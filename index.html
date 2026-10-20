@@ -1,0 +1,4370 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>环耕站布点调整&amp;检测工具 v2.0-beta</title>
+<style>
+:root{
+  --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
+  --bg:#e7eaee;--panel:#ffffff;--border:#cfd4da;--text:#1f2328;--muted:#667085;
+  --red:#c62828;--orange:#c76a00;--green:#1e7d3a;--purple:#6b4bb8;
+  --prov:#1a6fdb;--city:#d9720b;--county:#1f8f3e;
+  --shadow:0 1px 3px rgba(16,24,40,.12);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{font-family:"Segoe UI","Microsoft YaHei","PingFang SC",Arial,sans-serif;font-size:13px;color:var(--text);background:var(--bg);overflow:hidden}
+button{font-family:inherit}
+.hidden{display:none !important}
+.ribbon{height:80px;background:linear-gradient(#ffffff,#f2f4f7);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 14px;position:relative;z-index:5;gap:10px}
+.brand{display:flex;align-items:flex-start;gap:10px;min-width:420px;max-width:820px}
+.logo{width:34px;height:34px;border-radius:6px;background:linear-gradient(135deg,#0b7fc4,#0a5f96);display:flex;align-items:center;justify-content:center;color:#fff;font-size:19px;font-weight:700;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);margin-top:2px}
+.brand .title{font-size:16px;font-weight:600;letter-spacing:.5px;line-height:1.25}
+.brand .sub{font-size:11px;color:var(--muted);line-height:1.3}
+.brand-credit{font-size:9.5px;color:#8a949e;line-height:1.35;margin-top:2px;white-space:normal;max-width:720px}
+.ver{font-size:10px;color:#fff;background:#8a949e;border-radius:8px;padding:1px 7px;margin-left:4px;vertical-align:2px}
+.ribbon-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;justify-content:flex-end}
+.ribbon-sep{width:1px;height:26px;background:var(--border);margin:0 3px}
+.btn{border:1px solid #b7bec7;background:#fff;color:var(--text);padding:7px 12px;border-radius:3px;font-size:13px;cursor:pointer;line-height:1.2;white-space:nowrap}
+.btn:hover{background:#f0f4f8;border-color:#97a1ac}
+.btn:active{background:#e4eaf0}
+.btn:disabled{opacity:1;cursor:not-allowed;background:#eef1f4;border-color:#d3d8de;color:#98a2b3}
+.btn-primary{background:var(--blue);border-color:var(--blue-dark);color:#fff;font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.btn-primary:disabled{background:#a9c7dd;border-color:#a9c7dd;color:#fff;box-shadow:none}
+.btn-primary:hover:not(:disabled){background:#0a86d2;border-color:#0079c1}
+.btn-ghost{background:transparent;border-color:transparent;color:#344054}
+.btn-ghost:hover{background:#e8edf2;border-color:#d5dbe2}
+.btn.active{background:#dff0fb;border-color:var(--blue);color:#065e94;font-weight:600;box-shadow:inset 0 0 0 1px rgba(0,121,193,.25)}
+.btn.wide{width:100%;margin-top:6px}
+.btn.mini{padding:4px 8px;font-size:12px}
+.main{height:calc(100% - 80px - 24px);display:grid;grid-template-columns:312px minmax(0,1fr);gap:8px;padding:8px;min-height:0}
+.sidebar{background:var(--panel);border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow);overflow:auto;padding:10px 12px 14px}
+.section{border-bottom:1px solid #e6e9ed;padding-bottom:10px;margin-bottom:10px}
+.section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.panel-title{font-size:13px;font-weight:700;color:#344054;padding-bottom:7px;border-bottom:1px solid #e6e9ed;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;gap:6px}
+.panel-title .tiny{font-weight:400;font-size:11px;color:var(--muted)}
+.field{margin-bottom:8px}
+.field>label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
+.field select{width:100%;padding:6px 8px;border:1px solid #b8c0c9;border-radius:3px;background:#fff;font-size:12px;color:var(--text)}
+.field select:disabled{background:#f4f6f8;color:#98a2b3}
+.path{font-size:11px;color:#475467;background:#f5f7f9;border:1px solid #e1e6eb;border-radius:3px;padding:6px 8px;line-height:1.4;word-break:break-all;min-height:28px}
+.health{margin-top:8px;font-size:12px;line-height:1.5}
+.health .hrow{display:flex;gap:6px;align-items:flex-start;padding:2px 0;color:#475467;word-break:break-all}
+.health .hrow .ic{flex:0 0 15px;font-weight:700}
+.health .ok .ic{color:var(--green)} .health .warn .ic{color:var(--orange)} .health .err .ic{color:var(--red)} .health .info .ic{color:var(--blue)}
+.health .file{font-family:Consolas,monospace;font-size:11px}
+.kbd-help{font-size:11.5px;line-height:1.7;color:#475467;background:#f8fafc;border:1px dashed #d7dde4;border-radius:4px;padding:7px 9px;margin:7px 0}
+.kbd-help b{color:#1f2328}
+.selection-box{font-size:12px;line-height:1.6;color:#344054;background:#f7fbfe;border:1px solid #cfe2ef;border-radius:4px;padding:7px 9px;margin:6px 0;min-height:38px;word-break:break-all}
+.selection-box .sel-empty{color:#8a949e}
+.selection-box .tag{display:inline-block;padding:0 6px;border-radius:8px;background:#e5f2fa;color:#0b5f93;font-size:11px;margin-right:4px}
+.candidate-stats{font-size:11.5px;color:#475467;margin:4px 0 2px;line-height:1.6}
+.candidate-stats .ok{color:var(--green);font-weight:600}
+.candidate-stats .bad{color:var(--red);font-weight:600}
+.mini-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.chk{display:flex;align-items:center;gap:7px;padding:3px 0;cursor:pointer;font-size:12px;user-select:none}
+.chk input{margin:0}
+.sym{display:inline-block;flex:0 0 auto;vertical-align:middle}
+.sym-prov{width:8px;height:8px;background:var(--prov);transform:rotate(45deg);margin:0 2px}
+.sym-city{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid var(--city)}
+.sym-county{width:8px;height:8px;background:var(--county)}
+.sym-other{width:8px;height:8px;border:1.5px solid #8a939e;border-radius:50%;background:#fff}
+.sym-pool-ok{width:8px;height:8px;border:1.5px solid #1e7d3a;border-radius:50%;background:#d8f3df}
+.sym-pool-bad{width:8px;height:8px;border:1.5px solid #b0b8c1;border-radius:50%;background:#f0f2f4}
+.sym-circle{width:9px;height:9px;border:1.5px solid #6aa8d8;border-radius:50%}
+.sym-grid{width:10px;height:9px;border-left:1px solid #9aa4ae;border-top:1px solid #9aa4ae;background:linear-gradient(90deg,transparent 4px,#9aa4ae 4px,#9aa4ae 5px,transparent 5px),linear-gradient(0deg,transparent 4px,#9aa4ae 4px,#9aa4ae 5px,transparent 5px)}
+.sym-base{width:10px;height:9px;border:1px solid #7fa3bd;background:linear-gradient(135deg,#cfe3f2,#eef6fc)}
+.criteria{margin-top:8px;background:#f7f9fb;border:1px solid #e1e6eb;border-radius:4px;padding:8px 10px}
+.criteria .t{font-size:11px;color:var(--muted)}
+.criteria .v{font-size:16px;font-weight:700;color:var(--blue);margin:2px 0}
+.criteria .n{font-size:11px;color:var(--muted);line-height:1.45}
+.content{display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0}
+.map-panel{position:relative;flex:1 1 auto;min-height:280px;background:#eef1f3;border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow);overflow:hidden}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
+#map.panning{cursor:grabbing}
+.map-toolbar{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;z-index:3}
+.map-toolbar button{width:30px;height:30px;border:1px solid #aab2bb;background:rgba(255,255,255,.95);border-radius:3px;font-size:16px;line-height:1;cursor:pointer;color:#344054;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.map-toolbar button:hover{background:#fff;border-color:#8b95a1}
+.map-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(238,241,243,.82);z-index:4}
+.empty-card{background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:0 6px 20px rgba(16,24,40,.16);padding:20px 24px;max-width:500px;text-align:left}
+.empty-title{font-size:17px;font-weight:600;margin-bottom:8px}
+.empty-card ol{margin:6px 0 14px 20px;padding:0;font-size:12.5px;line-height:1.8;color:#475467}
+.map-legend{position:absolute;right:10px;bottom:42px;background:rgba(255,255,255,.95);border:1px solid #d5dbe2;border-radius:4px;padding:7px 9px;font-size:11px;line-height:1.65;color:#344054;z-index:3;box-shadow:var(--shadow)}
+.map-legend .row{display:flex;align-items:center;gap:6px}
+.map-legend .line{display:inline-block;width:16px;height:0;border-top:2px solid var(--red);margin-right:2px}
+.map-legend .line.cross{border-top:2px dashed var(--orange)}
+.scalebar{position:absolute;left:14px;bottom:12px;z-index:3;background:rgba(255,255,255,.92);border:1px solid #d5dbe2;border-radius:3px;padding:4px 8px;font-size:11px;color:#344054;min-width:110px}
+.scalebar-bar{height:6px;border:1px solid #344054;border-top:none;width:80px;margin-bottom:2px}
+.north{position:absolute;right:18px;top:12px;z-index:3;color:#344054;font-size:12px;font-weight:700;text-align:center;line-height:1}
+.north::before{content:"";display:block;width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:12px solid #344054;margin:0 auto 2px}
+.map-hover{position:absolute;z-index:6;background:rgba(31,35,40,.94);color:#fff;padding:7px 9px;border-radius:4px;font-size:11.5px;line-height:1.55;pointer-events:none;max-width:300px;box-shadow:0 3px 10px rgba(0,0,0,.25)}
+.map-hover b{color:#ffd479;font-weight:600}
+.attribution{position:absolute;right:12px;bottom:10px;z-index:4;font-size:10.5px;color:#475467;background:rgba(255,255,255,.86);border-radius:3px;padding:2px 6px;display:none}
+.attribution a{color:#1c5f8f;text-decoration:none}
+.map-loading{position:absolute;inset:0;z-index:5;display:none;align-items:center;justify-content:center;background:rgba(238,241,243,.7)}
+.spinner{width:34px;height:34px;border:3px solid #c6d6e3;border-top-color:var(--blue);border-radius:50%;animation:spin 0.9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.map-mode-hint{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:5;background:rgba(31,35,40,.88);color:#fff;border-radius:4px;padding:5px 11px;font-size:12px;display:none;white-space:nowrap}
+.visual-panel{position:absolute;right:12px;top:56px;z-index:6;width:272px;max-height:calc(100% - 120px);overflow:auto;background:rgba(255,255,255,.97);border:1px solid #cbd3da;border-radius:5px;box-shadow:0 6px 20px rgba(16,24,40,.2);padding:10px 11px;font-size:12px;color:#344054}
+.visual-panel .vp-head{font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #e6e9ed;padding-bottom:6px;margin-bottom:7px}
+.visual-panel .vp-info{line-height:1.6;background:#f7f9fb;border:1px solid #e2e8ee;border-radius:4px;padding:6px 8px;margin-bottom:7px;word-break:break-all}
+.visual-panel .vp-info b{color:#1f2328}
+.visual-panel .vp-progress{font-size:11.5px;color:#667085;margin-bottom:6px}
+.visual-panel .vp-checks{border-top:1px solid #eef1f4;border-bottom:1px solid #eef1f4;padding:5px 0;margin:4px 0}
+.visual-panel .vp-checks .chk{padding:3px 0}
+.visual-panel .vp-checks .chk.disabled{color:#98a2b3;cursor:not-allowed}
+.visual-panel .vp-nav{display:flex;gap:6px;margin-top:7px}
+.visual-panel .vp-nav button{flex:1}
+.visual-panel .vp-note{font-size:11px;color:#8a949e;line-height:1.45;margin-top:5px}
+.results-panel{flex:0 0 232px;background:var(--panel);border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.result-head{display:flex;align-items:center;gap:10px;padding:6px 10px;border-bottom:1px solid #e6e9ed;min-height:36px;flex-wrap:wrap}
+.tabs{display:flex;gap:2px}
+.tabs button{border:1px solid transparent;background:transparent;color:#475467;padding:4px 10px;border-radius:3px;cursor:pointer;font-size:12px}
+.tabs button.active{background:#e8f3fb;border-color:#c8e1f2;color:#0b5f93;font-weight:600}
+.badge{display:inline-block;padding:3px 10px;border-radius:11px;font-size:12px;font-weight:600;white-space:nowrap}
+.badge-idle{background:#eef1f4;color:#667085}
+.badge-pass{background:#e5f6ea;color:#166534;border:1px solid #b7e4c7}
+.badge-fail{background:#fdeaea;color:#a61b1b;border:1px solid #f2c4c4}
+.badge-edit{background:#fff4e0;color:#9a5b00;border:1px solid #f0d8b0}
+#summaryText{font-size:12px;color:#344054;line-height:1.5}
+.table-wrap{flex:1 1 auto;overflow:auto;position:relative}
+table.data{width:100%;border-collapse:collapse;font-size:12px}
+table.data th{position:sticky;top:0;background:#f4f6f8;color:#475467;font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid #e1e6eb;white-space:nowrap;z-index:1}
+table.data td{padding:5px 8px;border-bottom:1px solid #eef1f4;white-space:nowrap;color:#344054}
+table.data tbody tr{cursor:pointer}
+table.data tbody tr:hover{background:#f2f8fd}
+table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospace}
+.table-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#7a8491;font-size:12.5px;padding:16px;text-align:center;line-height:1.7;background:#fff;white-space:pre-line}
+.statusbar{height:24px;background:#f4f6f8;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:11px;color:#5b6673;gap:12px}
+.statusbar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.banner{margin:8px 8px 0;padding:8px 12px;border-radius:4px;font-size:12.5px;line-height:1.5;border:1px solid;display:flex;gap:8px;align-items:flex-start}
+.banner.err{background:#fdf0f0;border-color:#f0c4c4;color:#9d1c1c}
+.banner.warn{background:#fff8e8;border-color:#f0ddb4;color:#8a5600}
+.banner.info{background:#eef6fd;border-color:#c5dff2;color:#1c5f8f}
+.modal{position:fixed;inset:0;background:rgba(15,23,32,.45);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-card{background:#fff;width:min(760px,94vw);max-height:86vh;overflow:auto;border-radius:6px;box-shadow:0 20px 50px rgba(0,0,0,.3);padding:20px 24px}
+.modal-card.small{width:min(560px,94vw)}
+.modal-card h2{margin:0 0 6px;font-size:18px}
+.modal-card .muted{color:var(--muted);font-size:12px;margin-bottom:12px}
+.modal-card h3{font-size:13.5px;margin:14px 0 5px;color:#1f4d73}
+.modal-card p,.modal-card li{font-size:12.6px;line-height:1.7;color:#344054;margin:4px 0}
+.modal-card ul,.modal-card ol{padding-left:20px;margin:4px 0}
+.modal-card code{background:#f2f4f6;border-radius:3px;padding:1px 5px;font-family:Consolas,monospace;font-size:11.5px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;flex-wrap:wrap}
+.form-row{margin:10px 0}
+.form-row label{display:block;font-size:12px;color:#475467;margin-bottom:4px}
+.form-row input{width:100%;padding:7px 9px;border:1px solid #b8c0c9;border-radius:3px;font-size:13px;font-family:Consolas,monospace}
+.note{background:#f7f9fb;border:1px solid #e2e8ee;border-radius:4px;padding:8px 10px;font-size:11.5px;line-height:1.65;color:#475467;margin:8px 0}
+.replace-details{font-size:12.5px;line-height:1.75;color:#344054}
+.replace-details b{color:#1f2328}
+.replace-details .warn{color:#9a5b00}
+.replace-details .bad{color:#a61b1b}
+.check-content{font-size:12.5px;line-height:1.75;color:#344054}
+.check-content b{color:#1f2328}
+.check-content .ok{color:#166534;font-weight:600}
+.check-content .bad{color:#a61b1b;font-weight:600}
+.check-content ul{padding-left:20px;margin:4px 0}
+.check-loading{display:flex;align-items:center;gap:9px;margin-top:10px;color:#667085;font-size:12.5px}
+.spinner.small{width:18px;height:18px;border-width:2px;margin:0}
+.check-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.toast-wrap{position:fixed;left:50%;bottom:40px;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:6px;align-items:center;pointer-events:none}
+.toast{background:rgba(31,35,40,.94);color:#fff;padding:8px 14px;border-radius:4px;font-size:12.5px;line-height:1.5;box-shadow:0 4px 14px rgba(0,0,0,.3);max-width:80vw}
+.toast.err{background:rgba(166,27,27,.96)} .toast.ok{background:rgba(22,101,52,.96)} .toast.warn{background:rgba(154,91,0,.96)}
+.edit-idle{color:#98a2b3}
+</style>
+</head>
+<body>
+<noscript><div style="padding:40px;font:16px 'Microsoft YaHei',sans-serif">本工具需要启用 JavaScript，且请使用 Microsoft Edge 或 Google Chrome 浏览器打开。</div></noscript>
+<div id="browserWarn" style="display:none;position:fixed;inset:0;z-index:99999;background:#fff;padding:60px;font:16px 'Microsoft YaHei',sans-serif;color:#a61b1b;line-height:1.7"></div>
+<script>
+(function () {
+  var ok = ('TextDecoder' in window) && Array.prototype.find && String.prototype.normalize &&
+    window.Promise && window.Map && window.Set && window.Blob && window.URL;
+  if (!ok) {
+    var el = document.getElementById('browserWarn');
+    if (el) { el.style.display = 'block'; el.textContent = '本工具需要 Microsoft Edge 或 Google Chrome 浏览器（需支持现代 JavaScript），请更换浏览器后重新打开本文件。'; }
+  }
+})();
+</script>
+
+<div class="ribbon">
+  <div class="brand">
+    <div class="logo">◎</div>
+    <div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.0-beta</span></div>
+      <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
+    </div>
+  </div>
+  <div class="ribbon-actions">
+    <button id="btnPick" class="btn btn-primary">选择任务文件夹</button>
+    <input id="folderInput" type="file" webkitdirectory multiple class="hidden">
+    <button id="btnEditMode" class="btn">编辑模式</button>
+    <button id="btnCheck" class="btn">问题检查</button>
+    <button id="btnUndo" class="btn" disabled title="撤销（Ctrl+Z）">撤销</button>
+    <button id="btnRedo" class="btn" disabled title="重做（Ctrl+Y）">重做</button>
+    <button id="btnExport" class="btn" disabled>导出成果</button>
+    <div class="ribbon-sep"></div>
+    <button id="btnBasemap" class="btn btn-ghost">天地图</button>
+    <button id="btnHelp" class="btn btn-ghost">帮助</button>
+  </div>
+</div>
+<div id="banner" class="banner hidden"></div>
+
+<div class="main">
+  <aside class="sidebar">
+    <div class="section">
+      <div class="panel-title">内容列表 <span class="tiny" id="groupCount"></span></div>
+      <div class="field">
+        <label>任务文件夹（只读）</label>
+        <div class="path" id="rootPath">未选择（请点击左上角"选择任务文件夹"）</div>
+      </div>
+      <div class="field">
+        <label>任务组</label>
+        <select id="groupSelect" disabled><option>—</option></select>
+      </div>
+      <div class="field">
+        <label>行政区</label>
+        <select id="regionSelect" disabled><option>—</option></select>
+      </div>
+      <div class="health" id="health"><div class="hrow info"><span class="ic">i</span><span>选择任务文件夹后自动识别任务组与行政区。</span></div></div>
+    </div>
+
+    <div class="section">
+      <div class="panel-title">编辑工具 <span class="tiny" id="editState">未开启</span></div>
+      <div class="kbd-help">
+        <b>Ctrl+单击</b> 或普通单击：选择 02 问题点<br>
+        <b>Shift+单击</b>：用 03 样点池中最近/指定的候选点替换已选点<br>
+        <b>按住 Space + 单击</b>：在 20 m 圆环内移动已选点（圆环外自动限制）<br>
+        <b>Esc</b> 取消；<b>Ctrl+Z / Ctrl+Y</b> 撤销/重做
+      </div>
+      <div class="mini-row" style="margin:6px 0">
+        <button id="btnAutoAdjust" class="btn mini" disabled title="自动替换本行政区因间距过近而冲突的 02 样点">一键调整样点</button>
+        <button id="btnVisualMode" class="btn mini" disabled title="逐点目视检查林地、河流、侵蚀沟、田垄">目视检查模式</button>
+      </div>
+      <div class="mini-row" style="margin:0 0 5px">
+        <button id="btnProgressExport" class="btn mini" disabled title="把本地进度导出为 JSON 文件">导出进度</button>
+        <button id="btnProgressImport" class="btn mini" disabled title="从 JSON 文件导入进度">导入进度</button>
+        <input type="file" id="progressInput" accept=".json,application/json" style="display:none">
+      </div>
+      <div class="tiny" id="progressState" style="margin:0 0 6px;color:#8a949e">本地进度：未启用</div>
+      <div class="selection-box" id="selectionPanel"><span class="sel-empty">未选择样点</span></div>
+      <div class="candidate-stats" id="candidateStats"></div>
+      <button id="btnReplaceNearest" class="btn mini wide" style="margin:2px 0 4px" disabled>一键替换为最近合格候选</button>
+      <div class="mini-row">
+        <button id="btnUndo2" class="btn mini" disabled>撤销</button>
+        <button id="btnRedo2" class="btn mini" disabled>重做</button>
+        <button id="btnClearEdits" class="btn mini" disabled>清空全部修改</button>
+      </div>
+      <div class="criteria">
+        <div class="t">判定标准</div>
+        <div class="v">&gt; 1500 m</div>
+        <div class="n">本区三级点 + 同文件夹其他行政区点；编辑时实时校验。</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="panel-title">图层</div>
+      <label class="chk"><input type="checkbox" id="lyrProv" checked><span class="sym sym-prov"></span>省级样点（01，强制锁定）</label>
+      <label class="chk"><input type="checkbox" id="lyrCity" checked><span class="sym sym-city"></span>市级样点（02，可编辑）</label>
+      <label class="chk"><input type="checkbox" id="lyrCounty" checked><span class="sym sym-county"></span>县级样点（02，可编辑）</label>
+      <label class="chk"><input type="checkbox" id="lyrPool" checked><span class="sym sym-pool-ok"></span>03 样点池（候选）</label>
+      <label class="chk"><input type="checkbox" id="lyrGrid" checked><span class="sym sym-grid"></span>05 区县格网</label>
+      <label class="chk"><input type="checkbox" id="lyrOther" checked><span class="sym sym-other"></span>同文件夹其他行政区点</label>
+      <label class="chk"><input type="checkbox" id="lyrCircle"><span class="sym sym-circle"></span>1.5 km 参考圈</label>
+      <label class="chk"><input type="checkbox" id="lyrBase" checked><span class="sym sym-base"></span>天地图影像底图</label>
+      <label class="chk"><input type="checkbox" id="lyrLabel" checked>天地图注记</label>
+      <label class="chk"><input type="checkbox" id="lyrMesh" checked>网格线</label>
+    </div>
+  </aside>
+
+  <section class="content">
+    <div class="map-panel" id="mapPanel">
+      <canvas id="map"></canvas>
+      <div class="map-toolbar">
+        <button id="btnZoomIn" title="放大">＋</button>
+        <button id="btnZoomOut" title="缩小">－</button>
+        <button id="btnFit" title="显示全部">⤢</button>
+      </div>
+      <div class="map-empty" id="mapEmpty">
+        <div class="empty-card">
+          <div class="empty-title">开始检查与编辑样点</div>
+          <ol>
+            <li>点击下方按钮，选择你本人的任务文件夹（含 <b>01_省级样点</b>、<b>02_市县级样点</b> 的那一层）</li>
+            <li>在左侧选择行政区；加载完成后会自动做间距检查</li>
+            <li>点击“编辑模式”，用 Ctrl+单击选择 02 点、Shift+单击替换、Space+单击移动</li>
+            <li>完成后点“导出成果”，生成新的 SHP 文件（不修改原文件）</li>
+          </ol>
+          <button id="btnPick2" class="btn btn-primary">选择任务文件夹</button>
+        </div>
+      </div>
+      <div class="map-legend">
+        <div class="row"><span class="sym sym-prov"></span>省级点（锁定）　<span class="sym sym-city"></span>市级点　<span class="sym sym-county"></span>县级点</div>
+        <div class="row"><span class="sym sym-pool-ok"></span>合格候选　<span class="sym sym-pool-bad"></span>不合格候选　<span class="sym sym-other"></span>其它行政区点</div>
+        <div class="row"><span class="line"></span>区内间距不足　<span class="line cross"></span>跨区间距不足</div>
+      </div>
+      <div class="scalebar"><div class="scalebar-bar" id="scalebarBar"></div><div id="scalebarText">—</div></div>
+      <div class="north">N</div>
+      <div class="attribution" id="attribution">地图数据 © <a href="https://www.tianditu.gov.cn/" target="_blank" rel="noopener">天地图</a></div>
+      <div class="map-loading" id="mapLoading"><div class="spinner"></div></div>
+      <div class="map-mode-hint" id="modeHint"></div>
+      <div class="map-hover hidden" id="hoverTip"></div>
+      <div id="visualPanel" class="visual-panel hidden">
+        <div class="vp-head"><span>目视检查</span><span id="visualProgress" class="tiny">0 / 0</span></div>
+        <div id="visualInfo" class="vp-info"></div>
+        <div class="vp-checks">
+          <label class="chk"><input type="checkbox" id="chkForest"> 林地重合</label>
+          <label class="chk"><input type="checkbox" id="chkRiver"> 河流距离</label>
+          <label class="chk"><input type="checkbox" id="chkGully"> 侵蚀沟避让</label>
+          <label class="chk" id="lblRidge"><input type="checkbox" id="chkRidge"> 田垄检查（水田）</label>
+        </div>
+        <div class="vp-progress" id="visualCheckNote"></div>
+        <div class="vp-nav">
+          <button id="btnVisualPrev" class="btn mini">上一点</button>
+          <button id="btnVisualNext" class="btn mini">下一点</button>
+        </div>
+        <button id="btnVisualFinish" class="btn btn-primary wide" style="margin-top:6px">完成检查</button>
+        <button id="btnVisualExit" class="btn mini wide" style="margin-top:4px">退出目视检查</button>
+        <div class="vp-note">地图中的蓝色圆环半径为 100 m，可用于判断样点距道路的距离；四项检查请结合天地图影像人工判断后勾选。</div>
+      </div>
+    </div>
+
+    <div class="results-panel">
+      <div class="result-head">
+        <div class="tabs">
+          <button data-tab="check" class="active" id="tabCheck">间距检查</button>
+          <button data-tab="log" id="tabLog">修改记录 <span id="logCount">0</span></button>
+        </div>
+        <span class="badge badge-idle" id="resultBadge">未检查</span>
+        <span id="summaryText">请选择任务文件夹与行政区。</span>
+      </div>
+      <div class="table-wrap" id="checkPane">
+        <table class="data" id="resultTable">
+          <thead><tr><th>#</th><th>类型</th><th>本区样点</th><th>对方样点</th><th>对方行政区</th><th>间距 (m)</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-empty" id="tableEmpty">暂无检查结果</div>
+      </div>
+      <div class="table-wrap hidden" id="logPane">
+        <table class="data" id="logTable">
+          <thead><tr><th>时间</th><th>行政区</th><th>图层</th><th>原编号</th><th>操作</th><th>原坐标</th><th>新坐标</th><th>移动(m)</th><th>说明</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="table-empty" id="logEmpty">暂无修改记录</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer class="statusbar">
+  <span id="statusLeft">就绪</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.0-beta · 原数据只读 · 修改仅在内存中</span>
+</footer>
+
+<!-- 帮助 -->
+<div id="helpModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
+    <div class="muted">v2.0-beta · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <h3>一、整体流程</h3>
+    <ol>
+      <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
+      <li>选择行政区，工具自动加载 01 省级点、02 市/县级点、03 样点池、05 格网，并做间距检查。</li>
+      <li>开启"编辑模式"，用 Ctrl+单击选中一条 02 问题点；Shift+单击 03 候选点替换；按住 Space+单击在 20 m 圆环内移动。</li>
+      <li>每次修改都会做间距、类型、20 m 半径校验，并写入修改记录。</li>
+      <li>点击"导出成果"：生成修改后的 02 SHP 五件套（新文件，不覆盖原文件）+ 修改记录 + 校验报告。</li>
+    </ol>
+    <h3>二、编辑规则</h3>
+    <ul>
+      <li><b>01 省级样点强制锁定</b>：即使在编辑模式下，也不能替换、移动或选中省级点；单击省级点会提示“强制锁定”。</li>
+      <li>只有 02 图层可编辑；03/05 只读。</li>
+      <li>Shift+单击替换：候选点必须与问题点地类一致，且与当前所有样点（含相邻行政区）间距严格大于 1500 m；不合格候选点会变灰并禁止选择。</li>
+      <li>Space+单击移动：以当前点位为圆心、20 m 为半径显示可操作圆环；光标超出圆环会自动限制在圆环边界；移动后同样校验 1500 m 间距。</li>
+      <li>每次修改都可撤销/重做；导出前可随时继续调整，原文件始终不变。</li>
+      <li>存在“未导出”的修改时切换行政区或任务组，会弹出确认窗口；确认切换将丢弃未导出的内存修改。</li>
+      <li><b>问题检查</b>：点击顶部“问题检查”按钮，中央窗口会显示当前正在检查的行政区、点数、检查范围等信息，并强制至少显示 2 秒后给出检查结果。</li>
+      <li><b>格网组合检查</b>：修改后关闭“编辑模式”时，工具会逐一检查当前行政区每个 05 格网是否保持“1 省级 + 1 市级 + 1 县级”组合；通过会提示，未通过可选择“继续编辑”或“强制保存”。</li>
+      <li><b>一键调整样点</b>：对当前行政区自动查找因间距过近而冲突的 02 样点，从 03 候选池中选择同地类、与所有点保持 1500 m 以上的候选点进行批量替换，尽量优先落在原格网内。</li>
+      <li><b>目视检查模式</b>：逐点显示 100 m 圆环和右侧悬浮面板，人工勾选“林地重合、河流距离、侵蚀沟避让、田垄检查（仅水田）”；完成后自动做一次间距复核，通过后会询问是否导出成果。</li>
+      <li><b>本地进度</b>：编辑、目视检查勾选会自动保存到浏览器本地（IndexedDB，失败时自动降级到 localStorage）。重新选择同一任务文件夹时，会提示是否恢复上次的编辑状态；每个行政区各保存一份进度。也可用“导出进度 / 导入进度”保存为 JSON 文件。</li>
+    </ul>
+    <h3>三、天地图底图</h3>
+    <ul>
+      <li>工具支持天地图影像/注记（WMTS）。首次使用需填写浏览器端密钥，保存在本机浏览器缓存中。</li>
+      <li>密钥可能绑定了域名白名单（如 jinguo0201.github.io）；本地双击打开或域名不符时底图可能加载失败，不影响检查和编辑。</li>
+      <li>本项目约定的浏览器端密钥已预填；如无法加载，请检查网络、密钥有效期与白名单。</li>
+      <li>建议在 HTTPS 页面（如 GitHub Pages）使用，以获得完整的地图加载能力。</li>
+    </ul>
+    <h3>四、成果与安全</h3>
+    <ul>
+      <li>导出包中只包含被修改的 02 图层和记录文件；01/03/04/05 不会被修改。</li>
+      <li>导出后建议用 ArcGIS/QGIS 打开核对，再按成果提交要求替换原文件。</li>
+      <li>刷新页面会丢失未导出的内存修改，请及时导出。</li>
+    </ul>
+    <div class="modal-actions"><button id="btnCloseHelp" class="btn btn-primary">知道了</button></div>
+  </div>
+</div>
+
+<!-- 天地图密钥 -->
+<div id="keyModal" class="modal hidden">
+  <div class="modal-card small">
+    <h2>天地图密钥</h2>
+    <div class="muted">用于加载天地图影像/注记底图；密钥只保存在本机浏览器，不会上传。</div>
+    <div class="form-row">
+      <label>浏览器端密钥（tk）</label>
+      <input id="keyInput" type="text" spellcheck="false" placeholder="请输入天地图 tk">
+    </div>
+    <div class="note">
+      当前页面来源：<b id="keyOrigin"></b><br>
+      已申请的白名单域名：<b>jinguo0201.github.io</b>。请确认当前页面来源在白名单内；不加载底图不影响检查与编辑。
+    </div>
+    <div class="modal-actions">
+      <button id="btnKeyClear" class="btn">清除密钥</button>
+      <button id="btnKeySkip" class="btn">暂不启用底图</button>
+      <button id="btnKeySave" class="btn btn-primary">保存并启用</button>
+    </div>
+  </div>
+</div>
+
+<!-- 替换确认 -->
+<div id="replaceModal" class="modal hidden">
+  <div class="modal-card small">
+    <h2>确认替换样点</h2>
+    <div id="replaceContent" class="replace-details"></div>
+    <div class="modal-actions">
+      <button id="btnReplaceCancel" class="btn">取消</button>
+      <button id="btnReplaceConfirm" class="btn btn-primary">确认替换</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导出成果 -->
+<div id="exportModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>导出修改成果</h2>
+    <div id="exportContent"></div>
+    <div class="modal-actions">
+      <button id="btnExportCancel" class="btn">取消</button>
+      <button id="btnExportFolder" class="btn">导出到指定文件夹…</button>
+      <button id="btnExportZip" class="btn btn-primary">下载 ZIP 成果包</button>
+    </div>
+  </div>
+</div>
+
+<!-- 切换行政区/任务组时未保存修改提示 -->
+<div id="switchModal" class="modal hidden">
+  <div class="modal-card small">
+    <h2>切换前确认</h2>
+    <p id="switchMessage">当前修改未保存，切换区县将会丢失修改进度。</p>
+    <div class="note">建议先点击“取消切换”，再使用“导出成果”保存修改后再切换。</div>
+    <div class="modal-actions">
+      <button id="btnSwitchCancel" class="btn">取消切换</button>
+      <button id="btnSwitchConfirm" class="btn btn-primary">确认切换</button>
+    </div>
+  </div>
+</div>
+
+<div id="toastWrap" class="toast-wrap"></div>
+
+<!-- 问题检查提示窗口 -->
+<div id="checkModal" class="modal hidden">
+  <div class="modal-card small">
+    <h2 id="checkTitle">正在检查样点间距</h2>
+    <div id="checkContent" class="check-content"></div>
+    <div class="check-loading" id="checkLoading"><div class="spinner small"></div><span>正在检查，请稍候…</span></div>
+    <div class="modal-actions">
+      <button id="btnCheckClose" class="btn btn-primary" disabled>关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 关闭编辑模式前的格网组合检查 -->
+<div id="gridCheckModal" class="modal hidden">
+  <div class="modal-card small">
+    <h2 id="gridCheckTitle">格网组合检查</h2>
+    <div id="gridCheckContent" class="check-content"></div>
+    <div class="note">“强制保存”表示保留当前内存修改并退出编辑模式，仍需通过“导出成果”生成新的 SHP 文件。</div>
+    <div class="modal-actions">
+      <button id="btnGridContinue" class="btn">继续编辑</button>
+      <button id="btnGridForce" class="btn btn-primary">强制保存</button>
+      <button id="btnGridDone" class="btn btn-primary hidden">完成</button>
+    </div>
+  </div>
+</div>
+
+<!-- 一键自动调整样点 -->
+<div id="autoModal" class="modal hidden">
+  <div class="modal-card small">
+    <h2 id="autoTitle">一键调整当前行政区样点</h2>
+    <div id="autoContent" class="check-content"></div>
+    <div class="check-loading" id="autoLoading"><div class="spinner small"></div><span>正在自动调整，请稍候…</span></div>
+    <div class="modal-actions">
+      <button id="btnAutoClose" class="btn btn-primary" disabled>关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 目视检查完成后的距离复核/导出提示 -->
+<div id="visualResultModal" class="modal hidden">
+  <div class="modal-card small">
+    <h2 id="visualResultTitle">目视检查完成</h2>
+    <div id="visualResultContent" class="check-content"></div>
+    <div class="modal-actions">
+      <button id="btnVisualResultClose" class="btn">关闭</button>
+      <button id="btnVisualResultEdit" class="btn hidden">继续编辑</button>
+      <button id="btnVisualResultExport" class="btn btn-primary hidden">导出成果</button>
+    </div>
+  </div>
+</div>
+
+<!-- 本地进度恢复 -->
+<div id="progressModal" class="modal hidden">
+  <div class="modal-card small">
+    <h2 id="progressTitle">发现本地工作进度</h2>
+    <div id="progressContent" class="check-content"></div>
+    <div class="modal-actions">
+      <button id="btnProgressIgnore" class="btn">忽略</button>
+      <button id="btnProgressDelete" class="btn">删除进度</button>
+      <button id="btnProgressRestore" class="btn btn-primary">恢复进度</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================= core.js ================= */
+'use strict';
+/* ============================================================
+ * 样点间距检查与编辑工具 v2.0 —— 核心纯函数
+ * （解析、距离、匹配、编辑导出、ZIP、投影换算）
+ * 本文件不访问 DOM，便于 Node 单元测试。
+ * ============================================================ */
+
+const THRESHOLD_M = 1500;
+const MOVE_LIMIT_M = 20;
+const TOOL_VERSION = 'v2.0-beta';
+const LEVELS = {
+  prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
+  city: { key: 'city', label: '市级', color: '#d9720b' },
+  county: { key: 'county', label: '县级', color: '#1f8f3e' }
+};
+const LEVEL_ORDER = ['prov', 'city', 'county'];
+const M_PER_DEG_LAT = 110540;
+const M_PER_DEG_LON_EQ = 111320;
+const MERC_R = 6378137;
+
+/* ---------- 通用 ---------- */
+function decodeBytes(bytes, encodingLabel) {
+  let label = encodingLabel || 'utf-8';
+  try { return new TextDecoder(label).decode(bytes); }
+  catch (e) { return new TextDecoder('utf-8').decode(bytes); }
+}
+function encodingFromCpg(cpgText) {
+  const t = String(cpgText || '').trim().toLowerCase();
+  if (t.indexOf('utf') >= 0) return 'utf-8';
+  if (t.indexOf('gbk') >= 0 || t.indexOf('936') >= 0 || t.indexOf('gb2312') >= 0 || t.indexOf('gb18030') >= 0) return 'gbk';
+  return 'utf-8';
+}
+function normalizeName(s) {
+  let t = String(s == null ? '' : s).trim();
+  try { t = t.normalize('NFKC'); } catch (e) { /* ignore */ }
+  return t.replace(/\s+/g, '').toLowerCase();
+}
+function cleanRegionName(s) {
+  return String(s == null ? '' : s).replace(/[_\-\s]+$/g, '').trim();
+}
+function escapeHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c];
+  });
+}
+function isFiniteNum(n) { return typeof n === 'number' && isFinite(n); }
+function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+function timestampForFile(d) {
+  d = d || new Date();
+  return '' + d.getFullYear() + pad2(d.getMonth() + 1) + pad2(d.getDate()) + '_' + pad2(d.getHours()) + pad2(d.getMinutes()) + pad2(d.getSeconds());
+}
+function timestampText(d) {
+  d = d || new Date();
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+}
+function sanitizeFileName(s) {
+  return String(s || '').replace(/[\\/:*?"<>|]/g, '_').replace(/\s+/g, '');
+}
+
+/* ---------- SHP 解析（点/点Z/点M/多点） ---------- */
+function parsePointsShp(arrayBuffer) {
+  const dv = new DataView(arrayBuffer);
+  if (arrayBuffer.byteLength < 100) throw new Error('SHP 文件过短');
+  if (dv.getInt32(0, false) !== 9994) throw new Error('不是有效的 Shapefile');
+  const points = [];
+  const records = [];
+  const shapeTypes = [];
+  let pos = 100;
+  let guard = 0;
+  while (pos + 8 <= arrayBuffer.byteLength && guard < 5000000) {
+    guard++;
+    const contentLen = dv.getInt32(pos + 4, false);
+    const cs = pos + 8;
+    const contentBytes = contentLen * 2;
+    if (contentBytes < 4 || cs + contentBytes > arrayBuffer.byteLength) break;
+    const st = dv.getInt32(cs, true);
+    if (shapeTypes.indexOf(st) < 0) shapeTypes.push(st);
+    if (st === 1 || st === 11 || st === 21) {
+      points.push({ x: dv.getFloat64(cs + 4, true), y: dv.getFloat64(cs + 12, true) });
+      records.push({ idx: records.length, offset: cs, contentLength: contentBytes, shapeType: st });
+    } else if (st === 8 || st === 18 || st === 28) {
+      const numPts = dv.getInt32(cs + 36, true);
+      for (let k = 0; k < numPts; k++) {
+        const off = cs + 40 + k * 16;
+        points.push({ x: dv.getFloat64(off, true), y: dv.getFloat64(off + 8, true) });
+      }
+      records.push({ idx: records.length, offset: cs, contentLength: contentBytes, shapeType: st });
+    } else if (st === 0) {
+      records.push({ idx: records.length, offset: cs, contentLength: contentBytes, shapeType: st, empty: true });
+    } else {
+      throw new Error('不支持的 Shape 类型：' + st + '（本工具仅支持点/多点）');
+    }
+    pos = cs + contentBytes;
+  }
+  return { points, records, shapeTypes };
+}
+
+/* ---------- SHP 面解析（05 格网） ---------- */
+function parsePolygonsShp(arrayBuffer) {
+  const dv = new DataView(arrayBuffer);
+  if (arrayBuffer.byteLength < 100) throw new Error('SHP 文件过短');
+  if (dv.getInt32(0, false) !== 9994) throw new Error('不是有效的 Shapefile');
+  const polygons = [];
+  let pos = 100;
+  let guard = 0;
+  while (pos + 8 <= arrayBuffer.byteLength && guard < 200000) {
+    guard++;
+    const contentLen = dv.getInt32(pos + 4, false);
+    const cs = pos + 8;
+    const contentBytes = contentLen * 2;
+    if (contentBytes < 4 || cs + contentBytes > arrayBuffer.byteLength) break;
+    const st = dv.getInt32(cs, true);
+    if (st === 5) {
+      const numParts = dv.getInt32(cs + 36, true);
+      const numPoints = dv.getInt32(cs + 40, true);
+      const parts = [];
+      for (let p = 0; p < numParts; p++) parts.push(dv.getInt32(cs + 44 + p * 4, true));
+      const ptsOff = cs + 44 + numParts * 4;
+      const rings = [];
+      for (let p = 0; p < numParts; p++) {
+        const start = parts[p];
+        const end = (p + 1 < numParts) ? parts[p + 1] : numPoints;
+        const ring = [];
+        for (let k = start; k < end; k++) {
+          ring.push([dv.getFloat64(ptsOff + k * 16, true), dv.getFloat64(ptsOff + k * 16 + 8, true)]);
+        }
+        rings.push(ring);
+      }
+      polygons.push({ rings: rings });
+    }
+    pos = cs + contentBytes;
+  }
+  return polygons;
+}
+
+/* ---------- DBF 解析 ---------- */
+function parseDbf(arrayBuffer, encodingLabel) {
+  const dv = new DataView(arrayBuffer);
+  const bytes = new Uint8Array(arrayBuffer);
+  if (arrayBuffer.byteLength < 32) throw new Error('DBF 文件过短');
+  const numRecords = dv.getUint32(4, true);
+  const headerLen = dv.getUint16(8, true);
+  const recordLen = dv.getUint16(10, true);
+  const decoder = (function () {
+    try { return new TextDecoder(encodingLabel || 'utf-8'); }
+    catch (e) { return new TextDecoder('utf-8'); }
+  })();
+  const fields = [];
+  let p = 32;
+  let fieldPos = 1;
+  while (p + 32 <= headerLen && bytes[p] !== 0x0d) {
+    let nameBytes = [];
+    for (let i = 0; i < 11; i++) {
+      if (bytes[p + i] === 0) break;
+      nameBytes.push(bytes[p + i]);
+    }
+    const name = decoder.decode(new Uint8Array(nameBytes));
+    const f = {
+      name: name, type: String.fromCharCode(bytes[p + 11]),
+      length: bytes[p + 16], decimals: bytes[p + 17],
+      offset: fieldPos
+    };
+    fieldPos += f.length;
+    fields.push(f);
+    p += 32;
+  }
+  const records = [];
+  for (let i = 0; i < numRecords; i++) {
+    const off = headerLen + i * recordLen;
+    if (off + recordLen > bytes.length) break;
+    const row = {};
+    for (const f of fields) {
+      const start = off + f.offset;
+      row[f.name] = decoder.decode(bytes.subarray(start, start + f.length)).replace(/\u0000/g, '').trim();
+    }
+    records.push(row);
+  }
+  return { fields, records, headerLen, recordLen, numRecords, encoding: encodingLabel || 'utf-8' };
+}
+
+/* ---------- PRJ / 投影 ---------- */
+function detectCrs(prjText) {
+  if (!prjText) return { kind: 'unknown', unitScale: 1, name: '未知坐标系' };
+  const t = String(prjText);
+  const projMatch = t.match(/PROJCS\s*\[\s*"([^"]*)"/i);
+  const geogMatch = t.match(/GEOGCS\s*\[\s*"([^"]*)"/i);
+  if (/PROJCS\s*\[/i.test(t)) {
+    let unitScale = 1;
+    let unitName = '';
+    const unitRe = /UNIT\s*\[\s*"([^"]*)"\s*,\s*([0-9.eE+\-]+)\s*\]/gi;
+    let um;
+    while ((um = unitRe.exec(t)) !== null) { unitName = um[1]; unitScale = parseFloat(um[2]) || 1; }
+    return { kind: 'projected', unitScale: unitScale, name: projMatch ? projMatch[1] : '投影坐标系', unitName: unitName };
+  }
+  if (/GEOGCS\s*\[/i.test(t)) {
+    return { kind: 'geographic', unitScale: 1, name: geogMatch ? geogMatch[1] : '地理坐标系' };
+  }
+  return { kind: 'unknown', unitScale: 1, name: '未知坐标系' };
+}
+function parseTMPrj(prjText) {
+  if (!prjText || !/PROJCS/i.test(prjText)) return null;
+  const getNum = function (name) {
+    const re = new RegExp('PARAMETER\\s*\\[\\s*"' + name + '"\\s*,\\s*([0-9.eE+\\-]+)', 'i');
+    const m = String(prjText).match(re);
+    return m ? parseFloat(m[1]) : null;
+  };
+  const lon0 = getNum('Central_Meridian');
+  const fe = getNum('False_Easting');
+  const fn = getNum('False_Northing');
+  let k0 = getNum('Scale_Factor');
+  if (lon0 == null || fe == null) return null;
+  if (k0 == null) k0 = 1;
+  let a = 6378137.0;
+  let f = 1 / 298.257222101;
+  if (/WGS_1984|WGS84/i.test(prjText) && !/CGCS2000|China_2000/i.test(prjText)) f = 1 / 298.257223563;
+  return { lon0: lon0, fe: fe, fn: fn || 0, k0: k0, a: a, f: f };
+}
+/* 高斯-克吕格/横轴墨卡托反算（米 → 经纬度） */
+function gkToLonLat(E, N, p) {
+  if (!p) return null;
+  const a = p.a, f = p.f;
+  const e2 = 2 * f - f * f;
+  const ep2 = e2 / (1 - e2);
+  const x = E - p.fe;
+  const y = N - p.fn;
+  const e4 = e2 * e2, e6 = e4 * e2;
+  const M = y / p.k0;
+  const mu = M / (a * (1 - e2 / 4 - 3 * e4 / 64 - 5 * e6 / 256));
+  const e1 = (1 - Math.sqrt(1 - e2)) / (1 + Math.sqrt(1 - e2));
+  const phi1 = mu + (3 * e1 / 2 - 27 * Math.pow(e1, 3) / 32) * Math.sin(2 * mu)
+    + (21 * e1 * e1 / 16 - 55 * Math.pow(e1, 4) / 32) * Math.sin(4 * mu)
+    + (151 * Math.pow(e1, 3) / 96) * Math.sin(6 * mu)
+    + (1097 * Math.pow(e1, 4) / 512) * Math.sin(8 * mu);
+  const sinPhi = Math.sin(phi1), cosPhi = Math.cos(phi1), tanPhi = Math.tan(phi1);
+  const C1 = ep2 * cosPhi * cosPhi;
+  const T1 = tanPhi * tanPhi;
+  const N1 = a / Math.sqrt(1 - e2 * sinPhi * sinPhi);
+  const R1 = a * (1 - e2) / Math.pow(1 - e2 * sinPhi * sinPhi, 1.5);
+  const D = x / (N1 * p.k0);
+  const lat = phi1 - (N1 * tanPhi / R1) * (D * D / 2
+    - (5 + 3 * T1 + 10 * C1 - 4 * C1 * C1 - 9 * ep2) * Math.pow(D, 4) / 24
+    + (61 + 90 * T1 + 298 * C1 + 45 * T1 * T1 - 252 * ep2 - 3 * C1 * C1) * Math.pow(D, 6) / 720);
+  const lon = (p.lon0 * Math.PI / 180) + (D
+    - (1 + 2 * T1 + C1) * Math.pow(D, 3) / 6
+    + (5 - 2 * C1 + 28 * T1 - 3 * C1 * C1 + 8 * ep2 + 24 * T1 * T1) * Math.pow(D, 5) / 120) / cosPhi;
+  const lonDeg = lon * 180 / Math.PI;
+  const latDeg = lat * 180 / Math.PI;
+  if (!isFinite(lonDeg) || !isFinite(latDeg) || Math.abs(latDeg) > 90) return null;
+  return [lonDeg, latDeg];
+}
+/* 经纬度 → Web Mercator（米） */
+function lonLatToMerc(lon, lat) {
+  const x = lon * Math.PI / 180 * MERC_R;
+  const clamped = Math.max(-85, Math.min(85, lat));
+  const y = MERC_R * Math.log(Math.tan(Math.PI / 4 + clamped * Math.PI / 360));
+  return { x: x, y: y };
+}
+function mercToLonLat(x, y) {
+  const lon = x / MERC_R * 180 / Math.PI;
+  const lat = (2 * Math.atan(Math.exp(y / MERC_R)) - Math.PI / 2) * 180 / Math.PI;
+  return { x: lon, y: lat };
+}
+function mercTileXY(lon, lat, z) {
+  const n = Math.pow(2, z);
+  const x = (lon + 180) / 360 * n;
+  const latRad = Math.max(-85, Math.min(85, lat)) * Math.PI / 180;
+  const y = (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n;
+  return { x: x, y: y, n: n };
+}
+
+/* ---------- 距离 / 空间索引 ---------- */
+function vincentyInverse(lon1, lat1, lon2, lat2) {
+  const a = 6378137.0, f = 1 / 298.257223563, b = (1 - f) * a;
+  if (lon1 === lon2 && lat1 === lat2) return 0;
+  const L = (lon2 - lon1) * Math.PI / 180;
+  const U1 = Math.atan((1 - f) * Math.tan(lat1 * Math.PI / 180));
+  const U2 = Math.atan((1 - f) * Math.tan(lat2 * Math.PI / 180));
+  const sinU1 = Math.sin(U1), cosU1 = Math.cos(U1);
+  const sinU2 = Math.sin(U2), cosU2 = Math.cos(U2);
+  let lam = L, sinSigma = 0, cosSigma = 0, sigma = 0, cos2Alpha = 0, cos2SigmaM = 0, sinAlpha = 0;
+  for (let i = 0; i < 200; i++) {
+    const sinLam = Math.sin(lam), cosLam = Math.cos(lam);
+    const t1 = cosU2 * sinLam, t2 = cosU1 * sinU2 - sinU1 * cosU2 * cosLam;
+    sinSigma = Math.sqrt(t1 * t1 + t2 * t2);
+    if (sinSigma === 0) return 0;
+    cosSigma = sinU1 * sinU2 + cosU1 * cosU2 * cosLam;
+    sigma = Math.atan2(sinSigma, cosSigma);
+    sinAlpha = cosU1 * cosU2 * sinLam / sinSigma;
+    cos2Alpha = 1 - sinAlpha * sinAlpha;
+    cos2SigmaM = cos2Alpha !== 0 ? cosSigma - 2 * sinU1 * sinU2 / cos2Alpha : 0;
+    const C = f / 16 * cos2Alpha * (4 + f * (4 - 3 * cos2Alpha));
+    const prev = lam;
+    lam = L + (1 - C) * f * sinAlpha * (sigma + C * sinSigma * (cos2SigmaM + C * cosSigma * (-1 + 2 * cos2SigmaM * cos2SigmaM)));
+    if (Math.abs(lam - prev) < 1e-12) break;
+  }
+  const u2 = cos2Alpha * (a * a - b * b) / (b * b);
+  const A = 1 + u2 / 16384 * (4096 + u2 * (-768 + u2 * (320 - 175 * u2)));
+  const B = u2 / 1024 * (256 + u2 * (-128 + u2 * (74 - 47 * u2)));
+  const dS = B * sinSigma * (cos2SigmaM + B / 4 * (cosSigma * (-1 + 2 * cos2SigmaM * cos2SigmaM)
+    - B / 6 * cos2SigmaM * (-3 + 4 * sinSigma * sinSigma) * (-3 + 4 * cos2SigmaM * cos2SigmaM)));
+  const s = b * A * (sigma - dS);
+  if (!isFinite(s)) throw new Error('距离计算失败');
+  return s;
+}
+function haversineMeters(lon1, lat1, lon2, lat2) {
+  const R = 6371000, rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad, dLon = (lon2 - lon1) * rad;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+function distanceBetween(a, b, crs) {
+  if (!crs || crs.kind === 'geographic') {
+    try { return vincentyInverse(a.x, a.y, b.x, b.y); }
+    catch (e) { return haversineMeters(a.x, a.y, b.x, b.y); }
+  }
+  return Math.hypot(a.x - b.x, a.y - b.y) * (crs.unitScale || 1);
+}
+function buildSpatialIndex(points, crs) {
+  const idx = { mode: crs.kind === 'geographic' ? 'deg' : 'm', buckets: new Map(), points: points, crs: crs };
+  if (idx.mode === 'deg') {
+    idx.bucketDeg = 0.02; /* 约 2.2 km */
+    for (const p of points) {
+      const k = Math.floor(p.y / idx.bucketDeg) + ',' + Math.floor(p.x / idx.bucketDeg);
+      let arr = idx.buckets.get(k);
+      if (!arr) { arr = []; idx.buckets.set(k, arr); }
+      arr.push(p);
+    }
+  } else {
+    idx.bucketM = 2000;
+    for (const p of points) {
+      const k = Math.floor(p.y / idx.bucketM) + ',' + Math.floor(p.x / idx.bucketM);
+      let arr = idx.buckets.get(k);
+      if (!arr) { arr = []; idx.buckets.set(k, arr); }
+      arr.push(p);
+    }
+  }
+  return idx;
+}
+function nearbyPoints(index, p) {
+  const out = [];
+  if (index.mode === 'deg') {
+    const bx = Math.floor(p.x / index.bucketDeg), by = Math.floor(p.y / index.bucketDeg);
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const arr = index.buckets.get((by + dy) + ',' + (bx + dx));
+        if (arr) for (const q of arr) out.push(q);
+      }
+    }
+  } else {
+    const bx = Math.floor(p.x / index.bucketM), by = Math.floor(p.y / index.bucketM);
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const arr = index.buckets.get((by + dy) + ',' + (bx + dx));
+        if (arr) for (const q of arr) out.push(q);
+      }
+    }
+  }
+  return out;
+}
+/** 检查候选点/移动目标与其它点的间距（严格 >1500m），排除 skipPoint 对象 */
+function spacingCheck(point, index, skipPoint, crs) {
+  const near = nearbyPoints(index, point);
+  for (const q of near) {
+    if (skipPoint && q === skipPoint) continue;
+    if (skipPoint && q.region === skipPoint.region && q.level === skipPoint.level && q.idx === skipPoint.idx) continue;
+    let d;
+    try { d = distanceBetween(point, q, crs); } catch (e) { continue; }
+    if (d <= THRESHOLD_M) {
+      return { ok: false, distance: d, conflict: q };
+    }
+  }
+  return { ok: true, distance: null, conflict: null };
+}
+/** 把目标点限制在以 anchor 为圆心、maxMeters 为半径的圆内（数据坐标） */
+function clampToCircle(anchor, target, maxMeters, crs) {
+  if (crs.kind === 'geographic') {
+    let cand = { x: target.x, y: target.y };
+    let clamped = false;
+    for (let i = 0; i < 4; i++) {
+      let d;
+      try { d = vincentyInverse(anchor.x, anchor.y, cand.x, cand.y); }
+      catch (e) { d = haversineMeters(anchor.x, anchor.y, cand.x, cand.y); }
+      if (d <= maxMeters + 1e-6) {
+        if (i > 0 || Math.abs(d - maxMeters) > 1e-6) { /* keep */ }
+        return { x: cand.x, y: cand.y, meters: d, clamped: clamped };
+      }
+      const scale = maxMeters / d;
+      cand = { x: anchor.x + (cand.x - anchor.x) * scale, y: anchor.y + (cand.y - anchor.y) * scale };
+      clamped = true;
+    }
+    try {
+      const d2 = vincentyInverse(anchor.x, anchor.y, cand.x, cand.y);
+      return { x: cand.x, y: cand.y, meters: d2, clamped: true };
+    } catch (e) {
+      return { x: cand.x, y: cand.y, meters: maxMeters, clamped: true };
+    }
+  }
+  const dx = (target.x - anchor.x) * (crs.unitScale || 1);
+  const dy = (target.y - anchor.y) * (crs.unitScale || 1);
+  let d = Math.hypot(dx, dy);
+  if (d <= maxMeters) return { x: target.x, y: target.y, meters: d, clamped: false };
+  const scale = maxMeters / d;
+  return {
+    x: anchor.x + (target.x - anchor.x) * scale,
+    y: anchor.y + (target.y - anchor.y) * scale,
+    meters: maxMeters,
+    clamped: true
+  };
+}
+
+/* ---------- 点与多边形 ---------- */
+function pointInRing(x, y, ring) {
+  let inside = false;
+  const n = ring.length;
+  let j = n - 1;
+  for (let i = 0; i < n; i++) {
+    const xi = ring[i].x !== undefined ? ring[i].x : ring[i][0];
+    const yi = ring[i].y !== undefined ? ring[i].y : ring[i][1];
+    const xj = ring[j].x !== undefined ? ring[j].x : ring[j][0];
+    const yj = ring[j].y !== undefined ? ring[j].y : ring[j][1];
+    if (((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / ((yj - yi) || 1e-12) + xi)) inside = !inside;
+    j = i;
+  }
+  return inside;
+}
+
+/* ---------- 文件夹结构识别（01/02/03/05） ---------- */
+function classifyFolder(seg) {
+  const s = String(seg || '').trim();
+  if (/^0?\s*1/.test(s) && s.indexOf('省级样点') >= 0) return 'provDir';
+  if (/^0?\s*2/.test(s) && (s.indexOf('市县级样点') >= 0 || s.indexOf('市县级') >= 0)) return 'cityDir';
+  return null;
+}
+function classifyBaseName(baseName) {
+  const b = String(baseName || '').trim();
+  if (!b || b === '市县级样点') return null;
+  const rules = [
+    { level: 'prov', kw: '省级样点' },
+    { level: 'city', kw: '市级样点' },
+    { level: 'county', kw: '县级样点' }
+  ];
+  for (const r of rules) {
+    if (b.length > r.kw.length && b.slice(-r.kw.length) === r.kw) {
+      const name = cleanRegionName(b.slice(0, b.length - r.kw.length));
+      if (name && name.length >= 2) return { level: r.level, name: name };
+    }
+  }
+  return null;
+}
+function buildSiblingMap(metas) {
+  const map = new Map();
+  for (const m of metas) {
+    const p = String(m.path || '').toLowerCase();
+    const dot = p.lastIndexOf('.');
+    if (dot < 0) continue;
+    const base = p.slice(0, dot), ext = p.slice(dot);
+    let rec = map.get(base);
+    if (!rec) { rec = Object.create(null); map.set(base, rec); }
+    if (!rec[ext]) rec[ext] = [];
+    rec[ext].push(m);
+  }
+  return map;
+}
+function firstOf(arr) { return arr && arr.length ? arr[0] : null; }
+function buildStructure(metas, siblingMap) {
+  const groups = new Map();
+  for (const m of metas) {
+    if (!/\.shp$/i.test(m.path)) continue;
+    const parts = String(m.path).split('/').filter(Boolean);
+    if (!parts.length) continue;
+    const fileName = parts[parts.length - 1];
+    const baseName = fileName.replace(/\.shp$/i, '');
+    const info = classifyBaseName(baseName);
+    if (!info) continue;
+    let dirIdx = -1, dirKind = null;
+    for (let i = parts.length - 2; i >= 0; i--) {
+      const k = classifyFolder(parts[i]);
+      if (k) { dirIdx = i; dirKind = k; break; }
+    }
+    let root = '', folderName = null;
+    if (dirIdx >= 0) {
+      root = parts.slice(0, dirIdx).join('/');
+      const between = parts.slice(dirIdx + 1, parts.length - 1);
+      if (between.length > 0) folderName = between[0];
+    } else {
+      root = parts.slice(0, -1).join('/');
+    }
+    let regionName = info.name;
+    const issues = [];
+    if (folderName && info.level === 'prov') {
+      regionName = cleanRegionName(folderName);
+      if (normalizeName(folderName) !== normalizeName(info.name)) issues.push('文件名“' + info.name + '”与所在文件夹“' + folderName + '”不一致');
+    }
+    if (dirKind === 'provDir' && info.level !== 'prov') issues.push('省级样点目录中出现' + LEVELS[info.level].label + '文件');
+    if (dirKind === 'cityDir' && info.level === 'prov') issues.push('市县级样点目录中出现省级样点文件');
+    const key = normalizeName(regionName);
+    if (!key) continue;
+    let g = groups.get(root);
+    if (!g) { g = { root: root, regions: new Map() }; groups.set(root, g); }
+    let r = g.regions.get(key);
+    if (!r) { r = { key: key, name: regionName, files: {}, issues: [], duplicate: false }; g.regions.set(key, r); }
+    if (issues.length) r.issues.push.apply(r.issues, issues);
+    if (r.files[info.level]) { r.duplicate = true; r.issues.push('发现重复的' + LEVELS[info.level].label + '样点文件'); continue; }
+    const basePath = m.path.slice(0, -4);
+    const rec = (siblingMap && siblingMap.get(basePath.toLowerCase())) || Object.create(null);
+    r.files[info.level] = {
+      shp: m,
+      dbf: firstOf(rec['.dbf']),
+      prj: firstOf(rec['.prj']),
+      cpg: firstOf(rec['.cpg']),
+      shx: firstOf(rec['.shx'])
+    };
+    if (!r.files[info.level].dbf) r.issues.push(LEVELS[info.level].label + '样点缺少 .dbf');
+    if (!r.files[info.level].prj) r.issues.push(LEVELS[info.level].label + '样点缺少 .prj');
+  }
+  const outGroups = [];
+  for (const g of groups.values()) {
+    const regions = [];
+    for (const r of g.regions.values()) {
+      const missing = [];
+      for (const lvl of LEVEL_ORDER) if (!r.files[lvl]) missing.push(LEVELS[lvl].label + '样点');
+      if (missing.length) r.issues.push('缺少：' + missing.join('、'));
+      r.valid = missing.length === 0 && !r.duplicate;
+      r.issues = r.issues.filter(function (v, i, a) { return a.indexOf(v) === i; });
+      regions.push(r);
+    }
+    regions.sort(function (a, b) {
+      if (a.valid !== b.valid) return a.valid ? -1 : 1;
+      return a.name.localeCompare(b.name, 'zh-Hans-CN');
+    });
+    outGroups.push({ root: g.root, label: g.root ? g.root.split('/').pop() : '选中文件夹', regions: regions });
+  }
+  outGroups.sort(function (a, b) { return a.label.localeCompare(b.label, 'zh-Hans-CN'); });
+  return { groups: outGroups };
+}
+/** 把 03 样点池、05 格网文件挂到对应行政区 */
+function attachAuxFiles(structure, metas, siblingMap) {
+  const groupByRoot = new Map();
+  for (const g of structure.groups) groupByRoot.set(g.root, g);
+  function findRegion(g, key) {
+    for (const r of g.regions) if (r.key === key) return r;
+    return null;
+  }
+  for (const m of metas) {
+    if (!/\.shp$/i.test(m.path)) continue;
+    const parts = String(m.path).split('/').filter(Boolean);
+    const fileName = parts[parts.length - 1];
+    const baseName = fileName.replace(/\.shp$/i, '');
+    /* 03 样点池 */
+    let idx = -1;
+    for (let i = parts.length - 2; i >= 0; i--) {
+      if (/^0?\s*3/.test(parts[i]) && parts[i].indexOf('样点池') >= 0) { idx = i; break; }
+    }
+    if (idx >= 0 && baseName.indexOf('样点候选池') >= 0) {
+      const root = parts.slice(0, idx).join('/');
+      const g = groupByRoot.get(root);
+      if (!g) continue;
+      const regionName = cleanRegionName(baseName.slice(0, baseName.length - '样点候选池'.length));
+      const r = findRegion(g, normalizeName(regionName));
+      if (!r) continue;
+      const basePath = m.path.slice(0, -4);
+      const rec = (siblingMap && siblingMap.get(basePath.toLowerCase())) || Object.create(null);
+      r.files.pool = { shp: m, dbf: firstOf(rec['.dbf']), prj: firstOf(rec['.prj']), cpg: firstOf(rec['.cpg']) };
+      continue;
+    }
+    /* 05 格网 */
+    idx = -1;
+    for (let i = parts.length - 2; i >= 0; i--) {
+      if (/^0?\s*5/.test(parts[i]) && parts[i].indexOf('格网') >= 0) { idx = i; break; }
+    }
+    if (idx >= 0) {
+      const root = parts.slice(0, idx).join('/');
+      const g = groupByRoot.get(root);
+      if (!g) continue;
+      const between = parts.slice(idx + 1, parts.length - 1);
+      if (!between.length) continue;
+      const regionName = cleanRegionName(between[0]);
+      let r = findRegion(g, normalizeName(regionName));
+      if (!r) {
+        /* 兼容文件夹名与数据名略有差异的情况 */
+        const n = normalizeName(regionName);
+        r = g.regions.find(function (x) { return x.key.indexOf(n) >= 0 || n.indexOf(x.key) >= 0; }) || null;
+      }
+      if (!r) continue;
+      const basePath = m.path.slice(0, -4);
+      const rec = (siblingMap && siblingMap.get(basePath.toLowerCase())) || Object.create(null);
+      if (!r.files.grids) r.files.grids = [];
+      r.files.grids.push({ shp: m, prj: firstOf(rec['.prj']) });
+    }
+  }
+}
+
+/* ---------- 候选点筛选 ---------- */
+function evaluateCandidates(candidates, selected, currentPoints, crs) {
+  const skip = selected;
+  const others = currentPoints.filter(function (p) {
+    return !(p.region === skip.region && p.level === skip.level && p.idx === skip.idx);
+  });
+  const index = buildSpatialIndex(others, crs);
+  const results = [];
+  for (let i = 0; i < candidates.length; i++) {
+    const c = candidates[i];
+    const reasons = [];
+    if (normalizeName(c.dlmc) !== normalizeName(selected.dlmc)) reasons.push('地类不同（候选 ' + (c.dlmc || '—') + '）');
+    if (!reasons.length && Math.abs(c.x - selected.x) < 1e-9 && Math.abs(c.y - selected.y) < 1e-9) {
+      reasons.push('与所选问题点位置重合，替换无意义');
+    }
+    if (!reasons.length) {
+      const chk = spacingCheck(c, index, null, crs);
+      if (!chk.ok) reasons.push('与 ' + (chk.conflict ? (LEVELS[chk.conflict.level].label + ' ' + chk.conflict.id) : '其它点') + ' 间距 ' + chk.distance.toFixed(1) + ' m');
+    }
+    results.push({ idx: i, eligible: reasons.length === 0, reasons: reasons });
+  }
+  return { results: results, index: index };
+}
+
+/* ---------- DBF 字段编码 ---------- */
+function encodeDbfValue(field, value, encodingLabel, warnings) {
+  const len = field.length;
+  const spaceFill = function () {
+    const a = new Uint8Array(len); a.fill(0x20); return a;
+  };
+  if (field.type === 'N' || field.type === 'F') {
+    let text = (value == null ? '' : String(value)).trim();
+    if (!text) return spaceFill();
+    if (!/^[+\-]?[0-9.eE]+$/.test(text)) {
+      const n = Number(text);
+      if (!isFinite(n)) { warnings.push('字段 ' + field.name + ' 的值不是有效数字：' + text); text = '0'; }
+    }
+    if (text.length > len) {
+      const n = Number(text);
+      text = isFinite(n) ? n.toPrecision(Math.max(1, len - 7)) : text.slice(0, len);
+      if (text.length > len) text = text.slice(0, len);
+      warnings.push('字段 ' + field.name + ' 数值过长，已截断');
+    }
+    const a = spaceFill();
+    const b = new TextEncoder().encode(text);
+    a.set(b.subarray(0, len), len - Math.min(len, b.length));
+    return a;
+  }
+  if (field.type === 'D') {
+    const t = (value == null ? '' : String(value)).replace(/[^0-9]/g, '').slice(0, 8);
+    const a = spaceFill();
+    a.set(new TextEncoder().encode(t), 0);
+    return a;
+  }
+  if (field.type === 'L') {
+    const a = spaceFill();
+    const v = String(value == null ? '' : value).toUpperCase();
+    a[0] = v === 'Y' || v === 'T' || v === '1' ? 0x54 : (v === 'N' || v === 'F' || v === '0' ? 0x46 : 0x3f);
+    return a;
+  }
+  /* 字符型：仅支持 UTF-8（当前任务数据为 UTF-8） */
+  if (encodingLabel && encodingLabel.toLowerCase().indexOf('utf') < 0) {
+    throw new Error('当前版本仅支持 UTF-8 属性表导出；检测到 .cpg=' + encodingLabel + '，请先转换编码或在 ArcGIS 中编辑。');
+  }
+  let text = value == null ? '' : String(value);
+  let bytes = new TextEncoder().encode(text);
+  if (bytes.length > len) {
+    while (bytes.length > len && text.length > 0) { text = text.slice(0, -1); bytes = new TextEncoder().encode(text); }
+    warnings.push('字段 ' + field.name + ' 文本过长，已截断');
+  }
+  const a = spaceFill();
+  a.set(bytes, 0);
+  return a;
+}
+
+/* ---------- 生成修改后的 SHP/DBF 缓冲区 ---------- */
+/**
+ * raw: { shpBuf, dbfBuf, shp:{points,records}, dbf:{fields,records,headerLen,recordLen}, encoding }
+ * patches: [{idx, type:'replace'|'move', x, y, attrs?}]
+ */
+function applyPatchesToLayer(raw, patches) {
+  if (!patches || !patches.length) throw new Error('没有需要导出的修改');
+  const warnings = [];
+  const shp = new Uint8Array(raw.shpBuf.slice(0));
+  const dbf = new Uint8Array(raw.dbfBuf.slice(0));
+  const shpView = new DataView(shp.buffer);
+  const points = raw.shp.points.slice();
+  const attrRows = raw.dbf ? raw.dbf.records.map(function (r) { return Object.assign({}, r); }) : [];
+  patches.forEach(function (patch) {
+    const rec = raw.shp.records[patch.idx];
+    if (!rec) throw new Error('记录索引越界：' + patch.idx);
+    if (rec.shapeType !== 1 && rec.shapeType !== 11 && rec.shapeType !== 21) {
+      throw new Error('当前编辑仅支持点图层（shape type=1/11/21）');
+    }
+    shpView.setFloat64(rec.offset + 4, patch.x, true);
+    shpView.setFloat64(rec.offset + 12, patch.y, true);
+    points[patch.idx] = { x: patch.x, y: patch.y };
+    if (raw.dbf && patch.attrs) {
+      const row = attrRows[patch.idx];
+      raw.dbf.fields.forEach(function (f) {
+        let value;
+        if (Object.prototype.hasOwnProperty.call(patch.attrs, f.name)) value = patch.attrs[f.name];
+        else if (f.name === '距离过') value = '0';
+        else return;
+        row[f.name] = value;
+        const bytes = encodeDbfValue(f, value, raw.encoding, warnings);
+        const start = raw.dbf.headerLen + patch.idx * raw.dbf.recordLen + f.offset;
+        dbf.set(bytes, start);
+      });
+    } else if (raw.dbf) {
+      const row = attrRows[patch.idx];
+      const f = raw.dbf.fields.find(function (x) { return x.name === '距离过'; });
+      if (f) {
+        row[f.name] = '0';
+        const bytes = encodeDbfValue(f, '0', raw.encoding, warnings);
+        dbf.set(bytes, raw.dbf.headerLen + patch.idx * raw.dbf.recordLen + f.offset);
+      }
+    }
+  });
+  /* 更新 SHP 头 bbox */
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  points.forEach(function (p) {
+    if (!isFinite(p.x) || !isFinite(p.y)) return;
+    if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+    if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+  });
+  if (isFinite(minX)) {
+    shpView.setFloat64(36, minX, true);
+    shpView.setFloat64(44, minY, true);
+    shpView.setFloat64(52, maxX, true);
+    shpView.setFloat64(60, maxY, true);
+  }
+  return {
+    shpBuf: shp, dbfBuf: raw.dbf ? dbf : null,
+    points: points, attrs: attrRows, warnings: warnings
+  };
+}
+
+/* ---------- ZIP（store 方式，无第三方库） ---------- */
+let _crcTable = null;
+function crc32(u8) {
+  if (!_crcTable) {
+    _crcTable = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      _crcTable[n] = c >>> 0;
+    }
+  }
+  let crc = 0xFFFFFFFF;
+  for (let i = 0; i < u8.length; i++) crc = (crc >>> 8) ^ _crcTable[(crc ^ u8[i]) & 0xFF];
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function dosDateTime(d) {
+  d = d || new Date();
+  const time = ((d.getHours() & 0x1F) << 11) | ((d.getMinutes() & 0x3F) << 5) | ((Math.floor(d.getSeconds() / 2)) & 0x1F);
+  const date = (((d.getFullYear() - 1980) & 0x7F) << 9) | (((d.getMonth() + 1) & 0x0F) << 5) | (d.getDate() & 0x1F);
+  return { time, date };
+}
+function buildZip(files) {
+  const enc = new TextEncoder();
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+  const dt = dosDateTime(new Date());
+  files.forEach(function (f) {
+    const nameBytes = enc.encode(f.name);
+    const data = f.data;
+    const crc = crc32(data);
+    const header = new Uint8Array(30 + nameBytes.length);
+    const dv = new DataView(header.buffer);
+    dv.setUint32(0, 0x04034b50, true);
+    dv.setUint16(4, 20, true);
+    dv.setUint16(6, 0x0800, true); /* UTF-8 文件名 */
+    dv.setUint16(8, 0, true); /* store */
+    dv.setUint16(10, dt.time, true);
+    dv.setUint16(12, dt.date, true);
+    dv.setUint32(14, crc, true);
+    dv.setUint32(18, data.length, true);
+    dv.setUint32(22, data.length, true);
+    dv.setUint16(26, nameBytes.length, true);
+    dv.setUint16(28, 0, true);
+    header.set(nameBytes, 30);
+    localParts.push(header, data);
+    const central = new Uint8Array(46 + nameBytes.length);
+    const cv = new DataView(central.buffer);
+    cv.setUint32(0, 0x02014b50, true);
+    cv.setUint16(4, 20, true);
+    cv.setUint16(6, 20, true);
+    cv.setUint16(8, 0x0800, true);
+    cv.setUint16(10, 0, true);
+    cv.setUint16(12, dt.time, true);
+    cv.setUint16(14, dt.date, true);
+    cv.setUint32(16, crc, true);
+    cv.setUint32(20, data.length, true);
+    cv.setUint32(24, data.length, true);
+    cv.setUint16(28, nameBytes.length, true);
+    cv.setUint16(30, 0, true);
+    cv.setUint16(32, 0, true);
+    cv.setUint16(34, 0, true);
+    cv.setUint16(36, 0, true);
+    cv.setUint32(38, 0, true);
+    cv.setUint32(42, offset, true);
+    central.set(nameBytes, 46);
+    centralParts.push(central);
+    offset += header.length + data.length;
+  });
+  let centralSize = 0;
+  centralParts.forEach(function (c) { centralSize += c.length; });
+  const eocd = new Uint8Array(22);
+  const ev = new DataView(eocd.buffer);
+  ev.setUint32(0, 0x06054b50, true);
+  ev.setUint16(4, 0, true);
+  ev.setUint16(6, 0, true);
+  ev.setUint16(8, files.length, true);
+  ev.setUint16(10, files.length, true);
+  ev.setUint32(12, centralSize, true);
+  ev.setUint32(16, offset, true);
+  ev.setUint16(20, 0, true);
+  let total = offset + centralSize + eocd.length;
+  const out = new Uint8Array(total);
+  let p = 0;
+  localParts.forEach(function (part) { out.set(part, p); p += part.length; });
+  centralParts.forEach(function (part) { out.set(part, p); p += part.length; });
+  out.set(eocd, p);
+  return out;
+}
+
+/* ---------- CSV / 报告 ---------- */
+function csvEscape(v) {
+  const s = String(v == null ? '' : v);
+  if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function buildCsv(rows) {
+  return '\ufeff' + rows.map(function (r) { return r.map(csvEscape).join(','); }).join('\r\n');
+}
+function buildEditLogRows(logEntries) {
+  const rows = [['序号', '时间', '任务组', '行政区', '图层', '原编号', '操作', '原坐标', '新坐标', '移动距离(m)', '候选池编号', '候选点间距检查', '备注']];
+  logEntries.forEach(function (e, i) {
+    rows.push([
+      i + 1, e.timeText || '', e.group || '', e.region || '', LEVELS[e.level] ? LEVELS[e.level].label : e.level,
+      e.id || '', e.actionLabel || '', e.beforeCoord || '', e.afterCoord || '',
+      e.movedMeters == null ? '' : Number(e.movedMeters).toFixed(2),
+      e.candidateId || '', e.checkText || '', e.note || ''
+    ]);
+  });
+  return rows;
+}
+function buildExportManifest(opts) {
+  const lines = [];
+  lines.push('样点间距检查与编辑工具 ' + TOOL_VERSION);
+  lines.push('导出时间：' + timestampText(new Date()));
+  lines.push('任务组：' + (opts.group || ''));
+  lines.push('导出说明：本包只包含被修改的 02_市县级样点 图层（完整 shp/shx/dbf/prj/cpg 五件套），未修改 01/03/04/05。');
+  lines.push('使用方式：将本包中的文件按原名替换到成果目录的 02_市县级样点 下，并在 ArcGIS/QGIS 中打开核对。');
+  lines.push('');
+  lines.push('修改清单：');
+  (opts.entries || []).forEach(function (e) {
+    lines.push('- ' + e.region + ' / ' + (LEVELS[e.level] ? LEVELS[e.level].label : e.level) + ' / ' + (e.id || '') + ' / ' + (e.actionLabel || '') + ' / 原坐标 ' + (e.beforeCoord || '') + ' → 新坐标 ' + (e.afterCoord || ''));
+  });
+  lines.push('');
+  lines.push('校验结果：');
+  (opts.checks || []).forEach(function (c) { lines.push('- ' + c); });
+  return lines.join('\r\n');
+}
+
+/* ---------- 导出文件名辅助 ---------- */
+function layerFileBase(regionName, level) {
+  return regionName + LEVELS[level].label + '样点';
+}
+function outputPathFor(regionName, level, ext) {
+  return '02_市县级样点/' + layerFileBase(regionName, level) + '.' + ext;
+}
+
+
+/* ================= ui.js ================= */
+'use strict';
+/* ============================================================
+ * 样点间距检查与编辑工具 v2.0-beta —— 界面与交互
+ * ============================================================ */
+
+const DEFAULT_TIANDITU_KEY = '0abb8008ce8fcf66a77a070213200286';
+const LS_KEY = 'spacingEditTool.tiandituKey';
+const LS_BASE = 'spacingEditTool.basemap';
+
+const app = {
+  metas: [], structure: null, group: null, region: null,
+  layerCache: new Map(), regionData: null, otherRegionRaw: new Map(),
+  poolRaw: null, candidates: [], candidateEval: null, candidateDisplay: [],
+  gridWorld: [], gridCellInfo: [], gridBaseline: null, gridWarnings: [],
+  checkRunning: false, gridCheckRunning: false, autoRunning: false,
+  visualMode: false, visualPoints: [], visualIndex: 0, visualChecks: new Map(), visualPrevView: null,
+  initialViolationCount: null,
+  workspaceId: '', progressDoc: null, progressReady: false, progressPrompted: false,
+  progressPromptedRegions: new Set(), pendingRestore: null, progressSaveTimer: null,
+  progressModalTarget: null,
+  ownPoints: [], otherPoints: [], current: [], provPoints: [],
+  analysis: null,
+  selected: null, editMode: false, moveState: null,
+  patches: new Map(), editLog: [], undoStack: [], redoStack: [], exportDirty: false,
+  pendingSwitch: null,
+  crsMode: 'geo', crs: { kind: 'geographic', unitScale: 1 },
+  view: { cx: 0, cy: 0, scale: 1 },
+  hover: null, hoverIsCandidate: false,
+  tileCache: new Map(), tileErrors: 0, tileLoaded: 0, tileErrorNotified: false,
+  tiandituKey: '', basemapEnabled: true,
+  pendingExport: null, loadToken: 0, refreshToken: 0,
+  drag: null, moved: false,
+  resultTab: 'check'
+};
+let els = null;
+
+function $(id) { return document.getElementById(id); }
+
+/* ============================================================
+ * 启动
+ * ============================================================ */
+function init() {
+  els = {
+    folderInput: $('folderInput'), btnPick: $('btnPick'), btnPick2: $('btnPick2'),
+    groupSelect: $('groupSelect'), regionSelect: $('regionSelect'), rootPath: $('rootPath'),
+    health: $('health'), groupCount: $('groupCount'), banner: $('banner'),
+    mapPanel: $('mapPanel'), map: $('map'), mapEmpty: $('mapEmpty'), mapLoading: $('mapLoading'),
+    hoverTip: $('hoverTip'), scalebarBar: $('scalebarBar'), scalebarText: $('scalebarText'),
+    attribution: $('attribution'), modeHint: $('modeHint'),
+    btnEditMode: $('btnEditMode'), btnCheck: $('btnCheck'), btnUndo: $('btnUndo'), btnRedo: $('btnRedo'),
+    checkModal: $('checkModal'), checkTitle: $('checkTitle'), checkContent: $('checkContent'),
+    checkLoading: $('checkLoading'), btnCheckClose: $('btnCheckClose'),
+    gridCheckModal: $('gridCheckModal'), gridCheckTitle: $('gridCheckTitle'), gridCheckContent: $('gridCheckContent'),
+    btnGridContinue: $('btnGridContinue'), btnGridForce: $('btnGridForce'), btnGridDone: $('btnGridDone'),
+    btnAutoAdjust: $('btnAutoAdjust'), btnVisualMode: $('btnVisualMode'),
+    btnProgressExport: $('btnProgressExport'), btnProgressImport: $('btnProgressImport'),
+    progressInput: $('progressInput'), progressState: $('progressState'),
+    progressModal: $('progressModal'), progressTitle: $('progressTitle'), progressContent: $('progressContent'),
+    btnProgressIgnore: $('btnProgressIgnore'), btnProgressDelete: $('btnProgressDelete'), btnProgressRestore: $('btnProgressRestore'),
+    autoModal: $('autoModal'), autoTitle: $('autoTitle'), autoContent: $('autoContent'),
+    autoLoading: $('autoLoading'), btnAutoClose: $('btnAutoClose'),
+    visualPanel: $('visualPanel'), visualProgress: $('visualProgress'), visualInfo: $('visualInfo'),
+    chkForest: $('chkForest'), chkRiver: $('chkRiver'), chkGully: $('chkGully'), chkRidge: $('chkRidge'),
+    lblRidge: $('lblRidge'), visualCheckNote: $('visualCheckNote'),
+    btnVisualPrev: $('btnVisualPrev'), btnVisualNext: $('btnVisualNext'),
+    btnVisualFinish: $('btnVisualFinish'), btnVisualExit: $('btnVisualExit'),
+    visualResultModal: $('visualResultModal'), visualResultTitle: $('visualResultTitle'), visualResultContent: $('visualResultContent'),
+    btnVisualResultClose: $('btnVisualResultClose'), btnVisualResultEdit: $('btnVisualResultEdit'), btnVisualResultExport: $('btnVisualResultExport'),
+    btnUndo2: $('btnUndo2'), btnRedo2: $('btnRedo2'), btnClearEdits: $('btnClearEdits'),
+    btnExport: $('btnExport'), btnBasemap: $('btnBasemap'), btnHelp: $('btnHelp'),
+    editState: $('editState'), selectionPanel: $('selectionPanel'), candidateStats: $('candidateStats'),
+    btnReplaceNearest: $('btnReplaceNearest'),
+    resultBadge: $('resultBadge'), summaryText: $('summaryText'),
+    resultTable: $('resultTable'), tableEmpty: $('tableEmpty'),
+    logTable: $('logTable'), logEmpty: $('logEmpty'), logCount: $('logCount'),
+    checkPane: $('checkPane'), logPane: $('logPane'), tabCheck: $('tabCheck'), tabLog: $('tabLog'),
+    statusLeft: $('statusLeft'), statusRight: $('statusRight'),
+    btnZoomIn: $('btnZoomIn'), btnZoomOut: $('btnZoomOut'), btnFit: $('btnFit'),
+    lyrProv: $('lyrProv'), lyrCity: $('lyrCity'), lyrCounty: $('lyrCounty'),
+    lyrPool: $('lyrPool'), lyrGrid: $('lyrGrid'), lyrOther: $('lyrOther'),
+    lyrCircle: $('lyrCircle'), lyrBase: $('lyrBase'), lyrLabel: $('lyrLabel'), lyrMesh: $('lyrMesh'),
+    helpModal: $('helpModal'), btnCloseHelp: $('btnCloseHelp'),
+    keyModal: $('keyModal'), keyInput: $('keyInput'), keyOrigin: $('keyOrigin'),
+    btnKeySave: $('btnKeySave'), btnKeySkip: $('btnKeySkip'), btnKeyClear: $('btnKeyClear'),
+    replaceModal: $('replaceModal'), replaceContent: $('replaceContent'),
+    btnReplaceCancel: $('btnReplaceCancel'), btnReplaceConfirm: $('btnReplaceConfirm'),
+    switchModal: $('switchModal'), switchMessage: $('switchMessage'),
+    btnSwitchCancel: $('btnSwitchCancel'), btnSwitchConfirm: $('btnSwitchConfirm'),
+    exportModal: $('exportModal'), exportContent: $('exportContent'),
+    btnExportZip: $('btnExportZip'), btnExportFolder: $('btnExportFolder'), btnExportCancel: $('btnExportCancel'),
+    toastWrap: $('toastWrap')
+  };
+  els.ctx = els.map.getContext('2d');
+  bindEvents();
+  resizeCanvas();
+  initKeySettings();
+  updateEditUI();
+  updateUndoRedoButtons();
+  setTab('check');
+  window.addEventListener('resize', function () { resizeCanvas(); invalidate(); });
+  window.addEventListener('error', function (ev) { toast('运行出错：' + (ev.message || ev.error), 'err'); });
+  window.addEventListener('beforeunload', function (e) {
+    try { if (app.workspaceId) saveCurrentRegionProgress(); } catch (err) { /* ignore */ }
+    if (app.patches.size > 0 && app.exportDirty) { e.preventDefault(); e.returnValue = ''; }
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (document.visibilityState === 'hidden') {
+      try { if (app.workspaceId) saveCurrentRegionProgress(); } catch (err) { /* ignore */ }
+    }
+  });
+  setTimeout(resizeCanvas, 80);
+  setStatus('就绪：请选择任务文件夹。');
+}
+
+function bindEvents() {
+  var pick = function () { els.folderInput.click(); };
+  els.btnPick.addEventListener('click', pick);
+  els.btnPick2.addEventListener('click', pick);
+  els.folderInput.addEventListener('change', function (e) {
+    handleFileInput(e.target.files);
+    try { e.target.value = ''; } catch (err) { /* ignore */ }
+  });
+  els.groupSelect.addEventListener('change', function () { requestGroupSwitch(parseInt(els.groupSelect.value, 10)); });
+  els.regionSelect.addEventListener('change', function () { requestRegionSwitch(parseInt(els.regionSelect.value, 10)); });
+  els.btnEditMode.addEventListener('click', function () { toggleEditMode(); });
+  els.btnCheck.addEventListener('click', runExplicitCheck);
+  els.btnCheckClose.addEventListener('click', closeCheckModal);
+  els.btnReplaceNearest.addEventListener('click', function () {
+    if (!app.selected || !app.candidateDisplay) return;
+    const nearest = app.candidateDisplay.find(function (x) { return x.eligible; });
+    if (!nearest) { toast('当前没有合格候选点，请按存疑上报处理。', 'warn'); return; }
+    openReplaceModal(nearest.cand);
+  });
+  els.btnUndo.addEventListener('click', undo);
+  els.btnRedo.addEventListener('click', redo);
+  els.btnUndo2.addEventListener('click', undo);
+  els.btnRedo2.addEventListener('click', redo);
+  els.btnClearEdits.addEventListener('click', clearAllEdits);
+  els.btnProgressExport.addEventListener('click', exportProgressJSON);
+  els.btnProgressImport.addEventListener('click', function () { if (els.progressInput) els.progressInput.click(); });
+  els.progressInput.addEventListener('change', function (e) {
+    const f = e.target.files && e.target.files[0];
+    try { e.target.value = ''; } catch (err) { /* ignore */ }
+    if (f) importProgressJSON(f);
+  });
+  els.btnProgressRestore.addEventListener('click', confirmProgressRestore);
+  els.btnProgressIgnore.addEventListener('click', function () {
+    markProgressPrompted();
+    els.progressModal.classList.add('hidden');
+    updateProgressUI();
+  });
+  els.btnProgressDelete.addEventListener('click', deleteProgressTarget);
+  els.progressModal.addEventListener('click', function (e) { if (e.target === els.progressModal) { markProgressPrompted(); els.progressModal.classList.add('hidden'); } });
+  els.btnAutoAdjust.addEventListener('click', runAutoAdjust);
+  els.btnVisualMode.addEventListener('click', toggleVisualMode);
+  els.btnAutoClose.addEventListener('click', function () { if (!app.autoRunning) els.autoModal.classList.add('hidden'); });
+  els.btnVisualPrev.addEventListener('click', function () { visualStep(-1); });
+  els.btnVisualNext.addEventListener('click', function () { visualStep(1); });
+  els.btnVisualExit.addEventListener('click', function () { setVisualMode(false); });
+  els.btnVisualFinish.addEventListener('click', finishVisualCheck);
+  [els.chkForest, els.chkRiver, els.chkGully, els.chkRidge].forEach(function (cb) {
+    if (cb) cb.addEventListener('change', onVisualCheckChange);
+  });
+  els.btnVisualResultClose.addEventListener('click', function () { els.visualResultModal.classList.add('hidden'); });
+  els.btnVisualResultEdit.addEventListener('click', function () {
+    els.visualResultModal.classList.add('hidden');
+    setVisualMode(false);
+    setEditMode(true);
+  });
+  els.btnVisualResultExport.addEventListener('click', function () {
+    els.visualResultModal.classList.add('hidden');
+    setVisualMode(false);
+    openExportModal();
+  });
+  els.btnExport.addEventListener('click', openExportModal);
+  els.btnBasemap.addEventListener('click', openKeyModal);
+  els.btnHelp.addEventListener('click', function () { els.helpModal.classList.remove('hidden'); });
+  els.btnCloseHelp.addEventListener('click', function () { els.helpModal.classList.add('hidden'); });
+  els.helpModal.addEventListener('click', function (e) { if (e.target === els.helpModal) els.helpModal.classList.add('hidden'); });
+  els.btnKeySave.addEventListener('click', saveKey);
+  els.btnKeySkip.addEventListener('click', function () { els.keyModal.classList.add('hidden'); els.lyrBase.checked = false; });
+  els.btnKeyClear.addEventListener('click', function () {
+    app.tiandituKey = '';
+    try { localStorage.removeItem(LS_KEY); } catch (e) { /* ignore */ }
+    els.lyrBase.checked = false;
+    els.keyModal.classList.add('hidden');
+    toast('已清除天地图密钥', 'ok');
+    invalidate();
+  });
+  els.keyModal.addEventListener('click', function (e) { if (e.target === els.keyModal) els.keyModal.classList.add('hidden'); });
+  els.btnReplaceCancel.addEventListener('click', function () { els.replaceModal.classList.add('hidden'); });
+  els.replaceModal.addEventListener('click', function (e) { if (e.target === els.replaceModal) els.replaceModal.classList.add('hidden'); });
+  els.btnReplaceConfirm.addEventListener('click', confirmReplaceFromModal);
+  els.btnSwitchCancel.addEventListener('click', cancelSwitch);
+  els.btnSwitchConfirm.addEventListener('click', confirmSwitch);
+  els.switchModal.addEventListener('click', function (e) { if (e.target === els.switchModal) cancelSwitch(); });
+  els.btnGridContinue.addEventListener('click', function () {
+    els.gridCheckModal.classList.add('hidden');
+    app.gridCheckRunning = false;
+  });
+  els.btnGridForce.addEventListener('click', function () {
+    els.gridCheckModal.classList.add('hidden');
+    app.gridCheckRunning = false;
+    setEditMode(false);
+    toast('已保留当前修改并退出编辑模式；请在导出窗口生成成果包完成保存。', 'warn');
+    openExportModal();
+  });
+  els.btnGridDone.addEventListener('click', function () {
+    els.gridCheckModal.classList.add('hidden');
+    app.gridCheckRunning = false;
+    setEditMode(false);
+  });
+  els.gridCheckModal.addEventListener('click', function (e) {
+    if (e.target === els.gridCheckModal && !app.gridCheckRunning) {
+      els.gridCheckModal.classList.add('hidden');
+    }
+  });
+  els.btnExportCancel.addEventListener('click', function () { els.exportModal.classList.add('hidden'); });
+  els.exportModal.addEventListener('click', function (e) { if (e.target === els.exportModal) els.exportModal.classList.add('hidden'); });
+  els.btnExportZip.addEventListener('click', downloadExportZip);
+  els.btnExportFolder.addEventListener('click', exportToFolder);
+  els.tabCheck.addEventListener('click', function () { setTab('check'); });
+  els.tabLog.addEventListener('click', function () { setTab('log'); });
+  [els.lyrProv, els.lyrCity, els.lyrCounty, els.lyrPool, els.lyrGrid, els.lyrOther, els.lyrCircle, els.lyrLabel, els.lyrMesh].forEach(function (cb) {
+    if (cb) cb.addEventListener('change', invalidate);
+  });
+  els.lyrBase.addEventListener('change', function () {
+    if (els.lyrBase.checked && !app.tiandituKey) { openKeyModal(); return; }
+    if (els.lyrBase.checked && app.crsMode !== 'geo') {
+      els.lyrBase.checked = false;
+      toast('当前数据为投影坐标，暂不支持天地图底图叠加。', 'warn');
+      return;
+    }
+    invalidate();
+  });
+  els.btnZoomIn.addEventListener('click', function () { zoomAtCenter(1.25); });
+  els.btnZoomOut.addEventListener('click', function () { zoomAtCenter(0.8); });
+  els.btnFit.addEventListener('click', function () { fitView(); invalidate(); });
+  bindMapEvents();
+  document.addEventListener('keydown', onKeyDown);
+  document.addEventListener('keyup', onKeyUp);
+}
+
+/* ============================================================
+ * 地图尺寸 / 视图
+ * ============================================================ */
+function resizeCanvas() {
+  if (!els || !els.map) return;
+  const rect = els.mapPanel.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  els.map.width = Math.round(Math.max(1, rect.width) * dpr);
+  els.map.height = Math.round(Math.max(1, rect.height) * dpr);
+  els.map.style.width = Math.max(1, rect.width) + 'px';
+  els.map.style.height = Math.max(1, rect.height) + 'px';
+  els.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  invalidate();
+}
+function mapSize() {
+  const rect = els.mapPanel.getBoundingClientRect();
+  return { w: Math.max(1, rect.width), h: Math.max(1, rect.height) };
+}
+function toWorld(p) {
+  if (app.crsMode === 'geo') return lonLatToMerc(p.x, p.y);
+  const s = app.crs.unitScale || 1;
+  return { x: p.x * s, y: p.y * s };
+}
+function fromWorld(w) {
+  if (app.crsMode === 'geo') return mercToLonLat(w.x, w.y);
+  const s = app.crs.unitScale || 1;
+  return { x: w.x / s, y: w.y / s };
+}
+function metersToWorld(meters, lat) {
+  if (app.crsMode === 'geo') return meters / Math.max(0.2, Math.cos(lat * Math.PI / 180));
+  return meters * (app.crs.unitScale || 1);
+}
+function screenPos(w) {
+  const size = mapSize();
+  return { x: (w.x - app.view.cx) * app.view.scale + size.w / 2, y: size.h / 2 - (w.y - app.view.cy) * app.view.scale };
+}
+function worldPos(screen) {
+  const size = mapSize();
+  return { x: app.view.cx + (screen.x - size.w / 2) / app.view.scale, y: app.view.cy - (screen.y - size.h / 2) / app.view.scale };
+}
+function fitView() {
+  const worlds = [];
+  app.ownPoints.forEach(function (p) { worlds.push(toWorld(p)); });
+  if (els.lyrGrid.checked) {
+    app.gridWorld.forEach(function (ring) { ring.forEach(function (p) { worlds.push(p); }); });
+  }
+  if (!worlds.length) return;
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  worlds.forEach(function (w) {
+    if (w.x < minX) minX = w.x; if (w.x > maxX) maxX = w.x;
+    if (w.y < minY) minY = w.y; if (w.y > maxY) maxY = w.y;
+  });
+  const size = mapSize();
+  let spanX = maxX - minX, spanY = maxY - minY;
+  if (spanX < 1000) spanX = 1000;
+  if (spanY < 1000) spanY = 1000;
+  const scale = Math.min((size.w - 90) / spanX, (size.h - 90) / spanY);
+  app.view.scale = isFinite(scale) && scale > 0 ? scale : 0.01;
+  app.view.cx = (minX + maxX) / 2;
+  app.view.cy = (minY + maxY) / 2;
+}
+function zoomAtCenter(factor) {
+  const size = mapSize();
+  zoomAt(size.w / 2, size.h / 2, factor);
+}
+function zoomAt(sx, sy, factor) {
+  if (!app.view) return;
+  const before = worldPos({ x: sx, y: sy });
+  const size = mapSize();
+  app.view.scale = Math.max(1e-8, Math.min(80, app.view.scale * factor));
+  app.view.cx = before.x - (sx - size.w / 2) / app.view.scale;
+  app.view.cy = before.y + (sy - size.h / 2) / app.view.scale;
+  invalidate();
+}
+
+/* ============================================================
+ * 地图事件
+ * ============================================================ */
+function bindMapEvents() {
+  const canvas = els.map;
+  canvas.addEventListener('pointerdown', function (e) {
+    if (!app.ownPoints.length) return;
+    canvas.setPointerCapture(e.pointerId);
+    app.drag = { sx: e.clientX, sy: e.clientY, cx: app.view.cx, cy: app.view.cy, moved: false };
+    app.moved = false;
+    canvas.classList.add('panning');
+  });
+  canvas.addEventListener('pointermove', function (e) {
+    const rect = canvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+    if (app.moveState) {
+      updateMoveTarget(sx, sy);
+      return;
+    }
+    if (app.drag) {
+      const dx = e.clientX - app.drag.sx, dy = e.clientY - app.drag.sy;
+      if (Math.abs(dx) > 4 || Math.abs(dy) > 4) { app.drag.moved = true; app.moved = true; }
+      if (app.drag.moved) {
+        app.view.cx = app.drag.cx - dx / app.view.scale;
+        app.view.cy = app.drag.cy + dy / app.view.scale;
+        invalidate();
+        return;
+      }
+    }
+    updateHover(sx, sy);
+    updateStatusCoords(sx, sy);
+  });
+  canvas.addEventListener('pointerup', function (e) {
+    canvas.classList.remove('panning');
+    if (app.drag && !app.drag.moved) {
+      const rect = canvas.getBoundingClientRect();
+      handleMapClick(e.clientX - rect.left, e.clientY - rect.top, e);
+    }
+    app.drag = null;
+  });
+  canvas.addEventListener('pointercancel', function () { app.drag = null; canvas.classList.remove('panning'); });
+  canvas.addEventListener('pointerleave', function () { app.drag = null; hideHover(); canvas.classList.remove('panning'); });
+  canvas.addEventListener('wheel', function (e) {
+    if (!app.ownPoints.length) return;
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    zoomAt(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.25 : 0.8);
+  }, { passive: false });
+  canvas.addEventListener('dblclick', function (e) {
+    if (!app.ownPoints.length) return;
+    const rect = canvas.getBoundingClientRect();
+    zoomAt(e.clientX - rect.left, e.clientY - rect.top, 1.8);
+  });
+}
+
+function handleMapClick(sx, sy, event) {
+  if (app.visualMode) {
+    toast('目视检查模式：请用右侧面板逐点检查并勾选，点击“退出目视检查”返回编辑。', 'warn');
+    return;
+  }
+  if (!app.editMode) {
+    toast('请先点击上方“编辑模式”后再修改样点。', 'warn');
+    return;
+  }
+  if (app.moveState) {
+    commitMoveFromState();
+    return;
+  }
+  if (event && event.shiftKey) {
+    handleShiftClick(sx, sy);
+    return;
+  }
+  const point = hitOwnPoint(sx, sy);
+  if (point) {
+    selectPoint(point);
+  } else {
+    const prov = hitList(sx, sy, app.provPoints, 9);
+    if (prov) toast('省级样点（01）已强制锁定，不能替换或移动。', 'err');
+    else clearSelection();
+  }
+}
+function hitList(sx, sy, list, threshold) {
+  let best = null, bestD = threshold || 9;
+  for (const p of list) {
+    const s = screenPos(toWorld(p));
+    const d = Math.hypot(s.x - sx, s.y - sy);
+    if (d <= bestD) { bestD = d; best = p; }
+  }
+  return best;
+}
+function hitOwnPoint(sx, sy) {
+  const own = app.ownPoints.filter(function (p) { return p.level !== 'prov'; });
+  return hitList(sx, sy, own, 10);
+}
+function hitCandidate(sx, sy) {
+  if (!app.candidateDisplay || !app.candidateDisplay.length) return null;
+  let best = null, bestD = 10;
+  for (const item of app.candidateDisplay) {
+    const c = item.cand;
+    const s = screenPos(toWorld(c));
+    const d = Math.hypot(s.x - sx, s.y - sy);
+    if (d < bestD) { bestD = d; best = c; }
+  }
+  return best;
+}
+
+/* ============================================================
+ * 文件选择与结构识别
+ * ============================================================ */
+function handleFileInput(fileList) {
+  const files = Array.prototype.slice.call(fileList || []);
+  if (!files.length) return;
+  const metas = files.map(function (f) {
+    return { path: String(f.webkitRelativePath || f.name).replace(/\\/g, '/'), name: f.name, file: f };
+  });
+  handleFileMetas(metas);
+}
+function handleFileMetas(metas) {
+  if (app.patches.size > 0) {
+    if (!window.confirm('当前有未导出的修改，重新选择任务文件夹将丢失这些修改。是否继续？')) return;
+  }
+  try { if (app.workspaceId) saveCurrentRegionProgress(); } catch (e) { /* ignore */ }
+  app.loadToken++;
+  resetAll();
+  app.metas = metas;
+  const sibling = buildSiblingMap(metas);
+  app.structure = buildStructure(metas, sibling);
+  attachAuxFiles(app.structure, metas, sibling);
+  els.rootPath.textContent = metas.length ? (metas[0].path.split('/')[0] || '选中文件夹') + '（共 ' + metas.length + ' 个文件）' : '未选择';
+  const groups = app.structure.groups;
+  els.groupCount.textContent = groups.length ? '识别到 ' + groups.length + ' 个任务组' : '';
+  if (!groups.length) {
+    els.groupSelect.innerHTML = '<option>—</option>'; els.groupSelect.disabled = true;
+    els.regionSelect.innerHTML = '<option>—</option>'; els.regionSelect.disabled = true;
+    setHealth([{ type: 'err', text: '未识别到任务结构。请选择包含 01_省级样点、02_市县级样点 的任务文件夹（人名文件夹）或包含这些人名文件夹的上一层目录。' }]);
+    updateMapEmpty();
+    return;
+  }
+  els.groupSelect.innerHTML = '';
+  groups.forEach(function (g, i) {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = g.label + '（' + g.regions.filter(function (r) { return r.valid; }).length + ' 个可用行政区）';
+    els.groupSelect.appendChild(opt);
+  });
+  els.groupSelect.disabled = groups.length <= 1;
+  if (groups.length > 1) showBanner('检测到 ' + groups.length + ' 个任务组，请在左侧任务组中选择。', 'info');
+  initProgressForWorkspace();
+  selectGroup(0);
+}
+function resetAll() {
+  app.group = null; app.region = null; app.regionData = null;
+  app.layerCache.clear(); app.otherRegionRaw.clear();
+  app.poolRaw = null; app.candidates = []; app.candidateEval = null; app.candidateDisplay = [];
+  app.gridWorld = []; app.gridCellInfo = []; app.gridBaseline = null; app.gridWarnings = [];
+  app.initialViolationCount = null; app.visualMode = false; app.visualPoints = []; app.visualIndex = 0; app.visualPrevView = null;
+  if (els && els.visualPanel) els.visualPanel.classList.add('hidden');
+  app.ownPoints = []; app.otherPoints = []; app.current = []; app.provPoints = [];
+  app.analysis = null; app.selected = null; app.moveState = null;
+  app.patches.clear(); app.editLog = []; app.undoStack = []; app.redoStack = [];
+  app.exportDirty = false; app.pendingSwitch = null;
+  if (els && els.switchModal) els.switchModal.classList.add('hidden');
+  if (els && els.autoModal) els.autoModal.classList.add('hidden');
+  if (els && els.visualResultModal) els.visualResultModal.classList.add('hidden');
+  if (els && els.btnAutoAdjust) els.btnAutoAdjust.disabled = true;
+  if (els && els.btnVisualMode) { els.btnVisualMode.disabled = true; els.btnVisualMode.classList.remove('active'); }
+  app.crsMode = 'geo'; app.crs = { kind: 'geographic', unitScale: 1 };
+  app.pendingExport = null;
+  hideBanner();
+  clearResults();
+  renderLog();
+  updateSelectionPanel();
+  updateUndoRedoButtons();
+  updateExportButton();
+  updateMapEmpty();
+}
+/* ============================================================
+ * 本地进度：IndexedDB 自动保存（每个行政区一份），JSON 导入导出
+ * ============================================================ */
+const PROGRESS_DB_NAME = 'hgz_progress_v1';
+const PROGRESS_DB_VERSION = 1;
+const PROGRESS_STORE = 'workspaces';
+let _progressDbPromise = null;
+
+function hashString(s) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(36);
+}
+function computeWorkspaceId() {
+  if (!app.structure) return '';
+  const parts = [];
+  (app.structure.groups || []).forEach(function (g) {
+    parts.push('G:' + g.label);
+    (g.regions || []).forEach(function (r) {
+      if (!r.valid) return;
+      parts.push('R:' + r.key);
+      LEVEL_ORDER.forEach(function (l) {
+        const e = r.files && r.files[l];
+        const f = e && e.shp && e.shp.file;
+        if (f) parts.push(l + ':' + f.name + ':' + (f.size || 0));
+      });
+      const pool = r.files && r.files.pool;
+      if (pool && pool.shp && pool.shp.file) parts.push('P:' + pool.shp.file.name + ':' + (pool.shp.file.size || 0));
+      (r.files && r.files.grids ? r.files.grids : []).forEach(function (g) {
+        if (g && g.shp && g.shp.file) parts.push('X:' + g.shp.file.name + ':' + (g.shp.file.size || 0));
+      });
+    });
+  });
+  return 'ws_' + hashString(parts.join('|'));
+}
+function progressLocalKey(id) { return 'hgz_progress_backup_' + id; }
+function openProgressDB() {
+  if (_progressDbPromise) return _progressDbPromise;
+  _progressDbPromise = new Promise(function (resolve, reject) {
+    if (typeof indexedDB === 'undefined') { reject(new Error('当前浏览器不支持 IndexedDB')); return; }
+    let req;
+    try { req = indexedDB.open(PROGRESS_DB_NAME, PROGRESS_DB_VERSION); }
+    catch (e) { reject(e); return; }
+    req.onupgradeneeded = function () {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(PROGRESS_STORE)) db.createObjectStore(PROGRESS_STORE, { keyPath: 'workspaceId' });
+    };
+    req.onsuccess = function () { resolve(req.result); };
+    req.onerror = function () { reject(req.error || new Error('IndexedDB 打开失败')); };
+  });
+  return _progressDbPromise;
+}
+async function progressDBGet(id) {
+  const db = await openProgressDB();
+  return new Promise(function (resolve, reject) {
+    const tx = db.transaction(PROGRESS_STORE, 'readonly');
+    const req = tx.objectStore(PROGRESS_STORE).get(id);
+    req.onsuccess = function () { resolve(req.result || null); };
+    req.onerror = function () { reject(req.error); };
+  });
+}
+async function progressDBPut(doc) {
+  const db = await openProgressDB();
+  return new Promise(function (resolve, reject) {
+    const tx = db.transaction(PROGRESS_STORE, 'readwrite');
+    tx.objectStore(PROGRESS_STORE).put(doc);
+    tx.oncomplete = function () { resolve(); };
+    tx.onerror = function () { reject(tx.error); };
+  });
+}
+async function progressDBDelete(id) {
+  const db = await openProgressDB();
+  return new Promise(function (resolve, reject) {
+    const tx = db.transaction(PROGRESS_STORE, 'readwrite');
+    tx.objectStore(PROGRESS_STORE).delete(id);
+    tx.oncomplete = function () { resolve(); };
+    tx.onerror = function () { reject(tx.error); };
+  });
+}
+function newProgressDoc() {
+  return {
+    version: 1, workspaceId: app.workspaceId, label: app.structure && app.structure.groups && app.structure.groups[0] ? app.structure.groups[0].label : '',
+    savedAt: Date.now(), active: null, groups: {}
+  };
+}
+function normalizeProgressDoc(doc) {
+  if (!doc || typeof doc !== 'object') return null;
+  if (!doc.groups || typeof doc.groups !== 'object') doc.groups = {};
+  if (!Array.isArray(doc.version)) doc.version = 1;
+  doc.active = doc.active || null;
+  return doc;
+}
+function formatProgressTime(ts) {
+  if (!ts) return '—';
+  try { return new Date(ts).toLocaleString('zh-CN', { hour12: false }); }
+  catch (e) { return new Date(ts).toString(); }
+}
+function listProgressSnapshots(doc) {
+  const out = [];
+  if (!doc || !doc.groups) return out;
+  Object.keys(doc.groups).forEach(function (gl) {
+    const regions = doc.groups[gl] || {};
+    Object.keys(regions).forEach(function (rk) {
+      const snap = regions[rk];
+      if (!snap) return;
+      const patchCount = Array.isArray(snap.patches) ? snap.patches.length : 0;
+      const checkCount = snap.visualChecks ? Object.keys(snap.visualChecks).length : 0;
+      if (!patchCount && !checkCount) return;
+      out.push({ groupLabel: gl, regionKey: rk, snap: snap, patchCount: patchCount, checkCount: checkCount, savedAt: snap.savedAt || 0 });
+    });
+  });
+  out.sort(function (a, b) { return b.savedAt - a.savedAt; });
+  return out;
+}
+function snapshotHasContent(snap) {
+  if (!snap) return false;
+  return (Array.isArray(snap.patches) && snap.patches.length > 0) || (snap.visualChecks && Object.keys(snap.visualChecks).length > 0);
+}
+function updateProgressUI() {
+  if (!els || !els.progressState) return;
+  const count = listProgressSnapshots(app.progressDoc).length;
+  if (!app.workspaceId) {
+    els.progressState.textContent = '本地进度：未启用';
+    if (els.btnProgressExport) els.btnProgressExport.disabled = true;
+    if (els.btnProgressImport) els.btnProgressImport.disabled = true;
+    return;
+  }
+  if (count) {
+    const latest = listProgressSnapshots(app.progressDoc)[0];
+    els.progressState.textContent = '本地进度：已保存 ' + count + ' 个行政区 · 最近 ' + formatProgressTime(latest.savedAt);
+  } else {
+    els.progressState.textContent = '本地进度：暂无（编辑后自动保存）';
+  }
+  if (els.btnProgressExport) els.btnProgressExport.disabled = !app.workspaceId;
+  if (els.btnProgressImport) els.btnProgressImport.disabled = !app.workspaceId;
+}
+function withTimeout(promise, ms, fallback) {
+  return Promise.race([
+    Promise.resolve(promise).catch(function () { return fallback; }),
+    new Promise(function (resolve) { setTimeout(function () { resolve(fallback); }, ms); })
+  ]);
+}
+async function loadProgressDocForWorkspace() {
+  if (!app.workspaceId) return null;
+  let doc = null;
+  try { doc = await withTimeout(progressDBGet(app.workspaceId), 1600, null); }
+  catch (e) { doc = null; }
+  if (!doc) {
+    try {
+      const raw = localStorage.getItem(progressLocalKey(app.workspaceId));
+      if (raw) doc = JSON.parse(raw);
+    } catch (e) { /* ignore */ }
+  }
+  if (doc && doc.workspaceId === app.workspaceId) return normalizeProgressDoc(doc);
+  return null;
+}
+function initProgressForWorkspace() {
+  app.workspaceId = computeWorkspaceId();
+  app.progressDoc = null;
+  app.progressReady = false;
+  app.progressPrompted = false;
+  app.progressPromptedRegions = new Set();
+  app.pendingRestore = null;
+  app.progressModalTarget = null;
+  updateProgressUI();
+  if (!app.workspaceId) return;
+  const wid = app.workspaceId;
+  loadProgressDocForWorkspace().then(function (doc) {
+    if (app.workspaceId !== wid) return;
+    app.progressDoc = doc;
+    app.progressReady = true;
+    updateProgressUI();
+    if (!doc || !activeSnapshot(doc)) { app.progressPrompted = true; }
+    else setTimeout(maybePromptInitialProgress, 700);
+  }).catch(function () {
+    if (app.workspaceId !== wid) return;
+    app.progressReady = true;
+    updateProgressUI();
+  });
+}
+function snapshotCurrentRegion() {
+  if (!app.regionData || !app.region || !app.group) return null;
+  const prefix = app.region.key + '|';
+  const patches = [];
+  app.patches.forEach(function (patch, key) {
+    if (key.indexOf(prefix) === 0) patches.push([key, patch]);
+  });
+  const checks = {};
+  app.visualChecks.forEach(function (v, key) {
+    if (key.indexOf(prefix) === 0) checks[key] = v;
+  });
+  return {
+    groupLabel: app.group.label,
+    regionKey: app.region.key,
+    regionName: app.region.name,
+    savedAt: Date.now(),
+    patches: patches,
+    editLog: app.editLog.filter(function (e) { return e && e.region === app.region.name; }),
+    undoStack: app.undoStack.slice(),
+    redoStack: app.redoStack.slice(),
+    exportDirty: !!app.exportDirty,
+    visualChecks: checks
+  };
+}
+function saveCurrentRegionProgress() {
+  if (!app.progressReady) return false;
+  if (!app.workspaceId || !app.regionData || !app.region || !app.group) return false;
+  const snap = snapshotCurrentRegion();
+  if (!snap) return false;
+  if (!app.progressDoc) app.progressDoc = newProgressDoc();
+  app.progressDoc.workspaceId = app.workspaceId;
+  if (!app.progressDoc.groups) app.progressDoc.groups = {};
+  const gl = snap.groupLabel;
+  app.progressDoc.groups[gl] = app.progressDoc.groups[gl] || {};
+  if (!snap.patches.length && !Object.keys(snap.visualChecks).length) delete app.progressDoc.groups[gl][snap.regionKey];
+  else app.progressDoc.groups[gl][snap.regionKey] = snap;
+  if (app.progressDoc.groups[gl] && Object.keys(app.progressDoc.groups[gl]).length === 0) delete app.progressDoc.groups[gl];
+  app.progressDoc.active = { groupLabel: gl, regionKey: snap.regionKey, regionName: snap.regionName };
+  app.progressDoc.savedAt = Date.now();
+  persistProgressDoc();
+  return true;
+}
+function persistProgressDoc() {
+  if (!app.progressDoc || !app.workspaceId) return;
+  app.progressDoc.savedAt = Date.now();
+  try { localStorage.setItem(progressLocalKey(app.workspaceId), JSON.stringify(app.progressDoc)); } catch (e) { /* ignore */ }
+  updateProgressUI();
+  clearTimeout(app.progressSaveTimer);
+  app.progressSaveTimer = setTimeout(function () {
+    withTimeout(progressDBPut(app.progressDoc), 2200, null);
+  }, 120);
+}
+function scheduleProgressSave() {
+  if (!app.workspaceId || !app.regionData) return;
+  clearTimeout(app.progressSaveTimer);
+  app.progressSaveTimer = setTimeout(function () { saveCurrentRegionProgress(); }, 500);
+}
+function findStructureLocation(groupLabel, regionKey) {
+  if (!app.structure) return null;
+  for (let gi = 0; gi < app.structure.groups.length; gi++) {
+    const g = app.structure.groups[gi];
+    if (g.label !== groupLabel) continue;
+    for (let ri = 0; ri < g.regions.length; ri++) {
+      const r = g.regions[ri];
+      if (r.key === regionKey && r.valid) return { groupIndex: gi, regionIndex: ri, group: g, region: r };
+    }
+  }
+  return null;
+}
+function getSnapshot(doc, groupLabel, regionKey) {
+  if (!doc || !doc.groups || !doc.groups[groupLabel]) return null;
+  return doc.groups[groupLabel][regionKey] || null;
+}
+function activeSnapshot(doc) {
+  if (!doc) return null;
+  const all = listProgressSnapshots(doc);
+  if (!all.length) return null;
+  if (doc.active) {
+    const hit = all.find(function (x) { return x.groupLabel === doc.active.groupLabel && x.regionKey === doc.active.regionKey; });
+    if (hit) return hit;
+  }
+  return all[0];
+}
+function showProgressPrompt(snap, mode) {
+  if (!snap) return;
+  app.progressModalTarget = snap;
+  const patchCount = Array.isArray(snap.patches) ? snap.patches.length : 0;
+  const checks = snap.visualChecks ? Object.keys(snap.visualChecks).length : 0;
+  els.progressTitle.textContent = mode === 'import' ? '导入的本地工作进度' : (mode === 'initial' ? '发现上次的本地工作进度' : '发现该行政区的本地进度');
+  let html = '';
+  html += '<div><b>行政区：</b>' + escapeHtml(snap.regionName || snap.regionKey) + '</div>';
+  if (snap.groupLabel) html += '<div><b>任务组：</b>' + escapeHtml(snap.groupLabel) + '</div>';
+  html += '<div><b>修改记录：</b>' + patchCount + ' 条</div>';
+  if (checks) html += '<div><b>目视检查标记：</b>' + checks + ' 项</div>';
+  html += '<div><b>保存时间：</b>' + formatProgressTime(snap.savedAt) + '</div>';
+  if (snap.exportDirty === false && patchCount) html += '<div class="warn">该进度上次已执行过导出操作。</div>';
+  html += '<div class="note">恢复后将把该行政区的修改和目视检查标记重新载入内存；原 SHP 文件不会被改动。</div>';
+  els.progressContent.innerHTML = html;
+  els.btnProgressRestore.textContent = '恢复进度';
+  els.progressModal.classList.remove('hidden');
+}
+function markProgressPrompted(snap) {
+  const s = snap || app.progressModalTarget;
+  if (s && s.groupLabel && s.regionKey) app.progressPromptedRegions.add(s.groupLabel + '|' + s.regionKey);
+}
+function maybePromptInitialProgress() {
+  if (!app.progressReady || app.progressPrompted || !app.progressDoc) return;
+  if (!els || !els.progressModal.classList.contains('hidden')) return;
+  if (!app.regionData || !app.analysis) { setTimeout(maybePromptInitialProgress, 500); return; }
+  if (app.patches.size > 0) { app.progressPrompted = true; return; }
+  const active = activeSnapshot(app.progressDoc);
+  if (!active || !snapshotHasContent(active.snap)) { updateProgressUI(); return; }
+  if (!findStructureLocation(active.groupLabel, active.regionKey)) { return; }
+  app.progressPrompted = true;
+  app.progressPromptedRegions.add(active.groupLabel + '|' + active.regionKey);
+  showProgressPrompt(active.snap, 'initial');
+}
+function maybePromptCurrentRegionProgress() {
+  if (!app.progressReady || !app.progressDoc || !app.region || !app.regionData) return;
+  if (!app.progressPrompted) return;
+  if (!els.progressModal.classList.contains('hidden')) return;
+  if (app.patches.size > 0) return;
+  const key = app.group.label + '|' + app.region.key;
+  if (app.progressPromptedRegions.has(key)) return;
+  const snap = getSnapshot(app.progressDoc, app.group.label, app.region.key);
+  if (!snapshotHasContent(snap)) return;
+  if (!findStructureLocation(app.group.label, app.region.key)) return;
+  app.progressPromptedRegions.add(key);
+  showProgressPrompt(snap, 'region');
+}
+function confirmProgressRestore() {
+  const snap = app.progressModalTarget;
+  if (!snap) return;
+  markProgressPrompted(snap);
+  els.progressModal.classList.add('hidden');
+  startProgressRestore(snap);
+}
+function startProgressRestore(snap) {
+  const loc = findStructureLocation(snap.groupLabel, snap.regionKey);
+  if (!loc) { toast('该进度对应的行政区在当前文件夹中不存在，无法恢复。', 'err'); return; }
+  if (app.patches.size > 0 && app.exportDirty) {
+    if (!window.confirm('恢复本地进度会覆盖当前内存中未导出的修改，是否继续？')) return;
+  }
+  const sameRegion = app.region && app.region.key === snap.regionKey && app.group && app.group.label === snap.groupLabel && app.regionData;
+  if (sameRegion) {
+    applyRegionSnapshot(snap);
+  } else {
+    app.pendingRestore = snap;
+    app.progressPromptedRegions.add(snap.groupLabel + '|' + snap.regionKey);
+    selectGroup(loc.groupIndex, loc.regionIndex);
+    toast('正在载入本地进度…', 'info');
+  }
+}
+function applyRegionSnapshot(snap) {
+  if (!app.regionData || !app.region || !app.regionData.levels) return;
+  if (app.region.key !== snap.regionKey || (app.group && app.group.label !== snap.groupLabel)) return;
+  const prefix = app.region.key + '|';
+  Array.from(app.patches.keys()).forEach(function (k) { if (k.indexOf(prefix) === 0) app.patches.delete(k); });
+  let restored = 0, skipped = 0;
+  (snap.patches || []).forEach(function (pair) {
+    if (!Array.isArray(pair) || pair.length !== 2) { skipped++; return; }
+    const key = pair[0], patch = pair[1];
+    if (typeof key !== 'string' || key.indexOf(prefix) !== 0 || !patch || !isFinite(patch.x) || !isFinite(patch.y)) { skipped++; return; }
+    const parts = key.split('|');
+    const level = parts[1], idx = parseInt(parts[2], 10);
+    const raw = app.regionData.levels[level];
+    if (!raw || !(idx >= 0 && idx < raw.shp.points.length)) { skipped++; return; }
+    app.patches.set(key, patch);
+    restored++;
+  });
+  app.editLog = Array.isArray(snap.editLog) ? snap.editLog.slice() : [];
+  app.undoStack = Array.isArray(snap.undoStack) ? snap.undoStack.slice() : [];
+  app.redoStack = Array.isArray(snap.redoStack) ? snap.redoStack.slice() : [];
+  app.exportDirty = !!snap.exportDirty;
+  (snap.visualChecks ? Object.keys(snap.visualChecks) : []).forEach(function (k) {
+    if (k.indexOf(prefix) === 0) app.visualChecks.set(k, snap.visualChecks[k]);
+  });
+  app.selected = null;
+  app.pendingRestore = null;
+  refreshAll().then(function () {
+    updateUndoRedoButtons();
+    updateExportButton();
+    renderLog();
+    updateSelectionPanel();
+    if (app.visualMode) updateVisualPanel();
+    updateProgressUI();
+    toast('已恢复本地进度：' + restored + ' 条修改' + (skipped ? '（' + skipped + ' 条记录无效已跳过）' : ''), 'ok');
+  });
+}
+async function deleteProgressTarget() {
+  const snap = app.progressModalTarget;
+  if (!snap) return;
+  if (!window.confirm('确定删除该行政区的本地进度吗？此操作不可恢复。')) return;
+  if (app.progressDoc && app.progressDoc.groups && app.progressDoc.groups[snap.groupLabel]) {
+    delete app.progressDoc.groups[snap.groupLabel][snap.regionKey];
+    if (Object.keys(app.progressDoc.groups[snap.groupLabel]).length === 0) delete app.progressDoc.groups[snap.groupLabel];
+  }
+  markProgressPrompted(snap);
+  els.progressModal.classList.add('hidden');
+  persistProgressDoc();
+  if (listProgressSnapshots(app.progressDoc).length === 0) {
+    app.progressDoc = null;
+    try { localStorage.removeItem(progressLocalKey(app.workspaceId)); } catch (e) { /* ignore */ }
+    await withTimeout(progressDBDelete(app.workspaceId), 2000, null);
+  }
+  updateProgressUI();
+  toast('已删除该行政区的本地进度。', 'ok');
+}
+async function exportProgressJSON() {
+  if (!app.workspaceId) { toast('请先选择任务文件夹。', 'warn'); return; }
+  saveCurrentRegionProgress();
+  if (!app.progressDoc || !listProgressSnapshots(app.progressDoc).length) {
+    toast('当前没有可导出的本地进度。', 'warn');
+    return;
+  }
+  const data = JSON.stringify(app.progressDoc, null, 2);
+  const blob = new Blob([data], { type: 'application/json;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '环耕站布点_本地进度_' + timestampForFile() + '.json';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 800);
+  toast('已导出本地进度 JSON 文件。', 'ok');
+}
+function importProgressJSON(file) {
+  if (!app.workspaceId) { toast('请先选择任务文件夹后再导入进度。', 'warn'); return; }
+  const reader = new FileReader();
+  reader.onload = function () {
+    try {
+      const doc = normalizeProgressDoc(JSON.parse(String(reader.result || '')));
+      if (!doc || !doc.workspaceId) throw new Error('文件格式不正确');
+      if (doc.workspaceId !== app.workspaceId) {
+        toast('该进度文件与当前任务文件夹的数据不匹配（工作区编号不同），已取消导入。', 'err');
+        return;
+      }
+      app.progressDoc = doc;
+      app.progressReady = true;
+      app.progressPrompted = false;
+      app.progressPromptedRegions = new Set();
+      persistProgressDoc();
+      const active = activeSnapshot(doc);
+      if (active && snapshotHasContent(active.snap)) showProgressPrompt(active.snap, 'import');
+      else toast('进度文件已导入，但没有可恢复的修改。', 'info');
+    } catch (e) {
+      toast('进度文件读取失败：' + (e && e.message ? e.message : e), 'err');
+    }
+  };
+  reader.onerror = function () { toast('进度文件读取失败。', 'err'); };
+  reader.readAsText(file, 'utf-8');
+}
+
+
+function currentGroupIndex() {
+  if (!app.structure || !app.group) return -1;
+  return app.structure.groups.indexOf(app.group);
+}
+function currentRegionIndex() {
+  if (!app.group || !app.region) return -1;
+  return app.group.regions.indexOf(app.region);
+}
+function restoreSelectValues() {
+  const gi = currentGroupIndex();
+  if (gi >= 0) els.groupSelect.value = String(gi);
+  const ri = currentRegionIndex();
+  if (ri >= 0) els.regionSelect.value = String(ri);
+}
+function showSwitchPrompt(message) {
+  els.switchMessage.textContent = message;
+  els.switchModal.classList.remove('hidden');
+}
+function requestRegionSwitch(index) {
+  if (!app.group || isNaN(index) || index < 0 || index >= app.group.regions.length) { restoreSelectValues(); return; }
+  if (index === currentRegionIndex()) return;
+  const region = app.group.regions[index];
+  if (app.patches.size > 0 && app.exportDirty) {
+    app.pendingSwitch = { type: 'region', index: index };
+    showSwitchPrompt('当前修改尚未导出为成果文件。切换区县会退出当前编辑状态；工具已自动保存本地进度，重新进入该行政区时可恢复。' +
+      (region ? '\n\n目标行政区：' + region.name : ''));
+    return;
+  }
+  if (app.patches.size > 0) { saveCurrentRegionProgress(); discardAllEdits(); }
+  else saveCurrentRegionProgress();
+  selectRegion(index);
+}
+function requestGroupSwitch(index) {
+  if (!app.structure || isNaN(index) || index < 0 || index >= app.structure.groups.length) { restoreSelectValues(); return; }
+  if (index === currentGroupIndex()) return;
+  const g = app.structure.groups[index];
+  if (app.patches.size > 0 && app.exportDirty) {
+    app.pendingSwitch = { type: 'group', index: index };
+    showSwitchPrompt('当前修改尚未导出为成果文件。切换任务组会退出当前编辑状态；工具已自动保存本地进度，重新进入该行政区时可恢复。' +
+      (g ? '\n\n目标任务组：' + g.label : ''));
+    return;
+  }
+  if (app.patches.size > 0) { saveCurrentRegionProgress(); discardAllEdits(); }
+  else saveCurrentRegionProgress();
+  selectGroup(index);
+}
+function confirmSwitch() {
+  const ps = app.pendingSwitch;
+  app.pendingSwitch = null;
+  els.switchModal.classList.add('hidden');
+  if (!ps) return;
+  saveCurrentRegionProgress();
+  discardAllEdits();
+  if (ps.type === 'group') selectGroup(ps.index);
+  else selectRegion(ps.index);
+  toast('已切换；当前进度已保存到浏览器本地，可在目标行政区或下次打开时恢复。', 'info');
+}
+function cancelSwitch() {
+  app.pendingSwitch = null;
+  els.switchModal.classList.add('hidden');
+  restoreSelectValues();
+}
+function discardAllEdits() {
+  app.patches.clear();
+  app.editLog = [];
+  app.undoStack = [];
+  app.redoStack = [];
+  app.exportDirty = false;
+  app.selected = null;
+  app.moveState = null;
+  app.candidateEval = null;
+  app.candidateDisplay = [];
+  if (els) {
+    updateUndoRedoButtons();
+    updateExportButton();
+    renderLog();
+    updateSelectionPanel();
+    if (els.candidateStats) els.candidateStats.innerHTML = '';
+    if (els.btnReplaceNearest) { els.btnReplaceNearest.disabled = true; els.btnReplaceNearest.textContent = '一键替换为最近合格候选'; }
+  }
+}
+
+function selectGroup(index, preferredRegionIndex) {
+  const groups = app.structure ? app.structure.groups : [];
+  if (!groups.length || isNaN(index) || index < 0 || index >= groups.length) return;
+  app.group = groups[index];
+  els.groupSelect.value = String(index);
+  const regions = app.group.regions;
+  els.regionSelect.innerHTML = '';
+  let firstValid = -1;
+  regions.forEach(function (r, i) {
+    const opt = document.createElement('option');
+    opt.value = String(i);
+    opt.textContent = r.name + (r.valid ? '' : '（文件不全）');
+    if (!r.valid) opt.disabled = true;
+    els.regionSelect.appendChild(opt);
+    if (firstValid < 0 && r.valid) firstValid = i;
+  });
+  els.regionSelect.disabled = regions.length === 0;
+  let startIndex = firstValid;
+  if (preferredRegionIndex != null && preferredRegionIndex >= 0 && preferredRegionIndex < regions.length && regions[preferredRegionIndex].valid) {
+    startIndex = preferredRegionIndex;
+  }
+  if (startIndex >= 0) { els.regionSelect.value = String(startIndex); selectRegion(startIndex); }
+  else { selectRegion(-1); }
+}
+function selectRegion(index) {
+  app.loadToken++;
+  const token = app.loadToken;
+  clearSelection();
+  app.regionData = null; app.analysis = null; app.ownPoints = []; app.otherPoints = []; app.current = [];
+  app.otherRegionRaw.clear();
+  app.gridWorld = []; app.gridCellInfo = []; app.gridBaseline = null; app.gridWarnings = []; app.poolRaw = null; app.candidates = []; app.candidateEval = null; app.candidateDisplay = [];
+  app.initialViolationCount = null;
+  if (app.visualMode) setVisualMode(false);
+  clearResults();
+  updateMapEmpty();
+  invalidate();
+  if (!app.group || isNaN(index) || index < 0 || index >= app.group.regions.length) return;
+  app.region = app.group.regions[index];
+  els.regionSelect.value = String(index);
+  if (!app.region.valid) {
+    setHealth([{ type: 'err', text: '该行政区文件不全，无法加载：' }].concat(app.region.issues.map(function (t) { return { type: 'err', text: t }; })));
+    return;
+  }
+  showLoading(true);
+  setStatus('正在读取 ' + app.region.name + ' 的 01/02/03/05 数据…');
+  loadRegionData(app.group, app.region, token).then(function () {
+    if (token !== app.loadToken) return;
+    showLoading(false);
+    updateMapEmpty();
+    fitView();
+    refreshAll().then(function () {
+      if (token !== app.loadToken) return;
+      captureInitialState();
+      if (token !== app.loadToken) return;
+      if (app.pendingRestore && app.pendingRestore.regionKey === app.region.key &&
+          app.pendingRestore.groupLabel === app.group.label) {
+        const snap = app.pendingRestore;
+        app.pendingRestore = null;
+        applyRegionSnapshot(snap);
+        setStatus('已恢复本地进度：' + app.region.name);
+        return;
+      }
+      maybePromptInitialProgress();
+      maybePromptCurrentRegionProgress();
+      setStatus('已加载 ' + app.region.name + '，可开始检查与编辑。');
+      invalidate();
+    });
+  }).catch(function (err) {
+    if (token !== app.loadToken) return;
+    if (err && err.aborted) return;
+    showLoading(false);
+    showBanner('读取失败：' + (err && err.message ? err.message : err), 'err');
+    setStatus('读取失败');
+  });
+}
+
+/* ============================================================
+ * 图层读取
+ * ============================================================ */
+function readFileArrayBuffer(fileObj) {
+  if (!fileObj) return Promise.reject(new Error('文件不存在'));
+  if (typeof fileObj.arrayBuffer === 'function') return fileObj.arrayBuffer();
+  return new Promise(function (resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function () { resolve(reader.result); };
+    reader.onerror = function () { reject(new Error('读取文件失败')); };
+    reader.readAsArrayBuffer(fileObj);
+  });
+}
+function readTextFile(fileObj) {
+  return readFileArrayBuffer(fileObj).then(function (buf) {
+    return decodeBytes(new Uint8Array(buf), 'utf-8');
+  });
+}
+function loadLayerRaw(entry, level, regionName) {
+  if (!entry || !entry.shp) return Promise.reject(new Error('缺少图层文件'));
+  const key = entry.shp.path;
+  if (app.layerCache.has(key)) return app.layerCache.get(key);
+  const promise = (async function () {
+    const shpBuf = await readFileArrayBuffer(entry.shp.file);
+    const shp = parsePointsShp(shpBuf);
+    let dbfBuf = null, dbf = null, encoding = 'utf-8', cpgText = 'UTF-8';
+    if (entry.dbf) {
+      dbfBuf = await readFileArrayBuffer(entry.dbf.file);
+      if (entry.cpg) { cpgText = await readTextFile(entry.cpg.file); encoding = encodingFromCpg(cpgText); }
+      dbf = parseDbf(dbfBuf, encoding);
+    }
+    let shxBuf = null;
+    if (entry.shx) shxBuf = await readFileArrayBuffer(entry.shx.file);
+    let prjText = '';
+    if (entry.prj) prjText = await readTextFile(entry.prj.file);
+    else prjText = '';
+    return {
+      region: regionName, level: level, entry: entry,
+      shpBuf: shpBuf, dbfBuf: dbfBuf, shxBuf: shxBuf,
+      shp: shp, dbf: dbf, encoding: encoding, cpgText: cpgText,
+      prjText: prjText, crs: detectCrs(prjText)
+    };
+  })();
+  app.layerCache.set(key, promise);
+  promise.catch(function () { app.layerCache.delete(key); });
+  return promise;
+}
+function loadRegionData(group, region, token) {
+  function ensureActive() {
+    if (token !== app.loadToken) {
+      const e = new Error('读取已取消');
+      e.aborted = true;
+      throw e;
+    }
+  }
+  return (async function () {
+    const levels = {};
+    for (const lvl of LEVEL_ORDER) {
+      levels[lvl] = await loadLayerRaw(region.files[lvl], lvl, region.name);
+      ensureActive();
+    }
+    for (const lvl of LEVEL_ORDER) {
+      if (!levels[lvl].shp.points.length) throw new Error(LEVELS[lvl].label + '样点图层没有点');
+      if (levels[lvl].crs.kind === 'unknown') levels[lvl].crs = guessCrsFromPoints(levels[lvl].shp.points);
+    }
+    const kinds = {};
+    LEVEL_ORDER.forEach(function (l) { kinds[levels[l].crs.kind] = true; });
+    if (Object.keys(kinds).length > 1) throw new Error('三级图层坐标系类型不一致（地理/投影混用），无法计算距离。请先统一坐标系。');
+    const crsMode = levels.prov.crs.kind === 'projected' ? 'proj' : 'geo';
+    const crs = { kind: crsMode === 'proj' ? 'projected' : 'geographic', unitScale: levels.prov.crs.unitScale || 1 };
+    const provPointsLocal = buildPointsFromLevel(levels.prov, region.name, 'prov');
+
+    /* 其他行政区（用于跨区间距校验）—— 使用局部 Map，全部成功后再整体替换，避免切换行政区时残留旧数据 */
+    const otherRaw = new Map();
+    for (const r of group.regions) {
+      if (!r.valid || r.key === region.key) continue;
+      const lv = {};
+      for (const l of LEVEL_ORDER) {
+        lv[l] = await loadLayerRaw(r.files[l], l, r.name);
+        ensureActive();
+        if (lv[l].crs.kind === 'unknown') lv[l].crs = guessCrsFromPoints(lv[l].shp.points);
+        if (lv[l].crs.kind !== crs.kind) {
+          throw new Error('同文件夹其他行政区“' + r.name + '”的坐标系类型与当前行政区不一致（' +
+            (lv[l].crs.kind === 'geographic' ? '地理坐标' : '投影坐标') + '），无法统一计算距离。请先在 GIS 中统一坐标系。');
+        }
+      }
+      otherRaw.set(r.key, { region: r, levels: lv });
+    }
+    ensureActive();
+
+    /* 03 样点池（局部变量） */
+    const warnings = [];
+    let poolRawLocal = null;
+    let candidatesLocal = [];
+    if (region.files.pool && region.files.pool.shp) {
+      try {
+        const raw = await loadLayerRaw(region.files.pool, 'pool', region.name);
+        ensureActive();
+        if (raw.crs.kind === 'unknown') raw.crs = guessCrsFromPoints(raw.shp.points);
+        if (raw.crs.kind !== crs.kind) throw new Error('03 样点池坐标系类型与当前行政区不一致');
+        const cands = [];
+        raw.shp.points.forEach(function (p, i) {
+          const rec = raw.dbf ? (raw.dbf.records[i] || {}) : {};
+          cands.push({ idx: i, x: p.x, y: p.y, dlmc: rec.DLMC || '', attrs: rec });
+        });
+        poolRawLocal = raw;
+        candidatesLocal = cands;
+      } catch (e) {
+        if (e && e.aborted) throw e;
+        warnings.push('03 样点池读取失败：' + e.message);
+      }
+    } else {
+      warnings.push('未找到该行政区的 03 样点池文件，无法执行替换。');
+    }
+    ensureActive();
+
+    /* 05 格网（局部变量） */
+    const gridWorldLocal = [];
+    const gridCellInfoLocal = [];
+    if (region.files.grids && region.files.grids.length) {
+      for (const g of region.files.grids) {
+        try {
+          const shpBuf = await readFileArrayBuffer(g.shp.file);
+          ensureActive();
+          const polys = parsePolygonsShp(shpBuf);
+          let prjText = '';
+          if (g.prj) prjText = await readTextFile(g.prj.file);
+          ensureActive();
+          const gcrs = detectCrs(prjText);
+          const tm = parseTMPrj(prjText);
+          for (const poly of polys) {
+            for (const ring of poly.rings) {
+              const wr = [];
+              for (const pt of ring) {
+                let w = null;
+                if (crsMode === 'geo') {
+                  if (gcrs.kind === 'geographic') w = lonLatToMerc(pt[0], pt[1]);
+                  else if (tm) {
+                    const ll = gkToLonLat(pt[0], pt[1], tm);
+                    if (ll) w = lonLatToMerc(ll[0], ll[1]);
+                  }
+                } else if (gcrs.kind === 'projected') {
+                  w = { x: pt[0] * (gcrs.unitScale || 1), y: pt[1] * (gcrs.unitScale || 1) };
+                }
+                if (w) wr.push(w);
+              }
+              if (wr.length >= 3) { gridWorldLocal.push(wr); gridCellInfoLocal.push({ file: g.shp.name }); }
+            }
+          }
+        } catch (e) {
+          if (e && e.aborted) throw e;
+          warnings.push('05 格网读取失败（' + g.shp.name + '）：' + e.message);
+        }
+      }
+    }
+    ensureActive();
+
+    /* 一次性提交，确保快速切换行政区时不会把旧数据混进来 */
+    app.crsMode = crsMode;
+    app.crs = crs;
+    app.regionData = { region: region, levels: levels };
+    app.provPoints = provPointsLocal;
+    app.otherRegionRaw = otherRaw;
+    app.poolRaw = poolRawLocal;
+    app.candidates = candidatesLocal;
+    app.candidateEval = null;
+    app.candidateDisplay = [];
+    app.gridWorld = gridWorldLocal;
+    app.gridCellInfo = gridCellInfoLocal;
+    app.gridBaseline = null;
+    app.gridWarnings = warnings;
+    renderHealth();
+  })();
+}
+function buildPointsFromLevel(raw, regionName, level) {
+  const pts = [];
+  const recs = raw.dbf ? raw.dbf.records : [];
+  raw.shp.points.forEach(function (p, i) {
+    const rec = recs[i] || {};
+    pts.push({
+      region: regionName, level: level, idx: i,
+      id: level === 'prov' ? (rec.UNIQUE_ID || rec.NAME || '#' + (i + 1)) : (rec.YDBH || rec.OBJECTID || '#' + (i + 1)),
+      dlmc: rec.DLMC || '',
+      x: p.x, y: p.y, baseX: p.x, baseY: p.y,
+      record: rec
+    });
+  });
+  return pts;
+}
+function getPatch(regionKey, level, idx) {
+  return app.patches.get(regionKey + '|' + level + '|' + idx) || null;
+}
+function buildPointsForRegion(regionData, regionName, regionKey) {
+  const out = [];
+  for (const lvl of LEVEL_ORDER) {
+    const raw = regionData.levels[lvl];
+    const recs = raw.dbf ? raw.dbf.records : [];
+    raw.shp.points.forEach(function (p, i) {
+      const patch = getPatch(regionKey, lvl, i);
+      const baseRec = recs[i] || {};
+      const rec = patch && patch.attrs ? Object.assign({}, baseRec, patch.attrs) : baseRec;
+      const x = patch ? patch.x : p.x;
+      const y = patch ? patch.y : p.y;
+      out.push({
+        region: regionName, level: lvl, idx: i,
+        id: lvl === 'prov' ? (rec.UNIQUE_ID || rec.NAME || '#' + (i + 1)) : (rec.YDBH || rec.OBJECTID || '#' + (i + 1)),
+        dlmc: rec.DLMC || '',
+        x: x, y: y, baseX: p.x, baseY: p.y,
+        record: rec,
+        patchType: patch ? patch.type : null
+      });
+    });
+  }
+  return out;
+}
+async function buildAllCurrentPoints() {
+  const own = buildPointsForRegion(app.regionData, app.region.name, app.region.key);
+  const others = [];
+  for (const entry of app.otherRegionRaw.values()) {
+    if (!entry || !entry.region || entry.region.key === app.region.key) continue;
+    const pts = buildPointsForRegion(entry, entry.region.name, entry.region.key);
+    for (const p of pts) others.push(p);
+  }
+  return { own: own, others: others, all: own.concat(others) };
+}
+
+/* ============================================================
+ * 间距检查
+ * ============================================================ */
+function computeAnalysis(own, others) {
+  const violations = [];
+  let pairs = 0, min = Infinity, minPair = null;
+  function consider(a, b, type) {
+    let d;
+    try { d = distanceBetween(a, b, app.crs); } catch (e) { return; }
+    pairs++;
+    if (d < min) { min = d; minPair = { a: a, b: b, type: type, dist: d }; }
+    if (d <= THRESHOLD_M) violations.push({ a: a, b: b, type: type, dist: d });
+  }
+  for (let i = 0; i < own.length; i++) {
+    for (let j = i + 1; j < own.length; j++) consider(own[i], own[j], '区内');
+    for (let k = 0; k < others.length; k++) consider(own[i], others[k], '跨区');
+  }
+  violations.sort(function (x, y) { return x.dist - y.dist; });
+  return { pairs: pairs, min: min, minPair: minPair, violations: violations, pass: violations.length === 0 };
+}
+function refreshAll() {
+  const token = ++app.refreshToken;
+  return buildAllCurrentPoints().then(function (pts) {
+    if (token !== app.refreshToken) return;
+    app.current = pts.all;
+    app.ownPoints = pts.own;
+    app.otherPoints = pts.others;
+    app.analysis = computeAnalysis(pts.own, pts.others);
+    if (app.selected) {
+      const found = pts.all.find(function (p) {
+        return p.region === app.selected.region && p.level === app.selected.level && p.idx === app.selected.idx;
+      });
+      app.selected = found || null;
+    }
+    renderAnalysis();
+    renderLog();
+    renderHealth();
+    updateSelectionPanel();
+    updateUndoRedoButtons();
+    updateExportButton();
+    if (els.btnAutoAdjust) els.btnAutoAdjust.disabled = !app.regionData;
+    if (els.btnVisualMode) els.btnVisualMode.disabled = !app.regionData;
+    if (app.visualMode) {
+      app.visualPoints = app.ownPoints.slice();
+      if (app.visualIndex >= app.visualPoints.length) app.visualIndex = Math.max(0, app.visualPoints.length - 1);
+      updateVisualPanel();
+    }
+    invalidate();
+    if (app.selected && app.editMode) evaluateCandidatesIfAny();
+  });
+}
+
+/* ============================================================
+ * 编辑
+ * ============================================================ */
+function setEditMode(on) {
+  if (on && app.visualMode) setVisualMode(false);
+  app.editMode = !!on;
+  els.btnEditMode.classList.toggle('active', app.editMode);
+  els.editState.textContent = app.editMode ? '已开启' : '未开启';
+  if (!app.editMode) { clearSelection(); }
+  else {
+    setStatus('编辑模式：单击选择 02 点；Shift+单击 03 候选替换；按住 Space+单击移动。');
+  }
+  updateSelectionPanel();
+  invalidate();
+}
+function toggleEditMode() {
+  if (app.gridCheckRunning) return;
+  if (app.editMode) {
+    if (app.patches.size > 0) startGridCheckBeforeExit();
+    else setEditMode(false);
+  } else {
+    setEditMode(true);
+  }
+}
+function delay(ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }
+
+/* ---------- 问题检查按钮：居中提示窗口，至少显示 2 秒 ---------- */
+async function runExplicitCheck() {
+  if (app.checkRunning) return;
+  if (!app.regionData || !app.region) { toast('请先选择任务文件夹并加载行政区。', 'warn'); return; }
+  app.checkRunning = true;
+  els.btnCheck.disabled = true;
+  const started = Date.now();
+  const ownCounts = { prov: 0, city: 0, county: 0 };
+  app.ownPoints.forEach(function (p) { if (ownCounts[p.level] != null) ownCounts[p.level]++; });
+  const initialLines = [
+    '行政区：' + app.region.name + '（任务组 ' + app.group.label + '）',
+    '检查范围：本行政区省/市/县三级样点 + 同文件夹其他行政区样点',
+    '本区点数：省级 ' + ownCounts.prov + '，市级 ' + ownCounts.city + '，县级 ' + ownCounts.county,
+    '同文件夹其他行政区点数：' + app.otherPoints.length,
+    '判定标准：任意两点间距严格大于 1500 m'
+  ];
+  showCheckModal('正在检查样点间距', initialLines, true);
+  let result = null, error = null;
+  try {
+    await refreshAll();
+    result = app.analysis;
+  } catch (e) { error = e; }
+  const elapsed = Date.now() - started;
+  if (elapsed < 2000) await delay(2000 - elapsed);
+  if (error) {
+    setCheckResult('检查失败', '<div class="bad">' + escapeHtml(error.message || String(error)) + '</div>');
+  } else if (!result) {
+    setCheckResult('检查失败', '<div class="bad">未得到检查结果。</div>');
+  } else {
+    const pass = result.pass;
+    const lines = initialLines.concat([
+      '检查点对数：' + result.pairs,
+      '最小间距：' + (isFinite(result.min) ? result.min.toFixed(2) : '—') + ' m',
+      '违规点对数：' + result.violations.length,
+      '结论：' + (pass ? '通过' : '不通过')
+    ]);
+    let html = lines.map(function (t) { return '<div>' + escapeHtml(t) + '</div>'; }).join('');
+    html += '<div class="' + (pass ? 'ok' : 'bad') + '" style="margin-top:8px">' +
+      (pass ? '检查通过：三级样点任意两点间距均严格大于 1500 m。' : '检查不通过：存在间距不足的点对，详见下方结果表。') + '</div>';
+    setCheckResult(pass ? '检查完成：通过' : '检查完成：不通过', html);
+  }
+  app.checkRunning = false;
+  els.btnCheck.disabled = false;
+}
+function showCheckModal(title, lines, loading) {
+  els.checkTitle.textContent = title;
+  els.checkContent.innerHTML = lines.map(function (t) { return '<div>' + escapeHtml(t) + '</div>'; }).join('');
+  els.checkLoading.style.display = loading ? 'flex' : 'none';
+  els.btnCheckClose.disabled = !!loading;
+  els.checkModal.classList.remove('hidden');
+}
+function setCheckResult(title, html) {
+  els.checkTitle.textContent = title;
+  els.checkContent.innerHTML = html;
+  els.checkLoading.style.display = 'none';
+  els.btnCheckClose.disabled = false;
+}
+function closeCheckModal() {
+  if (app.checkRunning) return;
+  els.checkModal.classList.add('hidden');
+}
+
+/* ---------- 格网组合检查（关闭编辑模式前） ---------- */
+function computeGridCombination(pointsOwn) {
+  const cells = app.gridWorld.map(function () { return [0, 0, 0]; });
+  const outside = [0, 0, 0];
+  pointsOwn.forEach(function (p) {
+    const w = toWorld(p);
+    let hit = -1;
+    for (let i = 0; i < app.gridWorld.length; i++) {
+      if (pointInRing(w.x, w.y, app.gridWorld[i])) { hit = i; break; }
+    }
+    const lv = p.level === 'prov' ? 0 : (p.level === 'city' ? 1 : 2);
+    if (hit >= 0) cells[hit][lv]++; else outside[lv]++;
+  });
+  return { cells: cells, outside: outside };
+}
+function captureInitialState() {
+  app.initialViolationCount = app.analysis ? app.analysis.violations.length : null;
+  captureGridBaseline();
+}
+function captureGridBaseline() {
+  if (!app.regionData || !app.gridWorld.length) { app.gridBaseline = null; return; }
+  const cur = computeGridCombination(app.ownPoints);
+  app.gridBaseline = {
+    cells: cur.cells.map(function (c) { return c.join(','); }),
+    outside: cur.outside.slice(),
+    savedAt: Date.now()
+  };
+}
+function comboText(c) { return c[0] + '省/' + c[1] + '市/' + c[2] + '县'; }
+async function startGridCheckBeforeExit() {
+  app.gridCheckRunning = true;
+  els.gridCheckTitle.textContent = '正在检查格网组合';
+  els.gridCheckContent.innerHTML = '<div>正在逐一核对 ' + escapeHtml(app.region.name) + ' 每个 05 格网的“1 省 + 1 市 + 1 县”组合…</div>' +
+    '<div class="check-loading"><div class="spinner small"></div><span>检查中…</span></div>';
+  els.btnGridContinue.classList.add('hidden');
+  els.btnGridForce.classList.add('hidden');
+  els.btnGridDone.classList.add('hidden');
+  els.gridCheckModal.classList.remove('hidden');
+  await delay(120);
+  const cur = computeGridCombination(app.ownPoints);
+  const baseline = app.gridBaseline;
+  const cellCount = cur.cells.length;
+  const abnormal = [];
+  const changed = [];
+  let perfect = 0;
+  cur.cells.forEach(function (c, i) {
+    const s = c.join(',');
+    if (s === '1,1,1') perfect++;
+    else abnormal.push({ i: i, text: comboText(c), file: app.gridCellInfo[i] ? app.gridCellInfo[i].file : '' });
+    if (baseline && baseline.cells[i] !== s) {
+      changed.push({ i: i, base: baseline.cells[i], cur: s, file: app.gridCellInfo[i] ? app.gridCellInfo[i].file : '' });
+    }
+  });
+  const outsideTotal = cur.outside[0] + cur.outside[1] + cur.outside[2];
+  const pass = cellCount > 0 && perfect === cellCount && outsideTotal === 0 && changed.length === 0;
+  let html = '';
+  html += '<div><b>行政区：</b>' + escapeHtml(app.region.name) + '（' + cellCount + ' 个格网）</div>';
+  html += '<div><b>检查标准：</b>每个格网有且仅有 1 省级 + 1 市级 + 1 县级样点，且与修改前一致</div>';
+  if (cellCount === 0) html += '<div class="bad">未加载到 05 格网文件，无法执行格网组合检查。</div>';
+  else html += '<div><b>合格格网：</b>' + perfect + ' / ' + cellCount + '</div>';
+  if (abnormal.length) {
+    html += '<div class="bad">未达标格网：' + abnormal.length + ' 个</div><ul>' +
+      abnormal.slice(0, 8).map(function (a) { return '<li>' + escapeHtml(a.file) + ' 第 ' + (a.i + 1) + ' 个面：' + escapeHtml(a.text) + '</li>'; }).join('') + '</ul>';
+    if (abnormal.length > 8) html += '<div>…其余 ' + (abnormal.length - 8) + ' 个省略</div>';
+  }
+  if (outsideTotal) html += '<div class="bad">有 ' + outsideTotal + ' 个本区样点未落入任何格网（省 ' + cur.outside[0] + ' / 市 ' + cur.outside[1] + ' / 县 ' + cur.outside[2] + '）</div>';
+  if (changed.length) {
+    html += '<div class="warn">与修改前相比，' + changed.length + ' 个格网的组合发生变化：</div><ul>' +
+      changed.slice(0, 8).map(function (a) { return '<li>' + escapeHtml(a.file) + ' 第 ' + (a.i + 1) + ' 个面：' + escapeHtml(a.base || '—') + ' → ' + escapeHtml(a.cur) + '</li>'; }).join('') + '</ul>';
+    if (changed.length > 8) html += '<div>…其余 ' + (changed.length - 8) + ' 个省略</div>';
+  }
+  if (pass) {
+    els.gridCheckTitle.textContent = '格网组合检查通过';
+    html += '<div class="ok" style="margin-top:8px">检查通过：每个格网均保持 1 省级 + 1 市级 + 1 县级样点，与修改前一致。</div>';
+    els.btnGridDone.classList.remove('hidden');
+  } else {
+    els.gridCheckTitle.textContent = '格网组合检查未通过';
+    html += '<div class="bad" style="margin-top:8px">检查未通过：请选择“继续编辑”修正，或“强制保存”保留当前修改并退出编辑模式。</div>';
+    els.btnGridContinue.classList.remove('hidden');
+    els.btnGridForce.classList.remove('hidden');
+  }
+  els.gridCheckContent.innerHTML = html;
+  app.gridCheckRunning = false;
+}
+/* ============================================================
+ * 一键自动调整（解决距离过近）
+ * ============================================================ */
+function pointKeyOf(p) { return (p.region || '') + '|' + p.level + '|' + p.idx; }
+function isOwnEditable(p) {
+  return !!p && p.region === app.region.name && (p.level === 'city' || p.level === 'county');
+}
+function findGridIndexForPoint(p) {
+  if (!app.gridWorld.length) return -1;
+  const w = toWorld(p);
+  for (let i = 0; i < app.gridWorld.length; i++) {
+    if (pointInRing(w.x, w.y, app.gridWorld[i])) return i;
+  }
+  return -1;
+}
+function setAutoContent(title, html, loading) {
+  els.autoTitle.textContent = title;
+  els.autoContent.innerHTML = html || '';
+  els.autoLoading.style.display = loading ? 'flex' : 'none';
+  els.btnAutoClose.disabled = !!loading;
+}
+async function runAutoAdjust() {
+  if (app.autoRunning) return;
+  if (!app.regionData || !app.region) { toast('请先选择任务文件夹并加载行政区。', 'warn'); return; }
+  if (app.visualMode) setVisualMode(false);
+  if (!app.editMode) setEditMode(true);
+  clearSelection();
+  app.autoRunning = true;
+  els.btnAutoAdjust.disabled = true;
+  setAutoContent('正在自动调整样点', '<div>正在检查 ' + escapeHtml(app.region.name) + ' 的间距冲突并寻找 03 候选点…</div>', true);
+  els.autoModal.classList.remove('hidden');
+  await delay(60);
+  if (!app.candidates.length) {
+    setAutoContent('无法自动调整', '<div class="bad">该行政区没有可用的 03 样点池（或读取失败），无法自动替换。请先确认 03_样点池 文件是否存在。</div>', false);
+    app.autoRunning = false;
+    els.btnAutoAdjust.disabled = false;
+    return;
+  }
+  let replaced = 0, crossGrid = 0, iterations = 0;
+  const usedCandidates = new Set();
+  const attempted = new Set();
+  let lastError = null;
+  const maxIterations = Math.max(40, app.ownPoints.filter(isOwnEditable).length * 3 + 10);
+  try {
+    while (iterations < maxIterations) {
+      await refreshAll();
+      const violations = app.analysis ? app.analysis.violations : [];
+      if (!violations.length) break;
+      let chosen = null, chosenViolation = null;
+      for (const v of violations) {
+        const a = isOwnEditable(v.a), b = isOwnEditable(v.b);
+        const ka = a ? pointKeyOf(v.a) : null, kb = b ? pointKeyOf(v.b) : null;
+        if (a && !attempted.has(ka)) { chosen = v.a; chosenViolation = v; break; }
+        if (b && !attempted.has(kb)) { chosen = v.b; chosenViolation = v; break; }
+      }
+      if (!chosen) break;
+      const chosenKey = pointKeyOf(chosen);
+      const evalRes = evaluateCandidates(app.candidates, chosen, app.current, app.crs);
+      const chosenGrid = findGridIndexForPoint(chosen);
+      let best = null;
+      for (let i = 0; i < evalRes.results.length; i++) {
+        if (!evalRes.results[i].eligible || usedCandidates.has(i)) continue;
+        const cand = app.candidates[i];
+        const candGrid = findGridIndexForPoint(cand);
+        const sameGrid = (chosenGrid < 0 || candGrid < 0) ? true : (chosenGrid === candGrid);
+        const dist = distanceBetween(chosen, cand, app.crs);
+        const score = (sameGrid ? 0 : 1e12) + dist;
+        if (!best || score < best.score) best = { i: i, cand: cand, dist: dist, sameGrid: sameGrid, score: score };
+      }
+      if (!best) {
+        attempted.add(chosenKey);
+        iterations++;
+        continue;
+      }
+      const attrs = buildReplaceAttrsForPoint(chosen, best.cand, chosen.record && chosen.record.XZDM != null ? chosen.record.XZDM : null);
+      const key = app.region.key + '|' + chosen.level + '|' + chosen.idx;
+      const beforePatch = app.patches.get(key) || null;
+      const candidateId = best.cand.attrs.YDBH || ('#' + (best.cand.idx + 1));
+      const after = {
+        idx: chosen.idx, type: 'replace', x: best.cand.x, y: best.cand.y, attrs: attrs,
+        candidateId: candidateId, note: '一键自动调整替换'
+      };
+      const log = {
+        timeText: timestampText(new Date()), group: app.group.label, region: chosen.region, level: chosen.level,
+        id: chosen.id, actionLabel: '自动替换', beforeCoord: coordText(chosen), afterCoord: coordText(best.cand),
+        movedMeters: best.dist, candidateId: candidateId,
+        checkText: '地类一致；间距校验通过' + (best.sameGrid ? '' : '（跨格网）'),
+        note: '一键调整距离过近问题' + (best.sameGrid ? '' : '；候选点跨 05 格网')
+      };
+      const action = {
+        key: key, regionKey: app.region.key, regionName: chosen.region, level: chosen.level, idx: chosen.idx,
+        before: beforePatch, after: after, log: log
+      };
+      app.patches.set(key, after);
+      app.undoStack.push(action);
+      app.redoStack = [];
+      app.editLog.push(log);
+      app.exportDirty = true;
+      app.selected = null;
+      app.candidateEval = null;
+      app.candidateDisplay = [];
+      replaced++;
+      if (!best.sameGrid) crossGrid++;
+      usedCandidates.add(best.i);
+      iterations++;
+      updateUndoRedoButtons();
+      updateExportButton();
+      renderLog();
+      updateSelectionPanel();
+      setAutoContent('正在自动调整样点', '<div>已处理 <b>' + replaced + '</b> 个样点；正在重新计算间距与候选点…</div>' +
+        '<div class="check-loading"><div class="spinner small"></div><span>继续检查…</span></div>', true);
+      await delay(30);
+    }
+    await refreshAll();
+    scheduleProgressSave();
+    const remaining = app.analysis ? app.analysis.violations.length : 0;
+    let html = '';
+    html += '<div><b>行政区：</b>' + escapeHtml(app.region.name) + '</div>';
+    html += '<div><b>自动替换样点：</b>' + replaced + ' 个</div>';
+    if (crossGrid) html += '<div class="warn">其中跨 05 格网替换：' + crossGrid + ' 个，退出编辑模式时会由格网组合检查提示。</div>';
+    html += '<div><b>调整后剩余间距违规：</b>' + remaining + ' 对</div>';
+    if (remaining === 0) {
+      html += '<div class="ok" style="margin-top:8px">距离过近问题已完成自动处理，请继续目视检查或导出成果。</div>';
+    } else {
+      html += '<div class="bad" style="margin-top:8px">仍有违规未能自动处理。常见原因：无同地类候选、候选点均不满足 1500 m、或冲突涉及不可编辑的省级点/其他行政区点，请人工处理。</div>';
+    }
+    setAutoContent('自动调整完成', html, false);
+  } catch (e) {
+    lastError = e;
+    setAutoContent('自动调整失败', '<div class="bad">' + escapeHtml(e && e.message ? e.message : String(e)) + '</div>', false);
+  } finally {
+    app.autoRunning = false;
+    els.btnAutoAdjust.disabled = false;
+    invalidate();
+  }
+}
+
+/* ============================================================
+ * 目视检查模式
+ * ============================================================ */
+function visualKey(p) { return app.region.key + '|' + p.level + '|' + p.idx; }
+function visualFlags(p) {
+  const k = visualKey(p);
+  let f = app.visualChecks.get(k);
+  if (!f) { f = { forest: false, river: false, gully: false, ridge: false }; app.visualChecks.set(k, f); }
+  return f;
+}
+function isRidgeApplicable(p) { return p && p.dlmc === '水田'; }
+function isVisualPointComplete(p) {
+  const f = visualFlags(p);
+  if (!f.forest || !f.river || !f.gully) return false;
+  if (isRidgeApplicable(p) && !f.ridge) return false;
+  return true;
+}
+function setVisualMode(on) {
+  if (on) {
+    if (!app.regionData || !app.region) { toast('请先加载行政区。', 'warn'); return; }
+    if (!app.editMode) { /* 保持当前状态 */ }
+    if (app.editMode) setEditMode(false);
+    app.visualMode = true;
+    app.visualPrevView = { cx: app.view.cx, cy: app.view.cy, scale: app.view.scale };
+    els.btnVisualMode.classList.add('active');
+    els.visualPanel.classList.remove('hidden');
+    app.visualPoints = app.ownPoints.slice();
+    app.visualIndex = 0;
+    for (let i = 0; i < app.visualPoints.length; i++) {
+      if (!isVisualPointComplete(app.visualPoints[i])) { app.visualIndex = i; break; }
+    }
+    updateVisualPanel();
+    centerVisualPoint();
+    setStatus('目视检查模式：右侧面板逐点检查，勾选四项；地图蓝色圆环半径为 100 m。');
+    invalidate();
+  } else {
+    app.visualMode = false;
+    els.btnVisualMode.classList.remove('active');
+    els.visualPanel.classList.add('hidden');
+    app.visualPoints = [];
+    app.visualIndex = 0;
+    if (app.visualPrevView) {
+      app.view.cx = app.visualPrevView.cx;
+      app.view.cy = app.visualPrevView.cy;
+      app.view.scale = app.visualPrevView.scale;
+      app.visualPrevView = null;
+    }
+    hideModeHint();
+    setStatus('已退出目视检查模式。');
+    invalidate();
+  }
+}
+function toggleVisualMode() {
+  if (app.visualMode) setVisualMode(false);
+  else setVisualMode(true);
+}
+function currentVisualPoint() {
+  return app.visualPoints.length ? app.visualPoints[app.visualIndex] : null;
+}
+function visualStep(delta) {
+  if (!app.visualMode || !app.visualPoints.length) return;
+  const n = app.visualPoints.length;
+  app.visualIndex = (app.visualIndex + delta + n) % n;
+  updateVisualPanel();
+  centerVisualPoint();
+  invalidate();
+}
+function centerVisualPoint() {
+  const p = currentVisualPoint();
+  if (!p) return;
+  const w = toWorld(p);
+  app.view.cx = w.x; app.view.cy = w.y;
+  const radiusWorld = metersToWorld(100, p.y);
+  const size = mapSize();
+  app.view.scale = Math.min(size.w, size.h) * 0.30 / Math.max(1e-9, radiusWorld);
+  invalidate();
+}
+function updateVisualPanel() {
+  if (!els.visualPanel) return;
+  const p = currentVisualPoint();
+  if (!p) {
+    els.visualInfo.innerHTML = '<span class="bad">当前行政区没有可检查的样点。</span>';
+    els.visualProgress.textContent = '0 / 0';
+    [els.chkForest, els.chkRiver, els.chkGully, els.chkRidge].forEach(function (cb) { cb.checked = false; cb.disabled = true; });
+    return;
+  }
+  const f = visualFlags(p);
+  const idx = app.visualIndex + 1;
+  const total = app.visualPoints.length;
+  let done = 0;
+  app.visualPoints.forEach(function (q) { if (isVisualPointComplete(q)) done++; });
+  const levelLabel = LEVELS[p.level] ? LEVELS[p.level].label : p.level;
+  els.visualProgress.textContent = idx + ' / ' + total;
+  els.visualInfo.innerHTML =
+    '<div><b>级别：</b>' + escapeHtml(levelLabel) + '</div>' +
+    '<div><b>编号：</b>' + escapeHtml(p.id || '—') + '</div>' +
+    '<div><b>行政区：</b>' + escapeHtml(p.region) + '</div>' +
+    '<div><b>地类：</b>' + escapeHtml(p.dlmc || (p.level === 'prov' ? '—（01 无地类字段）' : '—')) + '</div>' +
+    '<div><b>坐标：</b>' + escapeHtml(coordText(p)) + '</div>';
+  els.visualCheckNote.innerHTML = '已完成 <b>' + done + ' / ' + total + '</b> 个样点的人工检查';
+  els.chkForest.checked = !!f.forest;
+  els.chkRiver.checked = !!f.river;
+  els.chkGully.checked = !!f.gully;
+  const ridgeOk = isRidgeApplicable(p);
+  els.chkRidge.checked = !!f.ridge;
+  els.chkRidge.disabled = !ridgeOk;
+  if (!ridgeOk) { els.chkRidge.checked = false; els.lblRidge.classList.add('disabled'); }
+  else els.lblRidge.classList.remove('disabled');
+  els.btnVisualPrev.disabled = total <= 1;
+  els.btnVisualNext.disabled = total <= 1;
+}
+function onVisualCheckChange() {
+  const p = currentVisualPoint();
+  if (!p) return;
+  const f = visualFlags(p);
+  f.forest = !!els.chkForest.checked;
+  f.river = !!els.chkRiver.checked;
+  f.gully = !!els.chkGully.checked;
+  f.ridge = isRidgeApplicable(p) ? !!els.chkRidge.checked : false;
+  app.visualChecks.set(visualKey(p), f);
+  scheduleProgressSave();
+  updateVisualPanel();
+  invalidate();
+}
+async function finishVisualCheck() {
+  if (!app.visualMode) return;
+  const total = app.visualPoints.length;
+  const incomplete = app.visualPoints.filter(function (p) { return !isVisualPointComplete(p); });
+  if (total === 0) { toast('当前行政区没有可检查的样点。', 'warn'); return; }
+  if (incomplete.length > 0) {
+    if (!window.confirm('还有 ' + incomplete.length + ' 个样点未完成四项检查，确定要结束目视检查吗？')) return;
+  }
+  await refreshAll();
+  const violations = app.analysis ? app.analysis.violations.length : 0;
+  const pairCount = app.analysis ? app.analysis.pairs : 0;
+  const minDist = app.analysis && isFinite(app.analysis.min) ? app.analysis.min : null;
+  const initial = app.initialViolationCount;
+  const modified = app.patches.size;
+  let html = '';
+  html += '<div><b>行政区：</b>' + escapeHtml(app.region.name) + '</div>';
+  html += '<div><b>目视检查完成：</b>' + (total - incomplete.length) + ' / ' + total + ' 个样点</div>';
+  html += '<div><b>本次内存修改：</b>' + modified + ' 条</div>';
+  if (initial != null) html += '<div><b>距离违规：</b>调整前 ' + initial + ' 对，当前 ' + violations + ' 对</div>';
+  html += '<div><b>隐式距离检查：</b>' + pairCount + ' 对，最小间距 ' + (minDist != null ? minDist.toFixed(2) + ' m' : '—') + '</div>';
+  els.btnVisualResultEdit.classList.add('hidden');
+  els.btnVisualResultExport.classList.add('hidden');
+  els.btnVisualResultClose.classList.remove('hidden');
+  if (violations > 0) {
+    els.visualResultTitle.textContent = '目视检查完成，但间距检查未通过';
+    html += '<div class="bad" style="margin-top:8px">仍有 ' + violations + ' 对样点间距不足，请继续编辑调整后再完成。</div>';
+    els.btnVisualResultEdit.classList.remove('hidden');
+    els.btnVisualResultEdit.textContent = '继续编辑';
+  } else {
+    els.visualResultTitle.textContent = '目视检查完成，间距检查通过';
+    html += '<div class="ok" style="margin-top:8px">距离检查通过：任意两点间距均严格大于 1500 m。</div>';
+    if (modified > 0) {
+      html += '<div style="margin-top:6px">是否导出本次修改结果？</div>';
+      els.btnVisualResultExport.classList.remove('hidden');
+    } else {
+      html += '<div style="margin-top:6px">本次没有修改需要导出。</div>';
+    }
+  }
+  els.visualResultContent.innerHTML = html;
+  els.visualResultModal.classList.remove('hidden');
+}
+
+function selectPoint(point) {
+  if (!app.editMode) { toast('请先开启编辑模式。', 'warn'); return; }
+  if (!point) return;
+  if (point.level === 'prov') { toast('省级样点（01）已强制锁定，不能替换或移动。', 'err'); return; }
+  if (point.region !== app.region.name || (point.level !== 'city' && point.level !== 'county')) {
+    toast('只能编辑当前行政区的 02 市、县级样点。', 'warn');
+    return;
+  }
+  app.selected = point;
+  app.moveState = null;
+  hideModeHint();
+  updateSelectionPanel();
+  evaluateCandidatesIfAny();
+  invalidate();
+}
+function clearSelection() {
+  if (app.moveState) cancelMoveMode();
+  app.selected = null;
+  app.candidateEval = null;
+  app.candidateDisplay = [];
+  app.moveState = null;
+  els.candidateStats.innerHTML = '';
+  if (els.btnReplaceNearest) { els.btnReplaceNearest.disabled = true; els.btnReplaceNearest.textContent = '一键替换为最近合格候选'; }
+  hideModeHint();
+  updateSelectionPanel();
+  invalidate();
+}
+async function evaluateCandidatesIfAny() {
+  if (!app.selected || !app.editMode || !app.candidates.length) {
+    app.candidateEval = null;
+    app.candidateDisplay = [];
+    if (els.btnReplaceNearest) { els.btnReplaceNearest.disabled = true; els.btnReplaceNearest.textContent = '一键替换为最近合格候选'; }
+    els.candidateStats.innerHTML = app.selected && !app.candidates.length ? '<span class="bad">该行政区无 03 候选池</span>' : '';
+    invalidate();
+    return;
+  }
+  const sel = app.selected;
+  try {
+    const evalRes = evaluateCandidates(app.candidates, sel, app.current, app.crs);
+    if (!app.selected || app.selected !== sel) { /* stale */ }
+    app.candidateEval = evalRes;
+    const rows = evalRes.results.map(function (r, i) {
+      return { idx: i, eligible: r.eligible, reasons: r.reasons, cand: app.candidates[i], dist: distanceBetween(app.candidates[i], sel, app.crs) };
+    }).sort(function (a, b) { return a.dist - b.dist; });
+    app.candidateDisplay = rows.slice(0, 160);
+    const nearestEligible = rows.find(function (x) { return x.eligible; });
+    if (els.btnReplaceNearest) {
+      els.btnReplaceNearest.disabled = !nearestEligible;
+      els.btnReplaceNearest.textContent = nearestEligible
+        ? '一键替换为最近合格候选（' + nearestEligible.dist.toFixed(1) + ' m）'
+        : '无合格候选（按存疑上报）';
+    }
+    const eligible = evalRes.results.filter(function (r) { return r.eligible; }).length;
+    els.candidateStats.innerHTML = '03 候选池：共 ' + app.candidates.length + ' 个；' +
+      '<span class="ok">合格 ' + eligible + '</span> / <span class="bad">不合格 ' + (app.candidates.length - eligible) + '</span>' +
+      '<br><span class="edit-idle">地图显示最近 ' + app.candidateDisplay.length + ' 个候选；Shift+单击合格候选点执行替换。</span>';
+    invalidate();
+  } catch (e) {
+    els.candidateStats.innerHTML = '<span class="bad">候选评估失败：' + escapeHtml(e.message) + '</span>';
+  }
+}
+function handleShiftClick(sx, sy) {
+  if (!app.selected) { toast('请先用 Ctrl+单击选择一个 02 问题点。', 'warn'); return; }
+  const cand = hitCandidate(sx, sy);
+  if (!cand) { toast('请点击 03 样点池中的候选点（绿色为合格候选）。', 'warn'); return; }
+  const res = app.candidateEval ? app.candidateEval.results[cand.idx] : null;
+  if (!res || !res.eligible) {
+    const reasons = res && res.reasons.length ? res.reasons.join('；') : '候选点未通过校验';
+    toast('该候选点不可替换：' + reasons, 'err');
+    return;
+  }
+  openReplaceModal(cand);
+}
+function openReplaceModal(cand) {
+  const sel = app.selected;
+  if (!sel) return;
+  const raw = app.regionData.levels[sel.level];
+  const orig = raw.dbf ? raw.dbf.records[sel.idx] : {};
+  const targetFields = raw.dbf ? raw.dbf.fields.map(function (f) { return f.name; }) : [];
+  app.pendingReplace = { cand: cand, targetFields: targetFields };
+  const d = distanceBetween(cand, sel, app.crs);
+  const xzdmNeeded = targetFields.indexOf('XZDM') >= 0;
+  let html = '';
+  html += '<div><b>问题点：</b>' + LEVELS[sel.level].label + ' ' + escapeHtml(sel.id) + '（' + escapeHtml(sel.region) + '）</div>';
+  html += '<div><b>当前位置：</b>' + coordText(sel) + '</div>';
+  html += '<div><b>候选点：</b>03 池点 ' + escapeHtml(cand.attrs.YDBH || ('#' + (cand.idx + 1))) + '，' +
+    escapeHtml(cand.attrs.ZLDWMC || '') + ' / ' + escapeHtml(cand.attrs.XZMC || '') + '</div>';
+  html += '<div><b>地类：</b>' + escapeHtml(sel.dlmc || '—') + '（类型一致）　<b>距离：</b>' + d.toFixed(1) + ' m</div>';
+  html += '<div class="warn">替换后属性：' + escapeHtml(targetFields.map(function (f) {
+    if (f === 'OBJECTID') return '保留原编号';
+    if (f === 'BATCH') return 'BATCH=本图层级别';
+    if (f === '距离过') return '距离过=0';
+    if (f === 'XZDM') return 'XZDM=手动填写';
+    return f;
+  }).join('、')) + '</div>';
+  if (xzdmNeeded) {
+    html += '<div class="form-row"><label>XZDM（乡镇代码，市级图层需填写；可留空）</label><input id="replaceXzdm" type="text" value="' + escapeHtml(orig.XZDM || '') + '"></div>';
+  }
+  html += '<div class="note">替换只影响内存，点击“导出成果”后才会生成新的 SHP 文件；原文件保持不变。</div>';
+  els.replaceContent.innerHTML = html;
+  els.replaceModal.classList.remove('hidden');
+}
+function confirmReplaceFromModal() {
+  els.replaceModal.classList.add('hidden');
+  const pend = app.pendingReplace;
+  if (!pend || !app.selected) return;
+  const xzdmEl = $('replaceXzdm');
+  applyReplace(pend.cand, xzdmEl ? xzdmEl.value.trim() : null);
+}
+function buildReplaceAttrsForPoint(point, cand, xzdmValue) {
+  const raw = app.regionData.levels[point.level];
+  const targetRec = raw.dbf ? (raw.dbf.records[point.idx] || {}) : {};
+  const attrs = {};
+  (raw.dbf ? raw.dbf.fields : []).forEach(function (f) {
+    const n = f.name;
+    if (n === 'OBJECTID') attrs[n] = targetRec.OBJECTID || '';
+    else if (n === 'BATCH') attrs[n] = LEVELS[point.level].label;
+    else if (n === '距离过') attrs[n] = '0';
+    else if (n === 'XZDM') attrs[n] = xzdmValue != null ? xzdmValue : (targetRec.XZDM || '');
+    else if (cand.attrs && Object.prototype.hasOwnProperty.call(cand.attrs, n)) attrs[n] = cand.attrs[n];
+    else attrs[n] = targetRec[n] || '';
+  });
+  return attrs;
+}
+function buildReplaceAttrs(sel, cand, xzdmValue) {
+  return buildReplaceAttrsForPoint(sel, cand, xzdmValue);
+}
+function applyReplace(candidate, xzdmValue) {
+  const sel = app.selected;
+  if (!sel || !candidate) return;
+  if (sel.level === 'prov') { toast('省级样点（01）已强制锁定，不能替换。', 'err'); return; }
+  if (sel.level !== 'city' && sel.level !== 'county') { toast('只能替换 02 市、县级样点。', 'err'); return; }
+  if (sel.region !== app.region.name) { toast('只能编辑当前行政区的样点。', 'err'); return; }
+  const raw = app.regionData.levels[sel.level];
+  const attrs = buildReplaceAttrs(sel, candidate, xzdmValue);
+  const key = app.region.key + '|' + sel.level + '|' + sel.idx;
+  const before = app.patches.get(key) || null;
+  const after = {
+    idx: sel.idx, type: 'replace', x: candidate.x, y: candidate.y, attrs: attrs,
+    candidateId: candidate.attrs.YDBH || ('#' + (candidate.idx + 1)),
+    note: '替换为 03 池点'
+  };
+  const log = {
+    timeText: timestampText(new Date()), group: app.group.label, region: sel.region, level: sel.level,
+    id: sel.id, actionLabel: '替换', beforeCoord: coordText(sel), afterCoord: coordText(candidate),
+    movedMeters: distanceBetween(sel, candidate, app.crs), candidateId: after.candidateId,
+    checkText: '地类一致；间距校验通过', note: '替换为 03 候选池点'
+  };
+  pushAction({ key: key, regionKey: app.region.key, regionName: sel.region, level: sel.level, idx: sel.idx, before: before, after: after, log: log });
+  app.selected = Object.assign({}, sel, {
+    x: candidate.x, y: candidate.y, id: candidate.attrs.YDBH || sel.id,
+    dlmc: candidate.attrs.DLMC || sel.dlmc,
+    record: Object.assign({}, sel.record, attrs), patchType: 'replace'
+  });
+  refreshAll().then(function () { toast('已替换样点（仅在内存中，未写入原文件）', 'ok'); });
+}
+function startMoveMode() {
+  if (!app.selected || !app.editMode) return;
+  if (app.selected.level === 'prov') { toast('省级样点（01）已强制锁定，不能移动。', 'err'); return; }
+  if (app.selected.level !== 'city' && app.selected.level !== 'county') { toast('只能移动 02 市、县级样点。', 'err'); return; }
+  const sel = app.selected;
+  const others = app.current.filter(function (p) {
+    return !(p.region === sel.region && p.level === sel.level && p.idx === sel.idx);
+  });
+  /* 放大到能看清 20 m 圆环的尺度 */
+  const prevView = { cx: app.view.cx, cy: app.view.cy, scale: app.view.scale };
+  const centerWorld = toWorld(sel);
+  app.view.cx = centerWorld.x;
+  app.view.cy = centerWorld.y;
+  const radiusWorld = metersToWorld(MOVE_LIMIT_M, sel.y);
+  const size = mapSize();
+  app.view.scale = Math.min(size.w, size.h) * 0.3 / Math.max(1e-9, radiusWorld);
+  app.moveState = {
+    anchor: { x: sel.x, y: sel.y },
+    index: buildSpatialIndex(others, app.crs),
+    target: { x: sel.x, y: sel.y },
+    meters: 0, clamped: false, spacing: { ok: true, conflict: null, distance: null },
+    prevView: prevView
+  };
+  showModeHint('移动模式：在 20 m 圆环内单击确定新位置；松开空格取消');
+  updateMoveTargetFromSelected();
+  invalidate();
+}
+function cancelMoveMode() {
+  if (!app.moveState) return;
+  if (app.moveState.prevView) {
+    app.view.cx = app.moveState.prevView.cx;
+    app.view.cy = app.moveState.prevView.cy;
+    app.view.scale = app.moveState.prevView.scale;
+  }
+  app.moveState = null;
+  hideModeHint();
+  invalidate();
+}
+function updateMoveTargetFromSelected() {
+  if (!app.moveState) return;
+  app.moveState.target = { x: app.moveState.anchor.x, y: app.moveState.anchor.y };
+  app.moveState.meters = 0;
+  app.moveState.clamped = false;
+  app.moveState.spacing = spacingCheck(app.moveState.target, app.moveState.index, null, app.crs);
+}
+function updateMoveTarget(sx, sy) {
+  if (!app.moveState) return;
+  const world = worldPos({ x: sx, y: sy });
+  const data = fromWorld(world);
+  const clamped = clampToCircle(app.moveState.anchor, data, MOVE_LIMIT_M, app.crs);
+  const target = { x: clamped.x, y: clamped.y };
+  const spacing = spacingCheck(target, app.moveState.index, null, app.crs);
+  app.moveState.target = target;
+  app.moveState.meters = clamped.meters;
+  app.moveState.clamped = clamped.clamped;
+  app.moveState.spacing = spacing;
+  let msg = '移动 ' + clamped.meters.toFixed(1) + ' / 20 m' + (clamped.clamped ? '（已限制在圆环内）' : '');
+  if (!spacing.ok) msg += ' · 与 ' + (spacing.conflict ? (LEVELS[spacing.conflict.level] ? LEVELS[spacing.conflict.level].label : '') + ' ' + spacing.conflict.id : '其它点') + ' 间距 ' + spacing.distance.toFixed(1) + ' m，不能提交';
+  else msg += ' · 间距校验通过';
+  showModeHint(msg);
+  invalidate();
+}
+function commitMoveFromState() {
+  if (!app.moveState || !app.selected) return;
+  if (app.selected.level === 'prov') { toast('省级样点（01）已强制锁定，不能移动。', 'err'); app.moveState = null; hideModeHint(); return; }
+  if (app.selected.level !== 'city' && app.selected.level !== 'county') { toast('只能移动 02 市、县级样点。', 'err'); app.moveState = null; hideModeHint(); return; }
+  if (!app.moveState.spacing.ok) {
+    toast('目标位置与其它样点间距不足 1500 m，不能提交。', 'err');
+    return;
+  }
+  const sel = app.selected;
+  const key = app.region.key + '|' + sel.level + '|' + sel.idx;
+  const before = app.patches.get(key) || null;
+  const target = app.moveState.target;
+  const prevView = app.moveState.prevView;
+  const moved = distanceBetween(sel, target, app.crs);
+  const after = Object.assign({}, before || {}, {
+    idx: sel.idx, type: before && before.attrs ? 'replace' : 'move',
+    x: target.x, y: target.y
+  });
+  const log = {
+    timeText: timestampText(new Date()), group: app.group.label, region: sel.region, level: sel.level,
+    id: sel.id, actionLabel: '移动', beforeCoord: coordText(sel), afterCoord: coordText(target),
+    movedMeters: moved, candidateId: '', checkText: '移动 ' + moved.toFixed(2) + ' m（≤20 m）；间距校验通过', note: ''
+  };
+  pushAction({ key: key, regionKey: app.region.key, regionName: sel.region, level: sel.level, idx: sel.idx, before: before, after: after, log: log });
+  app.selected = Object.assign({}, sel, { x: target.x, y: target.y, patchType: after.type });
+  app.moveState = null;
+  hideModeHint();
+  if (prevView) { app.view.cx = prevView.cx; app.view.cy = prevView.cy; app.view.scale = prevView.scale; }
+  refreshAll().then(function () { toast('已移动样点（仅在内存中）', 'ok'); });
+}
+function pushAction(action) {
+  app.patches.set(action.key, action.after);
+  app.undoStack.push(action);
+  app.redoStack = [];
+  app.editLog.push(action.log);
+  app.exportDirty = true;
+  afterEditChange();
+}
+function undo() {
+  const action = app.undoStack.pop();
+  if (!action) return;
+  if (action.before) app.patches.set(action.key, action.before);
+  else app.patches.delete(action.key);
+  const i = app.editLog.indexOf(action.log);
+  if (i >= 0) app.editLog.splice(i, 1);
+  app.redoStack.push(action);
+  app.exportDirty = app.patches.size > 0;
+  afterEditChange();
+}
+function redo() {
+  const action = app.redoStack.pop();
+  if (!action) return;
+  app.patches.set(action.key, action.after);
+  app.undoStack.push(action);
+  app.editLog.push(action.log);
+  app.exportDirty = true;
+  afterEditChange();
+}
+function afterEditChange() {
+  updateUndoRedoButtons();
+  updateExportButton();
+  scheduleProgressSave();
+  refreshAll();
+  toast('修改已记录，可继续编辑或导出成果。', 'ok');
+}
+function clearAllEdits() {
+  if (!app.patches.size) return;
+  if (!window.confirm('确定清空当前所有未导出的修改吗？此操作不可撤销。')) return;
+  discardAllEdits();
+  if (app.progressDoc && app.progressDoc.groups && app.group && app.region) {
+    const gl = app.group.label, rk = app.region.key;
+    if (app.progressDoc.groups[gl]) {
+      delete app.progressDoc.groups[gl][rk];
+      if (Object.keys(app.progressDoc.groups[gl]).length === 0) delete app.progressDoc.groups[gl];
+    }
+    persistProgressDoc();
+  }
+  refreshAll();
+  toast('已清空全部修改', 'ok');
+}
+function updateUndoRedoButtons() {
+  const canUndo = app.undoStack.length > 0;
+  const canRedo = app.redoStack.length > 0;
+  [els.btnUndo, els.btnUndo2].forEach(function (b) { if (b) b.disabled = !canUndo; });
+  [els.btnRedo, els.btnRedo2].forEach(function (b) { if (b) b.disabled = !canRedo; });
+  if (els.btnClearEdits) els.btnClearEdits.disabled = app.patches.size === 0;
+}
+function updateExportButton() {
+  els.btnExport.disabled = app.patches.size === 0;
+}
+function updateSelectionPanel() {
+  if (!els) return;
+  if (!app.selected) {
+    els.selectionPanel.innerHTML = '<span class="sel-empty">未选择样点</span>';
+    return;
+  }
+  const s = app.selected;
+  const patch = getPatch(app.region.key, s.level, s.idx);
+  let html = '<div><span class="tag">' + LEVELS[s.level].label + '</span>' + escapeHtml(s.id) + '（' + escapeHtml(s.region) + '）</div>';
+  html += '<div>当前坐标：' + coordText(s) + '</div>';
+  html += '<div>地类：' + escapeHtml(s.dlmc || (s.level === 'prov' ? '—（01 图层无地类字段）' : '—')) + '</div>';
+  if (Math.abs(s.x - s.baseX) > 1e-12 || Math.abs(s.y - s.baseY) > 1e-12) {
+    html += '<div>原始坐标：' + coordText({ x: s.baseX, y: s.baseY }) + '</div>';
+    html += '<div>距原始位置：' + distanceBetween(s, { x: s.baseX, y: s.baseY }, app.crs).toFixed(2) + ' m</div>';
+  }
+  if (patch) html += '<div style="color:#9a5b00">状态：' + (patch.type === 'replace' ? '已替换（候选 ' + escapeHtml(patch.candidateId || '') + '）' : '已移动') + '</div>';
+  html += '<div class="edit-idle" style="margin-top:3px">Ctrl+单击可改选；Shift+单击 03 候选替换；Space+单击移动</div>';
+  els.selectionPanel.innerHTML = html;
+}
+
+/* ============================================================
+ * 键盘
+ * ============================================================ */
+function isTypingTarget(e) {
+  const t = e.target;
+  return t && (t.tagName === 'INPUT' || t.tagName === 'SELECT' || t.tagName === 'TEXTAREA');
+}
+function onKeyDown(e) {
+  if (isTypingTarget(e)) return;
+  if (e.code === 'Escape') {
+    if (app.moveState) cancelMoveMode();
+    else if (app.selected) clearSelection();
+    return;
+  }
+  if (e.code === 'Space' && app.editMode && app.selected && !app.moveState) {
+    e.preventDefault();
+    startMoveMode();
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+    e.preventDefault();
+    if (e.shiftKey) redo(); else undo();
+    return;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+    e.preventDefault();
+    redo();
+  }
+}
+function onKeyUp(e) {
+  if (e.code === 'Space' && app.moveState) cancelMoveMode();
+}
+function showModeHint(msg) {
+  els.modeHint.textContent = msg;
+  els.modeHint.style.display = 'block';
+}
+function hideModeHint() {
+  els.modeHint.style.display = 'none';
+}
+
+/* ============================================================
+ * 地图绘制
+ * ============================================================ */
+let _raf = 0, _needDraw = false;
+function invalidate() {
+  _needDraw = true;
+  if (!_raf) _raf = requestAnimationFrame(tick);
+}
+function tick() {
+  _raf = 0;
+  if (_needDraw) { _needDraw = false; draw(); }
+  if (app.moveState) _raf = requestAnimationFrame(tick);
+}
+function draw() {
+  if (!els || !els.ctx) return;
+  const ctx = els.ctx;
+  const size = mapSize();
+  ctx.clearRect(0, 0, size.w, size.h);
+  ctx.fillStyle = '#eef1f3';
+  ctx.fillRect(0, 0, size.w, size.h);
+  const hasData = app.ownPoints.length > 0;
+  if (!hasData) { updateMapEmpty(); return; }
+  if (els.lyrBase.checked && app.tiandituKey && app.crsMode === 'geo') drawTiles(ctx, size);
+  else els.attribution.style.display = 'none';
+  if (els.lyrMesh.checked) drawMesh(ctx, size);
+  if (els.lyrGrid.checked) drawGridWorld(ctx);
+  if (els.lyrCircle.checked) drawCircles(ctx);
+  drawViolationLines(ctx);
+  if (els.lyrOther.checked) drawOtherPoints(ctx);
+  if (els.lyrProv.checked) drawProvPoints(ctx);
+  drawOwnPoints(ctx);
+  if (els.lyrPool.checked && app.selected && app.editMode) drawCandidates(ctx);
+  drawSelection(ctx);
+  drawMoveState(ctx);
+  if (app.visualMode) drawVisualOverlay(ctx);
+  updateScalebar();
+  updateMapEmpty();
+}
+function drawMesh(ctx, size) {
+  const step = niceStep(110 / app.view.scale);
+  const tl = worldPos({ x: 0, y: 0 }), br = worldPos({ x: size.w, y: size.h });
+  const minX = Math.min(tl.x, br.x), maxX = Math.max(tl.x, br.x);
+  const minY = Math.min(tl.y, br.y), maxY = Math.max(tl.y, br.y);
+  ctx.save();
+  ctx.strokeStyle = 'rgba(120,132,145,0.16)';
+  ctx.lineWidth = 1;
+  let count = 0;
+  for (let x = Math.ceil(minX / step) * step; x <= maxX && count < 3000; x += step, count++) {
+    const sx = (x - app.view.cx) * app.view.scale + size.w / 2;
+    ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, size.h); ctx.stroke();
+  }
+  count = 0;
+  for (let y = Math.ceil(minY / step) * step; y <= maxY && count < 3000; y += step, count++) {
+    const sy = size.h / 2 - (y - app.view.cy) * app.view.scale;
+    ctx.beginPath(); ctx.moveTo(0, sy); ctx.lineTo(size.w, sy); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawGridWorld(ctx) {
+  if (!app.gridWorld.length) return;
+  ctx.save();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(90,105,120,0.55)';
+  ctx.fillStyle = 'rgba(90,105,120,0.045)';
+  app.gridWorld.forEach(function (ring) {
+    ctx.beginPath();
+    ring.forEach(function (w, i) {
+      const s = screenPos(w);
+      if (i === 0) ctx.moveTo(s.x, s.y); else ctx.lineTo(s.x, s.y);
+    });
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+function drawCircles(ctx) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(26,111,219,0.28)';
+  ctx.lineWidth = 1;
+  app.ownPoints.forEach(function (p) {
+    if (p.level === 'prov') return;
+    const world = toWorld(p);
+    const s = screenPos(world);
+    const rPx = metersToWorld(THRESHOLD_M, p.y) * app.view.scale;
+    if (rPx < 2) return;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, rPx, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+function drawViolationLines(ctx) {
+  if (!app.analysis) return;
+  ctx.save();
+  app.analysis.violations.forEach(function (v) {
+    const a = screenPos(toWorld(v.a)), b = screenPos(toWorld(v.b));
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+    if (v.type === '跨区') { ctx.strokeStyle = 'rgba(199,106,0,0.95)'; ctx.setLineDash([6, 4]); }
+    else { ctx.strokeStyle = 'rgba(198,40,40,0.95)'; ctx.setLineDash([]); }
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+function drawOtherPoints(ctx) {
+  ctx.save();
+  app.otherPoints.forEach(function (p) {
+    const s = screenPos(toWorld(p));
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 2.6, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(138,147,158,0.8)';
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 0.8;
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+function drawProvPoints(ctx) {
+  ctx.save();
+  app.provPoints.forEach(function (p) {
+    const s = screenPos(toWorld(p));
+    drawSymbol(ctx, s.x, s.y, 'prov', false);
+  });
+  ctx.restore();
+}
+function drawOwnPoints(ctx) {
+  const show = { city: els.lyrCity.checked, county: els.lyrCounty.checked };
+  const violated = {};
+  if (app.analysis) {
+    app.analysis.violations.forEach(function (v) {
+      [v.a, v.b].forEach(function (p) { if (p.region === app.region.name) violated[p.level + '|' + p.idx] = true; });
+    });
+  }
+  ctx.save();
+  app.ownPoints.forEach(function (p) {
+    if (p.level === 'prov') return;
+    if (!show[p.level]) return;
+    const s = screenPos(toWorld(p));
+    const isViol = violated[p.level + '|' + p.idx];
+    if (isViol) {
+      ctx.beginPath(); ctx.arc(s.x, s.y, 9, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(198,40,40,0.85)'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.beginPath(); ctx.arc(s.x, s.y, 9, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(198,40,40,0.1)'; ctx.fill();
+    }
+    drawSymbol(ctx, s.x, s.y, p.level, false);
+    if (p.patchType) {
+      ctx.beginPath(); ctx.arc(s.x, s.y, 7, 0, Math.PI * 2);
+      ctx.strokeStyle = p.patchType === 'replace' ? 'rgba(107,75,184,0.9)' : 'rgba(199,106,0,0.9)';
+      ctx.lineWidth = 1.5; ctx.stroke();
+    }
+  });
+  ctx.restore();
+}
+function drawCandidates(ctx) {
+  if (!app.candidateDisplay || !app.candidateDisplay.length) return;
+  ctx.save();
+  for (const item of app.candidateDisplay) {
+    const c = item.cand;
+    const s = screenPos(toWorld(c));
+    if (s.x < -10 || s.y < -10 || s.x > mapSize().w + 10 || s.y > mapSize().h + 10) continue;
+    const eligible = item.eligible;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, eligible ? 4.2 : 2.6, 0, Math.PI * 2);
+    ctx.strokeStyle = eligible ? (item.reasons && item.reasons.length ? '#9a5b00' : '#1e7d3a') : 'rgba(150,158,168,0.75)';
+    ctx.fillStyle = eligible ? 'rgba(216,243,223,0.95)' : 'rgba(240,242,244,0.6)';
+    ctx.lineWidth = eligible ? 1.8 : 1;
+    ctx.fill(); ctx.stroke();
+    if (app.hover === c) {
+      ctx.beginPath(); ctx.arc(s.x, s.y, 8, 0, Math.PI * 2);
+      ctx.strokeStyle = '#1f2328'; ctx.lineWidth = 1.2; ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+function drawSelection(ctx) {
+  if (!app.selected) return;
+  const s = screenPos(toWorld(app.selected));
+  ctx.save();
+  ctx.beginPath(); ctx.arc(s.x, s.y, 11, 0, Math.PI * 2);
+  ctx.strokeStyle = '#111'; ctx.lineWidth = 2; ctx.setLineDash([4, 3]); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+function drawMoveState(ctx) {
+  if (!app.moveState) return;
+  const anchor = app.moveState.anchor;
+  const center = screenPos(toWorld(anchor));
+  const radiusPx = metersToWorld(MOVE_LIMIT_M, anchor.y) * app.view.scale;
+  const t = screenPos(toWorld(app.moveState.target));
+  ctx.save();
+  /* 20m 圆环 */
+  ctx.beginPath(); ctx.arc(center.x, center.y, radiusPx, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(0,121,193,0.9)'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(0,121,193,0.06)'; ctx.fill();
+  /* 圆心 */
+  ctx.beginPath(); ctx.arc(center.x, center.y, 3, 0, Math.PI * 2);
+  ctx.fillStyle = '#111'; ctx.fill();
+  /* 目标位置与连线 */
+  const ok = app.moveState.spacing.ok;
+  ctx.beginPath(); ctx.moveTo(center.x, center.y); ctx.lineTo(t.x, t.y);
+  ctx.strokeStyle = ok ? '#0b7a3e' : '#c62828'; ctx.lineWidth = 2; ctx.stroke();
+  ctx.beginPath(); ctx.arc(t.x, t.y, 7, 0, Math.PI * 2);
+  ctx.fillStyle = ok ? 'rgba(11,122,62,0.22)' : 'rgba(198,40,40,0.22)';
+  ctx.fill();
+  ctx.strokeStyle = ok ? '#0b7a3e' : '#c62828'; ctx.lineWidth = 2; ctx.stroke();
+  /* 距离标注 */
+  ctx.font = '12px "Microsoft YaHei",sans-serif';
+  ctx.fillStyle = '#1f2328';
+  ctx.fillText(app.moveState.meters.toFixed(1) + ' m', t.x + 12, t.y - 10);
+  ctx.restore();
+}
+function drawVisualOverlay(ctx) {
+  const p = currentVisualPoint();
+  if (!p) return;
+  const w = toWorld(p);
+  const s = screenPos(w);
+  const radius = Math.max(6, metersToWorld(100, p.y) * app.view.scale);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(24,130,205,0.10)';
+  ctx.fill();
+  ctx.setLineDash([7, 5]);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(18,110,180,0.9)';
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(18,110,180,0.55)';
+  ctx.beginPath();
+  ctx.moveTo(s.x - 14, s.y); ctx.lineTo(s.x + 14, s.y);
+  ctx.moveTo(s.x, s.y - 14); ctx.lineTo(s.x, s.y + 14);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(s.x, s.y, 4, 0, Math.PI * 2);
+  ctx.fillStyle = '#0b6fb2';
+  ctx.fill();
+  ctx.fillStyle = '#0b5f96';
+  ctx.font = '600 12px "Microsoft YaHei", sans-serif';
+  ctx.fillText('100 m', s.x + radius * 0.55, s.y - radius * 0.8);
+  ctx.restore();
+}
+function drawSymbol(ctx, x, y, level, active) {
+  const size = active ? 8 : 6.4;
+  ctx.save();
+  ctx.lineWidth = 1.4;
+  ctx.strokeStyle = '#ffffff';
+  if (level === 'prov') {
+    ctx.beginPath(); ctx.moveTo(x, y - size); ctx.lineTo(x + size, y); ctx.lineTo(x, y + size); ctx.lineTo(x - size, y); ctx.closePath();
+    ctx.fillStyle = LEVELS.prov.color; ctx.fill(); ctx.stroke();
+  } else if (level === 'city') {
+    ctx.beginPath(); ctx.moveTo(x, y - size); ctx.lineTo(x + size * 0.92, y + size * 0.78); ctx.lineTo(x - size * 0.92, y + size * 0.78); ctx.closePath();
+    ctx.fillStyle = LEVELS.city.color; ctx.fill(); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.rect(x - size * 0.82, y - size * 0.82, size * 1.64, size * 1.64);
+    ctx.fillStyle = LEVELS.county.color; ctx.fill(); ctx.stroke();
+  }
+  ctx.restore();
+}
+function niceStep(v) {
+  const steps = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000];
+  for (const s of steps) if (s >= v) return s;
+  return steps[steps.length - 1];
+}
+function updateScalebar() {
+  let meters;
+  if (app.crsMode === 'geo') {
+    const groundPerPx = (1 / app.view.scale) * Math.cos((fromWorld({ x: app.view.cx, y: app.view.cy }).y) * Math.PI / 180);
+    meters = niceStep(80 * groundPerPx);
+    let width = 0;
+    if (groundPerPx > 0) width = meters / groundPerPx;
+    const steps = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000];
+    for (let i = steps.length - 1; i >= 0; i--) {
+      const w = steps[i] / groundPerPx;
+      if (w >= 40 && w <= 160) { meters = steps[i]; width = w; break; }
+    }
+    els.scalebarBar.style.width = Math.max(20, Math.round(Math.min(170, width))) + 'px';
+  } else {
+    const groundPerPx = (1 / app.view.scale) / (app.crs.unitScale || 1);
+    meters = niceStep(80 * groundPerPx);
+    els.scalebarBar.style.width = Math.max(20, Math.round(Math.min(170, meters / groundPerPx))) + 'px';
+  }
+  els.scalebarText.textContent = meters >= 1000 ? (meters / 1000).toFixed(meters >= 10000 ? 1 : 2) + ' km' : Math.round(meters) + ' m';
+}
+
+/* ============================================================
+ * 天地图底图
+ * ============================================================ */
+function initKeySettings() {
+  let stored = '';
+  try { stored = localStorage.getItem(LS_KEY) || ''; } catch (e) { /* ignore */ }
+  if (stored) app.tiandituKey = stored;
+  else {
+    els.keyInput.value = DEFAULT_TIANDITU_KEY;
+    els.keyOrigin.textContent = (location.origin && location.origin !== 'null') ? location.origin : location.href.replace(/[^/]*$/, '');
+    els.keyModal.classList.remove('hidden');
+  }
+  try {
+    const b = localStorage.getItem(LS_BASE);
+    if (b === '0') { els.lyrBase.checked = false; app.basemapEnabled = false; }
+  } catch (e) { /* ignore */ }
+}
+function openKeyModal() {
+  els.keyInput.value = app.tiandituKey || DEFAULT_TIANDITU_KEY;
+  els.keyOrigin.textContent = (location.origin && location.origin !== 'null') ? location.origin : location.href.replace(/[^/]*$/, '');
+  els.keyModal.classList.remove('hidden');
+}
+function saveKey() {
+  const key = (els.keyInput.value || '').trim();
+  if (!key) { toast('请输入密钥，或点击“暂不启用底图”。', 'warn'); return; }
+  app.tiandituKey = key;
+  try { localStorage.setItem(LS_KEY, key); localStorage.setItem(LS_BASE, '1'); } catch (e) { /* ignore */ }
+  els.lyrBase.checked = true;
+  els.keyModal.classList.add('hidden');
+  toast('天地图密钥已保存，底图将在联网时加载。', 'ok');
+  invalidate();
+}
+function tileUrl(layer, z, x, y) {
+  return 'https://t0.tianditu.gov.cn/' + layer + '_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=' +
+    layer + '&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX=' + z + '&TILEROW=' + y + '&TILECOL=' + x +
+    '&tk=' + encodeURIComponent(app.tiandituKey);
+}
+function getTile(layer, z, x, y) {
+  const key = layer + '/' + z + '/' + x + '/' + y;
+  let rec = app.tileCache.get(key);
+  if (rec) return rec;
+  const img = new Image();
+  rec = { img: img, loaded: false, failed: false };
+  app.tileCache.set(key, rec);
+  img.onload = function () {
+    rec.loaded = true;
+    app.tileLoaded++;
+    invalidate();
+  };
+  img.onerror = function () {
+    rec.failed = true;
+    app.tileErrors++;
+    if (!app.tileErrorNotified && app.tileErrors >= 6 && app.tileLoaded === 0) {
+      app.tileErrorNotified = true;
+      showBanner('天地图底图加载失败：请检查网络、密钥以及域名白名单（jinguo0201.github.io）。底图不可用不影响样点检查与编辑。', 'warn');
+    }
+    invalidate();
+  };
+  img.src = tileUrl(layer, z, x, y);
+  return rec;
+}
+function drawTiles(ctx, size) {
+  const scale = app.view.scale;
+  if (!(scale > 0)) return;
+  const zFloat = Math.log2(2 * Math.PI * MERC_R * scale / 256);
+  const z = Math.max(3, Math.min(18, Math.ceil(zFloat)));
+  const n = Math.pow(2, z);
+  const tileWorld = (2 * Math.PI * MERC_R) / n;
+  const tl = worldPos({ x: 0, y: 0 }), br = worldPos({ x: size.w, y: size.h });
+  const minX = Math.min(tl.x, br.x), maxX = Math.max(tl.x, br.x);
+  const minY = Math.min(tl.y, br.y), maxY = Math.max(tl.y, br.y);
+  const tx0 = Math.max(0, Math.floor((minX + Math.PI * MERC_R) / tileWorld));
+  const tx1 = Math.min(n - 1, Math.floor((maxX + Math.PI * MERC_R) / tileWorld));
+  const ty0 = Math.max(0, Math.floor((Math.PI * MERC_R - maxY) / tileWorld));
+  const ty1 = Math.min(n - 1, Math.floor((Math.PI * MERC_R - minY) / tileWorld));
+  let drawn = 0;
+  for (let ty = ty0; ty <= ty1; ty++) {
+    for (let tx = tx0; tx <= tx1; tx++) {
+      const rec = getTile('img', z, tx, ty);
+      const leftWorld = -Math.PI * MERC_R + tx * tileWorld;
+      const topWorld = Math.PI * MERC_R - ty * tileWorld;
+      const sLeft = (leftWorld - app.view.cx) * scale + size.w / 2;
+      const sTop = size.h / 2 - (topWorld - app.view.cy) * scale;
+      const side = tileWorld * scale + 0.6;
+      if (rec.loaded) {
+        try { ctx.drawImage(rec.img, sLeft, sTop, side, side); drawn++; } catch (e) { /* ignore */ }
+      }
+    }
+  }
+  if (els.lyrLabel.checked && drawn > 0) {
+    const lz = Math.max(3, z);
+    const ln = Math.pow(2, lz);
+    const lTileWorld = (2 * Math.PI * MERC_R) / ln;
+    const ltx0 = Math.max(0, Math.floor((minX + Math.PI * MERC_R) / lTileWorld));
+    const ltx1 = Math.min(ln - 1, Math.floor((maxX + Math.PI * MERC_R) / lTileWorld));
+    const lty0 = Math.max(0, Math.floor((Math.PI * MERC_R - maxY) / lTileWorld));
+    const lty1 = Math.min(ln - 1, Math.floor((Math.PI * MERC_R - minY) / lTileWorld));
+    for (let ty = lty0; ty <= lty1; ty++) {
+      for (let tx = ltx0; tx <= ltx1; tx++) {
+        const rec = getTile('cia', lz, tx, ty);
+        if (!rec.loaded) continue;
+        const leftWorld = -Math.PI * MERC_R + tx * lTileWorld;
+        const topWorld = Math.PI * MERC_R - ty * lTileWorld;
+        const sLeft = (leftWorld - app.view.cx) * scale + size.w / 2;
+        const sTop = size.h / 2 - (topWorld - app.view.cy) * scale;
+        try { ctx.drawImage(rec.img, sLeft, sTop, lTileWorld * scale + 0.6, lTileWorld * scale + 0.6); } catch (e) { /* ignore */ }
+      }
+    }
+  }
+  els.attribution.style.display = drawn > 0 || app.tileLoaded > 0 ? 'block' : 'none';
+}
+
+/* ============================================================
+ * 悬浮提示
+ * ============================================================ */
+function updateHover(sx, sy) {
+  let found = null;
+  let isCand = false;
+  if (!app.selected || !app.editMode) {
+    found = hitList(sx, sy, app.ownPoints, 9) || hitList(sx, sy, app.provPoints, 8) ||
+      (els.lyrOther.checked ? hitList(sx, sy, app.otherPoints, 7) : null);
+  } else {
+    found = hitCandidate(sx, sy);
+    if (found) isCand = true;
+    else found = hitList(sx, sy, app.ownPoints, 9) || hitList(sx, sy, app.provPoints, 8);
+  }
+  app.hover = found;
+  app.hoverIsCandidate = isCand;
+  if (!found) { hideHover(); return; }
+  const lines = [];
+  if (isCand) {
+    lines.push('<b>03 候选池点</b>');
+    lines.push('编号：' + escapeHtml(found.attrs.YDBH || ('#' + (found.idx + 1))));
+    lines.push('地类：' + escapeHtml(found.attrs.DLMC || '—') + '　' + escapeHtml(found.attrs.ZLDWMC || ''));
+    const r = app.candidateEval ? app.candidateEval.results[found.idx] : null;
+    if (r) {
+      if (r.eligible) lines.push('<span style="color:#8be28b">合格候选</span>');
+      else lines.push('<span style="color:#ffb4b4">不可替换：' + escapeHtml(r.reasons.join('；')) + '</span>');
+    }
+  } else {
+    lines.push('<b>' + escapeHtml(LEVELS[found.level].label + '样点') + '</b>');
+    lines.push('编号：' + escapeHtml(found.id || '—'));
+    lines.push('行政区：' + escapeHtml(found.region));
+    lines.push('地类：' + escapeHtml(found.dlmc || (found.level === 'prov' ? '—（01 图层无地类字段）' : '—')));
+    lines.push('坐标：' + escapeHtml(coordText(found)));
+    if (found.level === 'prov') lines.push('<span style="color:#ffd479">省级样点（01）：强制锁定，不可替换或移动</span>');
+    else if (found.region === app.region.name) lines.push('<span style="color:#ffd479">可编辑：Ctrl+单击选择</span>');
+  }
+  els.hoverTip.innerHTML = lines.join('<br>');
+  els.hoverTip.classList.remove('hidden');
+  const size = mapSize();
+  let left = sx + 16, top = sy + 14;
+  if (left + 280 > size.w) left = sx - 290;
+  if (top + 120 > size.h) top = sy - 130;
+  els.hoverTip.style.left = Math.max(4, left) + 'px';
+  els.hoverTip.style.top = Math.max(4, top) + 'px';
+  invalidate();
+}
+function hideHover() {
+  app.hover = null;
+  if (els && els.hoverTip) els.hoverTip.classList.add('hidden');
+  invalidate();
+}
+function updateStatusCoords(sx, sy) {
+  if (!app.view) return;
+  const data = fromWorld(worldPos({ x: sx, y: sy }));
+  if (app.crsMode === 'geo') {
+    els.statusRight.textContent = '经度 ' + data.x.toFixed(6) + '  纬度 ' + data.y.toFixed(6) + '  ·  ' + TOOL_VERSION;
+  } else {
+    els.statusRight.textContent = 'X ' + data.x.toFixed(1) + '  Y ' + data.y.toFixed(1) + '  ·  ' + TOOL_VERSION;
+  }
+}
+
+/* ============================================================
+ * 结果与记录渲染
+ * ============================================================ */
+function clearResults() {
+  if (!els) return;
+  els.resultBadge.className = 'badge badge-idle';
+  els.resultBadge.textContent = '未检查';
+  els.summaryText.textContent = '请选择任务文件夹与行政区。';
+  if (els.resultTable.tBodies[0]) els.resultTable.tBodies[0].innerHTML = '';
+  els.tableEmpty.classList.remove('hidden');
+  els.tableEmpty.textContent = '暂无检查结果';
+  renderLog();
+}
+function renderAnalysis() {
+  const res = app.analysis;
+  if (!res) return;
+  const pass = res.pass;
+  els.resultBadge.className = 'badge ' + (pass ? 'badge-pass' : 'badge-fail');
+  els.resultBadge.textContent = pass ? '通过' : '不通过';
+  let summary = app.region.name + '：本区 ' + app.ownPoints.length + ' 点（省 ' +
+    app.ownPoints.filter(function (p) { return p.level === 'prov'; }).length + ' / 市 ' +
+    app.ownPoints.filter(function (p) { return p.level === 'city'; }).length + ' / 县 ' +
+    app.ownPoints.filter(function (p) { return p.level === 'county'; }).length + '），他区 ' +
+    app.otherPoints.length + ' 点；检查 ' + res.pairs + ' 对，最小间距 ' + (isFinite(res.min) ? res.min.toFixed(1) : '—') + ' m，违规 ' + res.violations.length + ' 对';
+  if (app.patches.size) summary += '；<b style="color:#9a5b00">已有 ' + app.patches.size + ' 条内存修改' +
+    (app.exportDirty ? '（未导出）' : '（已导出）') + '</b>';
+  els.summaryText.innerHTML = summary;
+  const tbody = els.resultTable.tBodies[0];
+  tbody.innerHTML = '';
+  if (pass) {
+    els.tableEmpty.classList.remove('hidden');
+    els.tableEmpty.textContent = '未发现间距 ≤ 1500 m 的点对，检查通过。' +
+      (res.minPair ? '\n最小间距：' + res.min.toFixed(1) + ' m（' + pointLabel(res.minPair.a) + ' ↔ ' + pointLabel(res.minPair.b) + '）' : '');
+  } else {
+    els.tableEmpty.classList.add('hidden');
+    res.violations.forEach(function (v, i) {
+      const tr = document.createElement('tr');
+      const cells = [String(i + 1), v.type, pointLabel(v.a), pointLabel(v.b), v.b.region, v.dist.toFixed(1)];
+      cells.forEach(function (text, idx) {
+        const td = document.createElement('td');
+        td.textContent = text;
+        if (idx === 5) td.className = 'dist';
+        tr.appendChild(td);
+      });
+      tr.title = '点击定位';
+      tr.addEventListener('click', function () { focusPair(v); });
+      tbody.appendChild(tr);
+    });
+  }
+}
+function pointLabel(p) {
+  return LEVELS[p.level].label + ' ' + (p.id || '—') + '（' + p.region + '）';
+}
+function coordText(p) {
+  if (app.crsMode === 'proj') return 'X ' + p.x.toFixed(2) + ', Y ' + p.y.toFixed(2);
+  return '经度 ' + p.x.toFixed(6) + ', 纬度 ' + p.y.toFixed(6);
+}
+function focusPair(v) {
+  const a = toWorld(v.a), b = toWorld(v.b);
+  app.view.cx = (a.x + b.x) / 2;
+  app.view.cy = (a.y + b.y) / 2;
+  const size = mapSize();
+  app.view.scale = Math.min(size.w, size.h) / Math.max(500, v.dist * 2.5 + 500);
+  invalidate();
+}
+function renderLog() {
+  if (!els) return;
+  if (els.logCount) els.logCount.textContent = String(app.editLog.length);
+  const tbody = els.logTable.tBodies[0];
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (!app.editLog.length) {
+    els.logEmpty.classList.remove('hidden');
+    els.logEmpty.textContent = '暂无修改记录';
+    return;
+  }
+  els.logEmpty.classList.add('hidden');
+  app.editLog.slice().reverse().forEach(function (e) {
+    const tr = document.createElement('tr');
+    const cells = [e.timeText, e.region, LEVELS[e.level] ? LEVELS[e.level].label : e.level, e.id, e.actionLabel,
+      e.beforeCoord, e.afterCoord, e.movedMeters == null ? '' : Number(e.movedMeters).toFixed(1), e.note || ''];
+    cells.forEach(function (text) {
+      const td = document.createElement('td');
+      td.textContent = text;
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
+function setTab(tab) {
+  app.resultTab = tab;
+  els.tabCheck.classList.toggle('active', tab === 'check');
+  els.tabLog.classList.toggle('active', tab === 'log');
+  els.checkPane.classList.toggle('hidden', tab !== 'check');
+  els.logPane.classList.toggle('hidden', tab !== 'log');
+}
+
+/* ============================================================
+ * 导出
+ * ============================================================ */
+async function collectExportPackage() {
+  if (!app.patches.size) throw new Error('当前没有修改，无法导出');
+  const groups = new Map();
+  app.patches.forEach(function (patch, key) {
+    const parts = key.split('|');
+    const regionKey = parts[0], level = parts[1], idx = parseInt(parts[2], 10);
+    const gkey = regionKey + '|' + level;
+    if (!groups.has(gkey)) groups.set(gkey, { regionKey: regionKey, level: level, patches: [] });
+    groups.get(gkey).patches.push({ width: 0, idx: idx, patch: patch });
+  });
+  const files = [];
+  const checks = [];
+  const regionMap = new Map();
+  app.group.regions.forEach(function (r) { regionMap.set(r.key, r); });
+  for (const g of groups.values()) {
+    const region = regionMap.get(g.regionKey);
+    if (!region) throw new Error('找不到修改对应的行政区：' + g.regionKey);
+    const raw = await loadLayerRaw(region.files[g.level], g.level, region.name);
+    const patches = g.patches.map(function (x) { return x.patch; });
+    const out = applyPatchesToLayer(raw, patches);
+    /* 读回校验 */
+    const checkShp = parsePointsShp(out.shpBuf.buffer);
+    const checkDbf = out.dbfBuf ? parseDbf(out.dbfBuf.buffer, raw.encoding) : null;
+    if (checkShp.points.length !== raw.shp.points.length) throw new Error('导出校验失败：点数不一致');
+    patches.forEach(function (p) {
+      const pt = checkShp.points[p.idx];
+      if (Math.abs(pt.x - p.x) > 1e-9 || Math.abs(pt.y - p.y) > 1e-9) throw new Error('导出校验失败：坐标未写入');
+      if (p.attrs && checkDbf) {
+        if (p.attrs.YDBH && checkDbf.records[p.idx].YDBH !== p.attrs.YDBH) throw new Error('导出校验失败：属性未写入');
+      }
+    });
+    const base = layerFileBase(region.name, g.level);
+    files.push({ name: '02_市县级样点/' + base + '.shp', data: new Uint8Array(out.shpBuf) });
+    if (out.dbfBuf) files.push({ name: '02_市县级样点/' + base + '.dbf', data: new Uint8Array(out.dbfBuf) });
+    if (raw.shxBuf) files.push({ name: '02_市县级样点/' + base + '.shx', data: new Uint8Array(raw.shxBuf) });
+    files.push({ name: '02_市县级样点/' + base + '.prj', data: new TextEncoder().encode(raw.prjText || '') });
+    files.push({ name: '02_市县级样点/' + base + '.cpg', data: new TextEncoder().encode((raw.cpgText || 'UTF-8').trim() || 'UTF-8') });
+    checks.push(region.name + ' / ' + LEVELS[g.level].label + '：记录数 ' + raw.shp.points.length + ' 不变，修改 ' + patches.length + ' 条，读回校验通过');
+    if (out.warnings && out.warnings.length) checks.push('字段警告：' + out.warnings.join('；'));
+  }
+  const logRows = buildEditLogRows(app.editLog);
+  files.push({ name: '修改记录.csv', data: new TextEncoder().encode(buildCsv(logRows)) });
+  const manifest = buildExportManifest({
+    group: app.group.label,
+    entries: app.editLog,
+    checks: checks.concat([
+      '01 省级样点：只读，未写入',
+      '导出图层：仅 02 市县级样点',
+      '记录数：与原始数据一致（未增删点）'
+    ])
+  });
+  files.push({ name: '导出说明.txt', data: new TextEncoder().encode(manifest) });
+  files.push({ name: '校验报告.txt', data: new TextEncoder().encode('校验时间：' + timestampText(new Date()) + '\r\n' + checks.join('\r\n')) });
+  return { files: files, checks: checks, zip: buildZip(files) };
+}
+function openExportModal() {
+  if (!app.patches.size) { toast('当前没有修改可导出。', 'warn'); return; }
+  const regions = new Set(), layers = new Set();
+  app.patches.forEach(function (p, key) {
+    const parts = key.split('|');
+    regions.add(parts[0]); layers.add(parts[1]);
+  });
+  els.exportContent.innerHTML = '<div class="replace-details">' +
+    '<div><b>修改记录：</b>' + app.editLog.length + ' 条</div>' +
+    '<div><b>涉及行政区：</b>' + regions.size + ' 个　<b>涉及图层：</b>' + layers.size + ' 个</div>' +
+    '<div class="note">导出的包内只包含被修改的 02 图层（完整五件套 .shp/.shx/.dbf/.prj/.cpg）以及修改记录、导出说明、校验报告。原文件夹不会被写入。推荐先下载 ZIP 检查无误后再替换成果。</div>' +
+    '<div><b>最近修改：</b></div>' +
+    '<ul>' + app.editLog.slice(-5).reverse().map(function (e) {
+      return '<li>' + escapeHtml(e.region + ' ' + LEVELS[e.level].label + ' ' + e.id + '：' + e.actionLabel + ' ' + e.beforeCoord + ' → ' + e.afterCoord) + '</li>';
+    }).join('') + '</ul></div>';
+  els.exportModal.classList.remove('hidden');
+  els.btnExportZip.disabled = false;
+  els.btnExportFolder.disabled = !('showDirectoryPicker' in window);
+}
+async function downloadExportZip() {
+  els.btnExportZip.disabled = true;
+  try {
+    const pkg = await collectExportPackage();
+    const blob = new Blob([pkg.zip], { type: 'application/zip' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '样点修改成果_' + sanitizeFileName(app.group.label) + '_' + timestampForFile() + '.zip';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 800);
+    app.exportDirty = false;
+    renderAnalysis();
+    saveCurrentRegionProgress();
+    els.exportModal.classList.add('hidden');
+    toast('已生成 ZIP 成果包，请到下载目录查看。', 'ok');
+  } catch (e) {
+    toast('导出失败：' + (e && e.message ? e.message : e), 'err');
+    els.btnExportZip.disabled = false;
+  }
+}
+async function exportToFolder() {
+  if (!('showDirectoryPicker' in window)) { toast('当前浏览器不支持直接写入文件夹，请使用“下载 ZIP”。', 'warn'); return; }
+  els.btnExportFolder.disabled = true;
+  try {
+    const dir = await window.showDirectoryPicker({ mode: 'readwrite' });
+    const pkg = await collectExportPackage();
+    const rootName = '修改成果_' + timestampForFile();
+    const root = await dir.getDirectoryHandle(rootName, { create: true });
+    for (const f of pkg.files) {
+      const parts = f.name.split('/');
+      let d = root;
+      for (let i = 0; i < parts.length - 1; i++) d = await d.getDirectoryHandle(parts[i], { create: true });
+      const fh = await d.getFileHandle(parts[parts.length - 1], { create: true });
+      const w = await fh.createWritable();
+      await w.write(f.data);
+      await w.close();
+    }
+    els.exportModal.classList.add('hidden');
+    app.exportDirty = false;
+    renderAnalysis();
+    saveCurrentRegionProgress();
+    toast('已导出到：' + rootName, 'ok');
+  } catch (e) {
+    if (e && e.name === 'AbortError') { toast('已取消导出', 'warn'); }
+    else toast('导出到文件夹失败：' + (e && e.message ? e.message : e), 'err');
+  } finally {
+    els.btnExportFolder.disabled = false;
+  }
+}
+
+/* ============================================================
+ * 界面辅助
+ * ============================================================ */
+function renderHealth() {
+  const rows = [];
+  if (!app.regionData) return;
+  const r = app.region;
+  rows.push({ type: 'ok', text: '行政区：' + r.name + '（任务组：' + app.group.label + '）' });
+  LEVEL_ORDER.forEach(function (lvl) {
+    const raw = app.regionData.levels[lvl];
+    rows.push({ type: raw.dbf ? 'ok' : 'warn', html: true, text: '<span class="file">' + escapeHtml(raw.entry.shp.path) + '</span>' });
+  });
+  if (r.files.pool) rows.push({ type: 'info', html: true, text: '<span class="file">' + escapeHtml(r.files.pool.shp.path) + '</span>（03 候选池）' });
+  if (r.files.grids && r.files.grids.length) rows.push({ type: 'info', text: '05 格网：' + r.files.grids.length + ' 个文件' });
+  rows.push({ type: 'info', text: '点数：省 ' + app.provPoints.length + ' / 市 ' + app.ownPoints.filter(function (p) { return p.level === 'city'; }).length + ' / 县 ' + app.ownPoints.filter(function (p) { return p.level === 'county'; }).length + '；坐标：' + (app.crsMode === 'geo' ? '地理坐标' : '投影坐标') });
+  if (app.gridWarnings.length) app.gridWarnings.forEach(function (w) { rows.push({ type: 'warn', text: w }); });
+  if (!r.files.pool) rows.push({ type: 'warn', text: '无 03 候选池：只能移动，不能替换。' });
+  setHealth(rows);
+}
+function setHealth(rows) {
+  if (!els) return;
+  els.health.innerHTML = rows.map(function (row) {
+    const icon = row.type === 'ok' ? '✓' : row.type === 'warn' ? '!' : row.type === 'err' ? '✕' : 'i';
+    const content = row.html ? row.text : escapeHtml(row.text);
+    return '<div class="hrow ' + row.type + '"><span class="ic">' + icon + '</span><span>' + content + '</span></div>';
+  }).join('');
+}
+function showBanner(msg, type) {
+  els.banner.className = 'banner ' + (type || 'info');
+  els.banner.textContent = msg;
+}
+function hideBanner() { els.banner.className = 'banner hidden'; els.banner.textContent = ''; }
+function setStatus(msg) { if (els) els.statusLeft.textContent = msg; }
+function showLoading(on, text) {
+  if (!els) return;
+  els.mapLoading.style.display = on ? 'flex' : 'none';
+  if (!on) setStatus(text || els.statusLeft.textContent);
+}
+function updateMapEmpty() {
+  if (!els) return;
+  const has = app.ownPoints.length > 0;
+  els.mapEmpty.classList.toggle('hidden', has);
+}
+function toast(msg, type) {
+  if (!els) return;
+  const d = document.createElement('div');
+  d.className = 'toast ' + (type || '');
+  d.textContent = msg;
+  els.toastWrap.appendChild(d);
+  setTimeout(function () { d.remove(); }, 4200);
+}
+function updateEditUI() {
+  if (!els) return;
+  els.btnEditMode.classList.toggle('active', app.editMode);
+  els.editState.textContent = app.editMode ? '已开启' : '未开启';
+}
+
+/* ============================================================
+ * 启动
+ * ============================================================ */
+if (typeof document !== 'undefined' && document.getElementById) {
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+}
+
+</script>
+</body>
+</html>
