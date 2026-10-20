@@ -323,9 +323,10 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
           <button id="btnVisualPrev" class="btn mini">上一点</button>
           <button id="btnVisualNext" class="btn mini">下一点</button>
         </div>
-        <button id="btnVisualFinish" class="btn btn-primary wide" style="margin-top:6px">完成检查</button>
+        <button id="btnVisualEditMode" class="btn mini wide" style="margin-top:6px">开启编辑模式</button>
+        <button id="btnVisualFinish" class="btn btn-primary wide" style="margin-top:4px">完成检查</button>
         <button id="btnVisualExit" class="btn mini wide" style="margin-top:4px">退出目视检查</button>
-        <div class="vp-note">地图中的蓝色圆环半径为 100 m，可用于判断样点距道路的距离；四项检查请结合天地图影像人工判断后勾选。</div>
+        <div class="vp-note">仅检查 02 市、县级样点，省级 01 点不进入队列。地图中的蓝色圆环半径为 100 m，可用于判断样点距道路的距离；四项检查请结合天地图影像人工判断后勾选。可在本面板开启编辑模式，直接替换或移动当前问题点。</div>
       </div>
     </div>
 
@@ -385,7 +386,8 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li><b>问题检查</b>：点击顶部“问题检查”按钮，中央窗口会显示当前正在检查的行政区、点数、检查范围等信息，并强制至少显示 2 秒后给出检查结果。</li>
       <li><b>格网组合检查</b>：修改后关闭“编辑模式”时，工具会逐一检查当前行政区每个 05 格网是否保持“1 省级 + 1 市级 + 1 县级”组合；通过会提示，未通过可选择“继续编辑”或“强制保存”。</li>
       <li><b>一键调整样点</b>：对当前行政区自动查找因间距过近而冲突的 02 样点，从 03 候选池中选择同地类、与所有点保持 1500 m 以上的候选点进行批量替换，尽量优先落在原格网内。</li>
-      <li><b>目视检查模式</b>：逐点显示 100 m 圆环和右侧悬浮面板，人工勾选“林地重合、河流距离、侵蚀沟避让、田垄检查（仅水田）”；完成后自动做一次间距复核，通过后会询问是否导出成果。</li>
+      <li><b>目视检查模式</b>：仅依次检查本区 02 市、县级样点（省级点不进入检查队列），地图显示 100 m 圆环和右侧悬浮面板，人工勾选“林地重合、河流距离、侵蚀沟避让、田垄检查（仅水田）”；面板内可开启编辑模式，用 Shift+单击替换或 Space+单击移动当前问题点；完成后自动做一次间距复核，通过后会询问是否导出成果。</li>
+      <li><b>天地图</b>：首次打开自动使用内置浏览器端密钥并隐式加载底图，不再弹出密钥填写窗口；顶部“天地图”按钮仍可更换密钥或关闭底图。</li>
       <li><b>本地进度</b>：编辑、目视检查勾选会自动保存到浏览器本地（IndexedDB，失败时自动降级到 localStorage）。重新选择同一任务文件夹时，会提示是否恢复上次的编辑状态；每个行政区各保存一份进度。也可用“导出进度 / 导入进度”保存为 JSON 文件。</li>
     </ul>
     <h3>三、天地图底图</h3>
@@ -1465,7 +1467,7 @@ function init() {
     visualPanel: $('visualPanel'), visualProgress: $('visualProgress'), visualInfo: $('visualInfo'),
     chkForest: $('chkForest'), chkRiver: $('chkRiver'), chkGully: $('chkGully'), chkRidge: $('chkRidge'),
     lblRidge: $('lblRidge'), visualCheckNote: $('visualCheckNote'),
-    btnVisualPrev: $('btnVisualPrev'), btnVisualNext: $('btnVisualNext'),
+    btnVisualPrev: $('btnVisualPrev'), btnVisualNext: $('btnVisualNext'), btnVisualEditMode: $('btnVisualEditMode'),
     btnVisualFinish: $('btnVisualFinish'), btnVisualExit: $('btnVisualExit'),
     visualResultModal: $('visualResultModal'), visualResultTitle: $('visualResultTitle'), visualResultContent: $('visualResultContent'),
     btnVisualResultClose: $('btnVisualResultClose'), btnVisualResultEdit: $('btnVisualResultEdit'), btnVisualResultExport: $('btnVisualResultExport'),
@@ -1559,6 +1561,10 @@ function bindEvents() {
   els.btnAutoClose.addEventListener('click', function () { if (!app.autoRunning) els.autoModal.classList.add('hidden'); });
   els.btnVisualPrev.addEventListener('click', function () { visualStep(-1); });
   els.btnVisualNext.addEventListener('click', function () { visualStep(1); });
+  els.btnVisualEditMode.addEventListener('click', function () {
+    if (!app.visualMode) return;
+    setEditMode(!app.editMode);
+  });
   els.btnVisualExit.addEventListener('click', function () { setVisualMode(false); });
   els.btnVisualFinish.addEventListener('click', finishVisualCheck);
   [els.chkForest, els.chkRiver, els.chkGully, els.chkRidge].forEach(function (cb) {
@@ -1775,8 +1781,8 @@ function bindMapEvents() {
 }
 
 function handleMapClick(sx, sy, event) {
-  if (app.visualMode) {
-    toast('目视检查模式：请用右侧面板逐点检查并勾选，点击“退出目视检查”返回编辑。', 'warn');
+  if (app.visualMode && !app.editMode) {
+    toast('目视检查模式：可先开启编辑模式，再单击选择 02 点进行替换或移动。', 'warn');
     return;
   }
   if (!app.editMode) {
@@ -2759,7 +2765,7 @@ function refreshAll() {
     if (els.btnAutoAdjust) els.btnAutoAdjust.disabled = !app.regionData;
     if (els.btnVisualMode) els.btnVisualMode.disabled = !app.regionData;
     if (app.visualMode) {
-      app.visualPoints = app.ownPoints.slice();
+      app.visualPoints = app.ownPoints.filter(function (p) { return p.level === 'city' || p.level === 'county'; });
       if (app.visualIndex >= app.visualPoints.length) app.visualIndex = Math.max(0, app.visualPoints.length - 1);
       updateVisualPanel();
     }
@@ -2772,10 +2778,13 @@ function refreshAll() {
  * 编辑
  * ============================================================ */
 function setEditMode(on) {
-  if (on && app.visualMode) setVisualMode(false);
   app.editMode = !!on;
   els.btnEditMode.classList.toggle('active', app.editMode);
   els.editState.textContent = app.editMode ? '已开启' : '未开启';
+  if (els.btnVisualEditMode) {
+    els.btnVisualEditMode.textContent = app.editMode ? '退出编辑模式' : '开启编辑模式';
+    els.btnVisualEditMode.classList.toggle('active', app.editMode);
+  }
   if (!app.editMode) { clearSelection(); }
   else {
     setStatus('编辑模式：单击选择 02 点；Shift+单击 03 候选替换；按住 Space+单击移动。');
@@ -3037,6 +3046,7 @@ async function runAutoAdjust() {
       app.undoStack.push(action);
       app.redoStack = [];
       app.editLog.push(log);
+      app.visualChecks.delete(key);
       app.exportDirty = true;
       app.selected = null;
       app.candidateEval = null;
@@ -3098,15 +3108,18 @@ function setVisualMode(on) {
   if (on) {
     if (!app.regionData || !app.region) { toast('请先加载行政区。', 'warn'); return; }
     if (!app.editMode) { /* 保持当前状态 */ }
-    if (app.editMode) setEditMode(false);
     app.visualMode = true;
     app.visualPrevView = { cx: app.view.cx, cy: app.view.cy, scale: app.view.scale };
     els.btnVisualMode.classList.add('active');
     els.visualPanel.classList.remove('hidden');
-    app.visualPoints = app.ownPoints.slice();
+    app.visualPoints = app.ownPoints.filter(function (p) { return p.level === 'city' || p.level === 'county'; });
     app.visualIndex = 0;
     for (let i = 0; i < app.visualPoints.length; i++) {
       if (!isVisualPointComplete(app.visualPoints[i])) { app.visualIndex = i; break; }
+    }
+    if (els.btnVisualEditMode) {
+      els.btnVisualEditMode.textContent = app.editMode ? '退出编辑模式' : '开启编辑模式';
+      els.btnVisualEditMode.classList.toggle('active', app.editMode);
     }
     updateVisualPanel();
     centerVisualPoint();
@@ -3158,10 +3171,14 @@ function updateVisualPanel() {
   if (!els.visualPanel) return;
   const p = currentVisualPoint();
   if (!p) {
-    els.visualInfo.innerHTML = '<span class="bad">当前行政区没有可检查的样点。</span>';
+    els.visualInfo.innerHTML = '<span class="bad">当前行政区没有可检查的 02 市、县级样点（省级点不进入目视检查队列）。</span>';
     els.visualProgress.textContent = '0 / 0';
     [els.chkForest, els.chkRiver, els.chkGully, els.chkRidge].forEach(function (cb) { cb.checked = false; cb.disabled = true; });
     return;
+  }
+  if (els.btnVisualEditMode) {
+    els.btnVisualEditMode.textContent = app.editMode ? '退出编辑模式' : '开启编辑模式';
+    els.btnVisualEditMode.classList.toggle('active', app.editMode);
   }
   const f = visualFlags(p);
   const idx = app.visualIndex + 1;
@@ -3496,6 +3513,7 @@ function pushAction(action) {
   app.undoStack.push(action);
   app.redoStack = [];
   app.editLog.push(action.log);
+  app.visualChecks.delete(action.key);
   app.exportDirty = true;
   afterEditChange();
 }
@@ -3504,6 +3522,7 @@ function undo() {
   if (!action) return;
   if (action.before) app.patches.set(action.key, action.before);
   else app.patches.delete(action.key);
+  app.visualChecks.delete(action.key);
   const i = app.editLog.indexOf(action.log);
   if (i >= 0) app.editLog.splice(i, 1);
   app.redoStack.push(action);
@@ -3516,6 +3535,7 @@ function redo() {
   app.patches.set(action.key, action.after);
   app.undoStack.push(action);
   app.editLog.push(action.log);
+  app.visualChecks.delete(action.key);
   app.exportDirty = true;
   afterEditChange();
 }
@@ -3907,16 +3927,9 @@ function updateScalebar() {
 function initKeySettings() {
   let stored = '';
   try { stored = localStorage.getItem(LS_KEY) || ''; } catch (e) { /* ignore */ }
-  if (stored) app.tiandituKey = stored;
-  else {
-    els.keyInput.value = DEFAULT_TIANDITU_KEY;
-    els.keyOrigin.textContent = (location.origin && location.origin !== 'null') ? location.origin : location.href.replace(/[^/]*$/, '');
-    els.keyModal.classList.remove('hidden');
-  }
-  try {
-    const b = localStorage.getItem(LS_BASE);
-    if (b === '0') { els.lyrBase.checked = false; app.basemapEnabled = false; }
-  } catch (e) { /* ignore */ }
+  app.tiandituKey = stored || DEFAULT_TIANDITU_KEY;
+  els.lyrBase.checked = true;
+  app.basemapEnabled = true;
 }
 function openKeyModal() {
   els.keyInput.value = app.tiandituKey || DEFAULT_TIANDITU_KEY;
