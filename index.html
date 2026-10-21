@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.4</title>
+<title>环耕站布点调整&amp;检测工具 v2.5</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -85,6 +85,8 @@ button{font-family:inherit}
 #map.panning{cursor:grabbing}
 .map-toolbar{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;z-index:3}
 .map-toolbar button{width:30px;height:30px;border:1px solid #aab2bb;background:rgba(255,255,255,.95);border-radius:3px;font-size:16px;line-height:1;cursor:pointer;color:#344054;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+#btnLoadViewTiles{width:auto;min-width:44px;padding:0 8px;font-size:12px;white-space:nowrap}
+.map-toolbar button:disabled{opacity:.45;cursor:not-allowed}
 .map-toolbar button:hover{background:#fff;border-color:#8b95a1}
 .map-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(238,241,243,.82);z-index:4}
 .empty-card{background:#fff;border:1px solid var(--border);border-radius:6px;box-shadow:0 6px 20px rgba(16,24,40,.16);padding:20px 24px;max-width:500px;text-align:left}
@@ -195,7 +197,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.4</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.5</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -277,7 +279,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <label class="chk"><input type="checkbox" id="lyrCircle"><span class="sym sym-circle"></span>1.5 km 参考圈</label>
       <label class="chk"><input type="checkbox" id="lyrBase" disabled><span class="sym sym-base"></span>天地图影像（仅目视检查）</label>
       <label class="chk" style="display:none"><input type="checkbox" id="lyrLabel">天地图注记</label>
-      <div class="tiny" id="basemapState" style="margin:2px 0 4px;color:#8a949e">底图未启用（进入目视检查后按目标 200 m 加载）</div>
+      <div class="tiny" id="basemapState" style="margin:2px 0 4px;color:#8a949e">底图未启用（进入目视检查后按点加载默认视野一次）</div>
       <label class="chk"><input type="checkbox" id="lyrMesh" checked>网格线</label>
     </div>
   </aside>
@@ -383,14 +385,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.4 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.5 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 帮助 -->
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.4 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v2.5 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -423,7 +425,8 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
     <h3>三、天地图底图</h3>
     <ul>
       <li>底图默认关闭；间距调整阶段强制不请求、不加载、不存储任何瓦片，避免消耗 Key 额度。</li>
-      <li>进入目视检查后，只为当前目标样点 200 m 外圈范围内的瓦片加载影像，不铺满屏幕、不额外加载注记；可用地图左上角“全图”按钮手动加载当前视野全部影像（会额外消耗额度）。</li>
+      <li>进入目视检查后，每切换到一个目标点，只加载该点在默认缩放下的当前视野影像一次；不加载注记，不随缩放或平移自动加载。</li>
+      <li>可用地图左上角“全图”按钮手动重新加载当前视野全部影像（会消耗额度）；缩放后如需要继续查看，请再次点击“全图”。</li>
       <li>不自动预加载、不持久化存储瓦片；可填写多个 Key，按列表从上到下使用，当前 Key 限流/权限/网络报错时自动静默切换下一个。全部 Key 不可用时暂停 60 秒并提示，点击 ↻ 可立即重试。</li>
       <li>密钥可能绑定了域名白名单（如 jinguo0201.github.io）；本地双击打开或域名不符时底图可能加载失败，不影响检查和编辑。</li>
       <li>同一 Key 并发/高频请求可能触发天地图限流（HTTP 429，code 302010）；多 Key 可缓解但不能绕过天地图服务条款。</li>
@@ -452,7 +455,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
     </div>
     <div class="tiny" id="keyStatus" style="margin:6px 0;color:#475467">底图状态：未启用</div>
     <div class="note" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
-      <span>底图加载：仅目视检查目标 200 m 范围；可用地图左上角“全图”手动加载当前视野。不持久化存储瓦片。</span>
+      <span>底图加载：目视检查每切换一个点，加载默认缩放视野一次；缩放后需点“全图”重新加载。不持久化存储瓦片。</span>
       <button id="btnClearCache" class="btn mini" style="display:none">清除旧缓存</button>
     </div>
     <div class="modal-actions">
@@ -608,14 +611,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v2.4 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v2.5 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.4';
+const TOOL_VERSION = 'v2.5';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1534,10 +1537,11 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v2.4 —— 界面与交互
+ * 环耕站布点调整与检测工具 v2.5 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
@@ -1554,9 +1558,9 @@ const TILE_TTL_IMG = 30 * 24 * 3600 * 1000;
 const TILE_TTL_LABEL = 7 * 24 * 3600 * 1000;
 const LS_ANNOUNCEMENT = 'spacingEditTool.announcementSeen';
 const ANNOUNCEMENT_ITEMS = [
-  '底图改为按需加载：间距调整阶段强制不请求、不加载、不存储任何瓦片；只有进入目视检查后，才按当前目标样点 200 m 外圈范围加载影像。',
-  '地图左上角新增“全图”按钮：仅在需要时手动加载当前视野全部影像；不再自动预加载、不持久化存储瓦片，显著减少天地图 Key 消耗。',
-  '多 Key 顺序切换保留：当前 Key 限流/报错时静默切换下一个；全部不可用时暂停 60 秒并提示。'
+  '目视检查底图改为按点加载：每切换到一个目标样点，只加载该点在默认缩放状态下当前视野内的影像一次；缩放、平移后不自动加载。',
+  '“全图”按钮可手动重新加载当前视野全部影像，并修正按钮文字超出范围的问题；间距调整阶段仍强制不加载任何瓦片。',
+  '多 Key 顺序切换保留；不自动预加载、不持久化存储瓦片，避免快速消耗额度。'
 ];
 
 const app = {
@@ -1883,7 +1887,7 @@ function bindEvents() {
   els.lyrBase.addEventListener('change', function () {
     if (els.lyrBase.checked && !inspectionActive()) {
       els.lyrBase.checked = false;
-      toast('间距调整阶段不加载底图；进入目视检查后才会按目标点 200 m 范围加载。', 'warn');
+      toast('间距调整阶段不加载底图；进入目视检查后才会在每个目标点加载默认视野一次。', 'warn');
       return;
     }
     if (els.lyrBase.checked && !app.tiandituKeys.length) {
@@ -1897,7 +1901,10 @@ function bindEvents() {
       return;
     }
     app.viewTilesSnapshot = null;
-    if (els.lyrBase.checked) resetTileCache();
+    if (els.lyrBase.checked) {
+      resetTileCache();
+      if (inspectionActive()) app.viewTilesSnapshot = makeViewTileSnapshot();
+    }
     updateKeyAndCacheUi();
     invalidate();
   });
@@ -1906,7 +1913,11 @@ function bindEvents() {
   els.btnFit.addEventListener('click', function () { fitView(); invalidate(); });
   els.btnRefreshTiles.addEventListener('click', function () {
     resetTileCache();
-    toast('已清空当前会话底图缓存，正在重新请求目标范围瓦片…', 'info');
+    if (inspectionActive() && app.tiandituKeys.length) {
+      app.viewTilesSnapshot = makeViewTileSnapshot();
+      els.lyrBase.checked = true;
+    }
+    toast('已清空当前会话底图缓存，正在重新请求当前视野影像…', 'info');
     invalidate();
   });
   els.btnLoadViewTiles.addEventListener('click', function () {
@@ -3473,6 +3484,7 @@ function centerVisualPoint() {
   const radiusWorld = metersToWorld(100, p.y);
   const size = mapSize();
   app.view.scale = Math.min(size.w, size.h) * 0.24 / Math.max(1e-9, radiusWorld);
+  app.viewTilesSnapshot = makeViewTileSnapshot();
   invalidate();
 }
 function updateVisualPanel() {
@@ -3619,6 +3631,7 @@ function centerPendingPoint() {
   const radiusWorld = metersToWorld(100, p.y);
   const size = mapSize();
   app.view.scale = Math.min(size.w, size.h) * 0.24 / Math.max(1e-9, radiusWorld);
+  app.viewTilesSnapshot = makeViewTileSnapshot();
   invalidate();
 }
 function pendingAllDone() {
@@ -4589,14 +4602,14 @@ function updateKeyAndCacheUi() {
   if (!els) return;
   const n = app.tiandituKeys.length;
   if (els.basemapState) {
-    if (!inspectionActive()) els.basemapState.textContent = '底图未启用（进入目视检查后按目标 200 m 加载）';
+    if (!inspectionActive()) els.basemapState.textContent = '底图未启用（进入目视检查后每个点加载默认视野一次）';
     else if (!els.lyrBase || !els.lyrBase.checked || !n) els.basemapState.textContent = '目视检查：底图关闭';
     else if (app.keysAllFailedUntil > Date.now()) els.basemapState.textContent = '底图：所有 Key 暂不可用，稍后自动重试';
     else els.basemapState.textContent = '底图：Key ' + (app.keyIndex + 1) + ' / ' + n + ' · ' + keyStatusText(app.keyIndex);
   }
   if (els.keyStatus) {
-    if (!n) els.keyStatus.textContent = '底图状态：未配置 Key（进入目视检查时按需加载）';
-    else if (!inspectionActive()) els.keyStatus.textContent = '底图状态：已保存 ' + n + ' 个 Key；进入目视检查后按目标 200 m 加载';
+    if (!n) els.keyStatus.textContent = '底图状态：未配置 Key（进入目视检查时按点加载默认视野）';
+    else if (!inspectionActive()) els.keyStatus.textContent = '底图状态：已保存 ' + n + ' 个 Key；进入目视检查后每个点加载默认视野一次';
     else if (app.keysAllFailedUntil > Date.now()) els.keyStatus.textContent = '底图状态：所有 Key 暂不可用，' + Math.ceil((app.keysAllFailedUntil - Date.now()) / 1000) + ' 秒后重试';
     else els.keyStatus.textContent = '底图状态：当前使用第 ' + (app.keyIndex + 1) + ' / ' + n + ' 个 Key · ' + keyStatusText(app.keyIndex);
   }
@@ -4704,7 +4717,7 @@ function initKeySettings() {
   if (els.btnLoadViewTiles) els.btnLoadViewTiles.disabled = true;
   app.viewTilesSnapshot = null;
   updateKeyAndCacheUi();
-  if (!list.length) showBanner('天地图底图未启用：请点击“底图设置”填入你自己的天地图浏览器端 tk；进入目视检查后才会按目标点 200 m 范围加载。', 'info');
+  if (!list.length) showBanner('天地图底图未启用：请点击“底图设置”填入你自己的天地图浏览器端 tk；进入目视检查后才会在每个目标点加载默认视野一次。', 'info');
   /* 不再持久化存储任何瓦片，启动时删除旧版本缓存 */
   try { indexedDB.deleteDatabase(TILE_DB_NAME); } catch (e) { /* ignore */ }
 }
@@ -4744,8 +4757,12 @@ function saveKey() {
   els.lyrBase.disabled = !inspectionActive();
   els.keyModal.classList.add('hidden');
   resetTileCache();
+  if (inspectionActive()) {
+    els.lyrBase.checked = true;
+    app.viewTilesSnapshot = makeViewTileSnapshot();
+  }
   updateKeyAndCacheUi();
-  toast('已保存 ' + keys.length + ' 个天地图 Key；进入目视检查后按目标 200 m 范围启用底图。', 'ok');
+  toast('已保存 ' + keys.length + ' 个天地图 Key；进入目视检查后每个目标点加载默认视野一次。', 'ok');
   invalidate();
 }
 
@@ -5026,7 +5043,7 @@ function enableInspectionBasemap() {
   if (!els) return;
   els.lyrBase.disabled = false;
   els.lyrBase.checked = app.tiandituKeys.length > 0;
-  els.lyrBase.title = '目视检查时仅加载目标点 200 m 范围影像';
+  els.lyrBase.title = '目视检查时每个点加载默认视野一次；缩放后不自动加载，需点“全图”';
   els.lyrLabel.checked = false;
   els.lyrLabel.disabled = true;
   els.btnLoadViewTiles.disabled = !app.tiandituKeys.length;
@@ -5108,14 +5125,10 @@ function makeViewTileSnapshot() {
 function drawTiles(ctx, size) {
   const scale = app.view.scale;
   if (!(scale > 0) || !inspectionActive()) return;
-  const zNow = tileZForScale(scale);
-  let z = zNow;
-  let coords = focusTileCoords(zNow);
-  if (app.viewTilesSnapshot && app.viewTilesSnapshot.z === zNow) {
-    z = app.viewTilesSnapshot.z;
-    coords = app.viewTilesSnapshot.coords;
-  }
-  if (!coords.length) { els.attribution.style.display = 'none'; return; }
+  const snap = app.viewTilesSnapshot;
+  if (!snap || !snap.coords || !snap.coords.length) { els.attribution.style.display = 'none'; return; }
+  const z = snap.z;
+  const coords = snap.coords;
   const n = Math.pow(2, z);
   const tileWorld = (2 * Math.PI * MERC_R) / n;
   let drawn = 0;
@@ -5584,9 +5597,12 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
+
 </script>
 </body>
 </html>
+
 
 
 
