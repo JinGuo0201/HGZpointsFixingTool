@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.2</title>
+<title>环耕站布点调整&amp;检测工具 v2.3</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -195,7 +195,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.2</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.3</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -277,6 +277,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <label class="chk"><input type="checkbox" id="lyrCircle"><span class="sym sym-circle"></span>1.5 km 参考圈</label>
       <label class="chk"><input type="checkbox" id="lyrBase"><span class="sym sym-base"></span>天地图影像底图</label>
       <label class="chk"><input type="checkbox" id="lyrLabel" checked>天地图注记</label>
+      <div class="tiny" id="basemapState" style="margin:2px 0 4px;color:#8a949e">底图未启用</div>
       <label class="chk"><input type="checkbox" id="lyrMesh" checked>网格线</label>
     </div>
   </aside>
@@ -381,14 +382,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.2 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.3 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 帮助 -->
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.2 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v2.3 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -402,6 +403,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li><b>01 省级样点强制锁定</b>：即使在编辑模式下，也不能替换、移动或选中省级点；单击省级点会提示“强制锁定”。</li>
       <li>只有 02 图层可编辑；03/05 只读。</li>
       <li>Shift+单击替换：候选点必须与问题点地类一致，且与当前所有样点（含相邻行政区）间距严格大于 1500 m；不合格候选点会变灰并禁止选择。</li>
+      <li><b>候选点格网优先</b>：选中问题点后，若同一 05 格网内存在合格候选，只显示同格网候选；同格网没有可替换候选时，才开放其他格网候选，并弹出横幅提示，跨格网替换可能影响格网组合。</li>
       <li>Space+单击移动：以当前点位为圆心、20 m 为半径显示可操作圆环；光标超出圆环会自动限制在圆环边界；移动后同样校验 1500 m 间距。</li>
       <li>每次修改都可撤销/重做；导出前可随时继续调整，原文件始终不变。</li>
       <li>存在“未导出”的修改时切换行政区或任务组，会弹出确认窗口；确认切换将丢弃未导出的内存修改。</li>
@@ -409,7 +411,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li><b>格网组合检查</b>：修改后关闭“编辑模式”时，工具会逐一检查当前行政区每个 05 格网是否保持“1 省级 + 1 市级 + 1 县级”组合；通过会提示，未通过可选择“继续编辑”或“强制保存”。</li>
       <li><b>一键调整样点</b>：对当前行政区自动查找因间距过近而冲突的 02 样点，从 03 候选池中选择同地类、与所有点保持 1500 m 以上的候选点进行批量替换，尽量优先落在原格网内。</li>
       <li><b>目视检查模式</b>：仅依次检查本区 02 市、县级样点（省级点不进入检查队列），地图同时显示 100 m 蓝色圆环和 200 m 橙色指示圈（均为高透明度），并显示右侧悬浮面板，人工勾选“林地重合、河流距离、侵蚀沟避让、田垄检查（仅水田）”；面板内可开启编辑模式，用 Shift+单击替换或 Space+单击移动当前问题点；目视检查中按住 Space 移动时保持当前视野，并在点位上显示黄色透明的 20 m 瞄准圈，不跳转到 20 m 放大视图；完成后自动做一次间距复核，通过后会询问是否导出成果。</li>
-      <li><b>天地图底图</b>：仅使用 Web 墨卡托影像 img_w + 注记 cia_w，与当前地图视图和 WGS84 样点坐标一致；首次使用不预填密钥，需点击“底图设置”填入自己的天地图 tk 后才会启用。经纬度投影 img_c 与 Web 墨卡托视图不直接兼容，工具不会自动切换。</li>
+      <li><b>天地图底图</b>：仅使用 Web 墨卡托影像 img_w + 注记 cia_w，与当前地图视图和 WGS84 样点坐标一致；首次使用不预填密钥，需在“底图设置”中填写自己的天地图 tk 后才会启用。支持填写多个 Key 按顺序自动切换，并使用 IndexedDB 持久缓存瓦片（上限 450 MB）；经纬度投影 img_c 与 Web 墨卡托视图不直接兼容，工具不会自动切换。</li>
       <li><b>本地进度</b>：编辑、目视检查勾选会自动保存到浏览器本地（IndexedDB，失败时自动降级到 localStorage）。重新选择同一任务文件夹时，会提示是否恢复上次的编辑状态；每个行政区各保存一份进度。也可用“导出进度 / 导入进度”保存为 JSON 文件。</li>
       <li><b>导出前目视检查校验</b>：点击“导出成果”时，若本区仍有 02 市、县级点存在未勾选的目视检查项，会阻止导出并弹出提示；可打开独立的“待补充目视检查”悬浮面板，逐点补充完成后合并回本次修改点集继续导出。</li>
       <li><b>导出格式与命名</b>：导出结果同时包含 SHP 五件套和市县级样点 KML（可导入奥维等软件）；ZIP 文件名与“导出到文件夹”的文件夹名称均包含行政区名称。</li>
@@ -419,10 +421,11 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
     </ul>
     <h3>三、天地图底图</h3>
     <ul>
-      <li>工具支持天地图影像/注记（WMTS）。首次使用需填写浏览器端密钥，保存在本机浏览器缓存中。</li>
+      <li>工具支持天地图影像/注记（WMTS）。首次使用不预填密钥，需在“底图设置”中填写自己的浏览器端 tk 后才会启用。</li>
+      <li>可填写多个 Key，按列表从上到下使用；当前 Key 限流/权限/网络报错时自动静默切换下一个。全部 Key 不可用时暂停 60 秒并提示，点击 ↻ 可立即重试。</li>
+      <li>瓦片会持久缓存到本机 IndexedDB，上限 450 MB，按最近使用自动淘汰；缓存命中不会请求天地图，也不消耗 Key 额度。可在“底图设置”查看用量并清空缓存。</li>
       <li>密钥可能绑定了域名白名单（如 jinguo0201.github.io）；本地双击打开或域名不符时底图可能加载失败，不影响检查和编辑。</li>
-      <li>同一密钥并发/高频请求可能触发天地图限流（HTTP 429，code 302010），即使账户额度未用完也会暂时无法加载底图；请稍后点击地图左上角 ↻ 重试，或更换为独立的浏览器端密钥。</li>
-      <li>本项目约定的浏览器端密钥已预填；如无法加载，请检查网络、密钥有效期与白名单。</li>
+      <li>同一 Key 并发/高频请求可能触发天地图限流（HTTP 429，code 302010）；多 Key 可缓解但不能绕过天地图服务条款。</li>
       <li>建议在 HTTPS 页面（如 GitHub Pages）使用，以获得完整的地图加载能力。</li>
     </ul>
     <h3>四、成果与安全</h3>
@@ -437,19 +440,22 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <!-- 天地图密钥 -->
 <div id="keyModal" class="modal hidden">
-  <div class="modal-card small">
+  <div class="modal-card">
     <h2>天地图底图设置</h2>
-    <div class="muted">首次使用不预填密钥，必须填入你自己的天地图浏览器端 tk 才会加载底图；密钥只保存在本机浏览器，不会上传。</div>
-    <div class="form-row">
-      <label>天地图浏览器端密钥（tk）</label>
-      <input id="keyInput" type="text" spellcheck="false" placeholder="请输入你自己的天地图 tk">
-    </div>
+    <div class="muted">首次使用不预填密钥，必须填入你自己的天地图浏览器端 tk 才会加载底图；可填写多个 Key，按从上到下的顺序使用，当前 Key 限流/报错时静默切换下一个。密钥只保存在本机浏览器，不会上传。</div>
+    <div id="keyRows"></div>
+    <button id="btnAddKey" class="btn mini" style="margin:4px 0 10px">＋ 添加一个 Key</button>
     <div class="note">
       当前页面来源：<b id="keyOrigin"></b><br>
-      已在天地图控制台申请的白名单域名示例：<b>jinguo0201.github.io</b>。请确认你的 tk 已配置当前域名；不加载底图不影响检查与编辑。
+      已在天地图控制台申请的白名单域名示例：<b>jinguo0201.github.io</b>。请确认每个 tk 都已配置当前域名；不加载底图不影响检查与编辑。
+    </div>
+    <div class="tiny" id="keyStatus" style="margin:6px 0;color:#475467">底图状态：未启用</div>
+    <div class="note" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+      <span>底图瓦片缓存：<b id="cacheStatus">正在统计…</b></span>
+      <button id="btnClearCache" class="btn mini">清空底图缓存</button>
     </div>
     <div class="modal-actions">
-      <button id="btnKeyClear" class="btn">清除密钥</button>
+      <button id="btnKeyClear" class="btn">清除全部 Key</button>
       <button id="btnKeySkip" class="btn">暂不启用底图</button>
       <button id="btnKeySave" class="btn btn-primary">保存并启用</button>
     </div>
@@ -601,14 +607,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v2.2 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v2.3 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.2';
+const TOOL_VERSION = 'v2.3';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1525,19 +1531,30 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v2.2 —— 界面与交互
+ * 环耕站布点调整与检测工具 v2.3 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
 const LS_KEY = 'spacingEditTool.tiandituKey';
+const LS_KEYS = 'spacingEditTool.tiandituKeys';
 const LS_BASE = 'spacingEditTool.basemap';
+const TILE_DB_NAME = 'hgz_tile_cache_v1';
+const TILE_DB_VERSION = 1;
+const TILE_STORE = 'tiles';
+const TILE_CACHE_MAX = 450 * 1024 * 1024;
+const TILE_CACHE_TARGET = 405 * 1024 * 1024;
+const TILE_MEM_MAX = 128;
+const TILE_TTL_IMG = 30 * 24 * 3600 * 1000;
+const TILE_TTL_LABEL = 7 * 24 * 3600 * 1000;
 const LS_ANNOUNCEMENT = 'spacingEditTool.announcementSeen';
 const ANNOUNCEMENT_ITEMS = [
-  '目视检查新增 200 m 橙色指示圈：与 100 m 蓝色圆环同时显示，两个圆均为高透明度，避免遮挡卫星影像；目视检查中的 20 m 移动瞄准圈保持不变。',
-  '新增任务分解表样点个数一致性检查：选择文件夹、切换行政区或导出时，实际省/市/县样点个数与《附件1 任务分解表》预期个数比对；不一致会弹窗提醒，但仍允许编辑、检查和导出。'
+  '底图设置支持填写多个天地图 Key：优先使用第 1 个，当前 Key 限流/报错时自动静默切换到下一个，全部不可用时暂停 60 秒并提示。',
+  '新增底图瓦片持久缓存：使用 IndexedDB 缓存已加载瓦片，上限 450 MB，按最近使用自动淘汰；缓存命中不消耗 Key 额度，切换 Key 或刷新页面后仍可复用。',
+  '编辑/目视检查选中样点时，优先显示同一 05 格网内的候选点；同格网没有可替换候选时，才开放其他格网候选并弹出横幅提示。'
 ];
 
 const app = {
@@ -1562,6 +1579,9 @@ const app = {
   hover: null, hoverIsCandidate: false,
   tileCache: new Map(), tileErrors: 0, tileLoaded: 0, tileErrorNotified: false,
   tiandituKey: '', basemapEnabled: false,
+  tiandituKeys: [], keyIndex: 0, keyStatuses: [], keysAllFailedUntil: 0,
+  tileDb: null, cacheBytes: 0, cacheReady: false, cacheEvicting: false,
+  cacheHits: 0, cacheMisses: 0, tileFetchUnsupported: false,
   regionCountChecks: new Map(), countMismatchPending: null, countValidateAllPromise: null, countValidatePromises: new Map(),
   pendingExport: null, loadToken: 0, refreshToken: 0,
   drag: null, moved: false,
@@ -1626,7 +1646,8 @@ function init() {
     lyrPool: $('lyrPool'), lyrGrid: $('lyrGrid'), lyrOther: $('lyrOther'),
     lyrCircle: $('lyrCircle'), lyrBase: $('lyrBase'), lyrLabel: $('lyrLabel'), lyrMesh: $('lyrMesh'),
     helpModal: $('helpModal'), btnCloseHelp: $('btnCloseHelp'),
-    keyModal: $('keyModal'), keyInput: $('keyInput'), keyOrigin: $('keyOrigin'),
+    keyModal: $('keyModal'), keyRows: $('keyRows'), btnAddKey: $('btnAddKey'), keyOrigin: $('keyOrigin'),
+    keyStatus: $('keyStatus'), cacheStatus: $('cacheStatus'), btnClearCache: $('btnClearCache'), basemapState: $('basemapState'),
     btnKeySave: $('btnKeySave'), btnKeySkip: $('btnKeySkip'), btnKeyClear: $('btnKeyClear'),
     replaceModal: $('replaceModal'), replaceContent: $('replaceContent'),
     btnReplaceCancel: $('btnReplaceCancel'), btnReplaceConfirm: $('btnReplaceConfirm'),
@@ -1787,14 +1808,34 @@ function bindEvents() {
   els.btnCloseHelp.addEventListener('click', function () { els.helpModal.classList.add('hidden'); });
   els.helpModal.addEventListener('click', function (e) { if (e.target === els.helpModal) els.helpModal.classList.add('hidden'); });
   els.btnKeySave.addEventListener('click', saveKey);
-  els.btnKeySkip.addEventListener('click', function () { els.keyModal.classList.add('hidden'); els.lyrBase.checked = false; resetTileCache(); invalidate(); });
+  els.btnAddKey.addEventListener('click', function () { addKeyRow(''); });
+  els.keyRows.addEventListener('click', function (e) {
+    const btn = e.target && e.target.closest ? e.target.closest('[data-key-remove]') : null;
+    if (!btn) return;
+    const row = btn.closest('.key-row');
+    if (row) row.remove();
+    if (!els.keyRows.querySelector('.key-row')) addKeyRow('');
+  });
+  els.btnClearCache.addEventListener('click', async function () {
+    els.btnClearCache.disabled = true;
+    try { await clearTileDiskCache(); toast('已清空底图瓦片缓存。', 'ok'); }
+    catch (e) { toast('清空缓存失败：' + (e && e.message ? e.message : e), 'err'); }
+    finally { els.btnClearCache.disabled = false; updateKeyAndCacheUi(); }
+  });
+  els.btnKeySkip.addEventListener('click', function () { els.keyModal.classList.add('hidden'); els.lyrBase.checked = false; resetTileCache(); updateKeyAndCacheUi(); invalidate(); });
   els.btnKeyClear.addEventListener('click', function () {
+    app.tiandituKeys = [];
     app.tiandituKey = '';
-    if (els.keyInput) els.keyInput.value = '';
-    try { localStorage.removeItem(LS_KEY); } catch (e) { /* ignore */ }
+    app.keyStatuses = [];
+    app.keyIndex = 0;
+    app.keysAllFailedUntil = 0;
+    try { localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_KEYS); } catch (e) { /* ignore */ }
+    els.keyRows.innerHTML = '';
+    addKeyRow('');
     els.lyrBase.checked = false;
     els.keyModal.classList.add('hidden');
     resetTileCache();
+    updateKeyAndCacheUi();
     showBanner('底图已关闭：请在“底图设置”中填入你自己的天地图 tk 后再启用。', 'info');
     invalidate();
   });
@@ -1836,7 +1877,7 @@ function bindEvents() {
     if (cb) cb.addEventListener('change', invalidate);
   });
   els.lyrBase.addEventListener('change', function () {
-    if (els.lyrBase.checked && !app.tiandituKey) {
+    if (els.lyrBase.checked && !app.tiandituKeys.length) {
       els.lyrBase.checked = false;
       openKeyModal();
       return;
@@ -1847,6 +1888,7 @@ function bindEvents() {
       return;
     }
     if (els.lyrBase.checked) resetTileCache();
+    updateKeyAndCacheUi();
     invalidate();
   });
   els.btnZoomIn.addEventListener('click', function () { zoomAtCenter(1.25); });
@@ -3806,11 +3848,35 @@ async function evaluateCandidatesIfAny() {
     const evalRes = evaluateCandidates(app.candidates, sel, app.current, app.crs);
     if (!app.selected || app.selected !== sel) { /* stale */ }
     app.candidateEval = evalRes;
+    const selGrid = findGridIndexForPoint(sel);
     const rows = evalRes.results.map(function (r, i) {
-      return { idx: i, eligible: r.eligible, reasons: r.reasons, cand: app.candidates[i], dist: distanceBetween(app.candidates[i], sel, app.crs) };
-    }).sort(function (a, b) { return a.dist - b.dist; });
-    app.candidateDisplay = rows.slice(0, 160);
-    const nearestEligible = rows.find(function (x) { return x.eligible; });
+      const cand = app.candidates[i];
+      const candGrid = findGridIndexForPoint(cand);
+      return {
+        idx: i, eligible: r.eligible, reasons: r.reasons, cand: cand,
+        dist: distanceBetween(cand, sel, app.crs),
+        sameGrid: selGrid >= 0 && candGrid === selGrid
+      };
+    }).sort(function (a, b) {
+      if (a.sameGrid !== b.sameGrid) return a.sameGrid ? -1 : 1;
+      return a.dist - b.dist;
+    });
+    const sameGridRows = rows.filter(function (x) { return x.sameGrid; });
+    const sameGridEligible = sameGridRows.filter(function (x) { return x.eligible; });
+    let displayRows = rows;
+    let gridNotice = '';
+    if (selGrid >= 0) {
+      if (sameGridEligible.length) {
+        displayRows = sameGridRows;
+        gridNotice = '同格网内合格候选 ' + sameGridEligible.length + ' 个，仅显示该 05 格网内的候选点。';
+      } else {
+        displayRows = rows.filter(function (x) { return !x.sameGrid; });
+        gridNotice = '当前 05 格网内没有可替换的 03 候选点，已开放其他格网候选点。';
+        showBanner('当前问题点所在的 05 格网内没有可替换的 03 候选点，已开放其他格网候选；跨格网替换可能影响格网组合，请谨慎选择。', 'warn');
+      }
+    }
+    app.candidateDisplay = displayRows.slice(0, 160);
+    const nearestEligible = app.candidateDisplay.find(function (x) { return x.eligible; });
     if (els.btnReplaceNearest) {
       els.btnReplaceNearest.disabled = !nearestEligible;
       els.btnReplaceNearest.textContent = nearestEligible
@@ -3820,7 +3886,8 @@ async function evaluateCandidatesIfAny() {
     const eligible = evalRes.results.filter(function (r) { return r.eligible; }).length;
     els.candidateStats.innerHTML = '03 候选池：共 ' + app.candidates.length + ' 个；' +
       '<span class="ok">合格 ' + eligible + '</span> / <span class="bad">不合格 ' + (app.candidates.length - eligible) + '</span>' +
-      '<br><span class="edit-idle">地图显示最近 ' + app.candidateDisplay.length + ' 个候选；Shift+单击合格候选点执行替换。</span>';
+      (gridNotice ? '<br><span class="' + (sameGridEligible.length ? 'ok' : 'bad') + '">' + escapeHtml(gridNotice) + '</span>' : '') +
+      '<br><span class="edit-idle">地图显示 ' + app.candidateDisplay.length + ' 个候选；Shift+单击合格候选点执行替换。</span>';
     invalidate();
   } catch (e) {
     els.candidateStats.innerHTML = '<span class="bad">候选评估失败：' + escapeHtml(e.message) + '</span>';
@@ -4163,7 +4230,7 @@ function draw() {
   ctx.fillRect(0, 0, size.w, size.h);
   const hasData = app.ownPoints.length > 0;
   if (!hasData) { updateMapEmpty(); return; }
-  if (els.lyrBase.checked && app.crsMode === 'geo' && app.tiandituKey) drawTiles(ctx, size);
+  if (els.lyrBase.checked && app.crsMode === 'geo' && app.tiandituKeys.length) drawTiles(ctx, size);
   else els.attribution.style.display = 'none';
   if (els.lyrMesh.checked) drawMesh(ctx, size);
   if (els.lyrGrid.checked) drawGridWorld(ctx);
@@ -4464,74 +4531,467 @@ function updateScalebar() {
 /* ============================================================
  * 天地图底图
  * ============================================================ */
-function initKeySettings() {
-  let stored = '';
-  try { stored = localStorage.getItem(LS_KEY) || ''; } catch (e) { /* ignore */ }
-  /* 旧版本曾内置共享默认 tk；首次迁移时清除，避免继续使用公共密钥 */
-  if (stored && hashString(stored) === LEGACY_DEFAULT_TIANDITU_HASH) {
-    stored = '';
-    try { localStorage.removeItem(LS_KEY); } catch (e) { /* ignore */ }
+/* ---------- 天地图 Key 列表 / 瓦片缓存 ---------- */
+function formatBytes(n) {
+  if (!isFinite(n) || n <= 0) return '0 MB';
+  if (n >= 1024 * 1024 * 1024) return (n / 1024 / 1024 / 1024).toFixed(1) + ' GB';
+  return (n / 1024 / 1024).toFixed(0) + ' MB';
+}
+function uniqueKeys(list) {
+  const seen = new Set(), out = [];
+  (Array.isArray(list) ? list : []).forEach(function (k) {
+    k = String(k == null ? '' : k).trim();
+    if (!k || seen.has(k)) return;
+    seen.add(k); out.push(k);
+  });
+  return out;
+}
+function keyStatusText(i) {
+  const st = app.keyStatuses[i];
+  if (!st) return '待用';
+  if (st.cooldownUntil && st.cooldownUntil > Date.now()) {
+    const sec = Math.ceil((st.cooldownUntil - Date.now()) / 1000);
+    return '冷却 ' + sec + 's';
   }
-  app.tiandituKey = stored;
-  app.basemapEnabled = !!stored;
-  els.lyrBase.checked = !!stored;
-  if (!stored) showBanner('天地图底图未启用：请点击“底图设置”填入你自己的天地图浏览器端 tk。不加载底图不影响检查与编辑。', 'info');
+  return st.lastError ? '可用（上次：' + st.lastError + '）' : '正常';
+}
+function updateKeyAndCacheUi() {
+  if (!els) return;
+  const n = app.tiandituKeys.length;
+  if (els.basemapState) {
+    if (!els.lyrBase || !els.lyrBase.checked || !n) els.basemapState.textContent = '底图未启用';
+    else if (app.keysAllFailedUntil > Date.now()) els.basemapState.textContent = '底图：所有 Key 暂不可用，稍后自动重试';
+    else els.basemapState.textContent = '底图：Key ' + (app.keyIndex + 1) + ' / ' + n + ' · ' + keyStatusText(app.keyIndex);
+  }
+  if (els.keyStatus) {
+    if (!n) els.keyStatus.textContent = '底图状态：未启用（请在上面添加自己的天地图 tk）';
+    else if (app.keysAllFailedUntil > Date.now()) els.keyStatus.textContent = '底图状态：所有 Key 暂不可用，' + Math.ceil((app.keysAllFailedUntil - Date.now()) / 1000) + ' 秒后重试';
+    else els.keyStatus.textContent = '底图状态：当前使用第 ' + (app.keyIndex + 1) + ' / ' + n + ' 个 Key · ' + keyStatusText(app.keyIndex);
+  }
+  if (els.cacheStatus) {
+    if (!app.cacheReady) els.cacheStatus.textContent = '正在统计…';
+    else els.cacheStatus.textContent = formatBytes(app.cacheBytes) + ' / 450 MB · 命中 ' + app.cacheHits + ' / 请求 ' + (app.cacheHits + app.cacheMisses);
+  }
+}
+function addKeyRow(value) {
+  if (!els || !els.keyRows) return;
+  const row = document.createElement('div');
+  row.className = 'key-row';
+  row.style.cssText = 'display:flex;gap:6px;align-items:center;margin:5px 0';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'key-row-input';
+  input.spellcheck = false;
+  input.placeholder = '天地图浏览器端 tk';
+  input.value = value || '';
+  input.style.flex = '1';
+  const del = document.createElement('button');
+  del.type = 'button';
+  del.className = 'btn mini';
+  del.setAttribute('data-key-remove', '1');
+  del.textContent = '删除';
+  row.appendChild(input); row.appendChild(del);
+  els.keyRows.appendChild(row);
+}
+function renderKeyRows(keys) {
+  if (!els || !els.keyRows) return;
+  els.keyRows.innerHTML = '';
+  const list = Array.isArray(keys) ? keys : [];
+  if (!list.length) addKeyRow('');
+  else list.forEach(function (k) { addKeyRow(k); });
+}
+function collectKeyRows() {
+  if (!els || !els.keyRows) return [];
+  return uniqueKeys(Array.prototype.map.call(els.keyRows.querySelectorAll('.key-row-input'), function (inp) { return inp.value; }));
+}
+function currentActiveKey() { return app.tiandituKeys[app.keyIndex] || ''; }
+function keyUsable(i) {
+  const st = app.keyStatuses[i];
+  return !!app.tiandituKeys[i] && (!st || !st.cooldownUntil || st.cooldownUntil <= Date.now());
+}
+function advanceToUsableKey() {
+  const n = app.tiandituKeys.length;
+  for (let step = 0; step < n; step++) {
+    const i = (app.keyIndex + step) % n;
+    if (keyUsable(i)) { app.keyIndex = i; app.tiandituKey = app.tiandituKeys[i]; return true; }
+  }
+  return false;
+}
+function markKeyFailure(index, message, cooldownMs) {
+  if (index !== app.keyIndex) return;
+  const st = app.keyStatuses[index];
+  if (!st) return;
+  st.lastError = message || '请求失败';
+  st.cooldownUntil = Date.now() + Math.max(5000, cooldownMs || 30000);
+  let next = -1;
+  for (let step = 1; step <= app.tiandituKeys.length; step++) {
+    const i = (index + step) % app.tiandituKeys.length;
+    if (i === index) break;
+    if (keyUsable(i)) { next = i; break; }
+  }
+  if (next >= 0) {
+    app.keyIndex = next;
+    app.tiandituKey = app.tiandituKeys[next];
+  } else {
+    app.keysAllFailedUntil = Date.now() + 60000;
+    app.tiandituKey = '';
+    showBanner('天地图所有 Key 暂不可用（限流/权限/网络）。工具会在 60 秒后自动重试；也可点击 ↻ 立即重试，或到“底图设置”添加/更换 Key。不影响样点检查与编辑。', 'warn');
+  }
+  updateKeyAndCacheUi();
+}
+function markKeySuccess(index) {
+  const st = app.keyStatuses[index];
+  if (st) { st.lastError = ''; st.cooldownUntil = 0; }
+  app.keysAllFailedUntil = 0;
+  updateKeyAndCacheUi();
+}
+function resetKeyStates() {
+  app.keyStatuses = app.tiandituKeys.map(function () { return { cooldownUntil: 0, lastError: '' }; });
+  app.keyIndex = 0;
+  app.keysAllFailedUntil = 0;
+  app.tiandituKey = app.tiandituKeys[0] || '';
+  updateKeyAndCacheUi();
+}
+function initKeySettings() {
+  let list = [], old = '';
+  try {
+    const raw = localStorage.getItem(LS_KEYS);
+    if (raw) { const parsed = JSON.parse(raw); if (Array.isArray(parsed)) list = parsed; }
+    old = localStorage.getItem(LS_KEY) || '';
+  } catch (e) { /* ignore */ }
+  list = uniqueKeys(list.length ? list : (old ? [old] : []));
+  /* 清除旧版共享默认 tk，不把它当作任何用户的 Key */
+  list = list.filter(function (k) { return hashString(k) !== LEGACY_DEFAULT_TIANDITU_HASH; });
+  app.tiandituKeys = list;
+  app.keyStatuses = list.map(function () { return { cooldownUntil: 0, lastError: '' }; });
+  app.keyIndex = 0;
+  app.tiandituKey = list[0] || '';
+  app.basemapEnabled = list.length > 0;
+  els.lyrBase.checked = list.length > 0;
+  updateKeyAndCacheUi();
+  if (!list.length) showBanner('天地图底图未启用：请点击“底图设置”填入你自己的天地图浏览器端 tk。不加载底图不影响检查与编辑。', 'info');
+  initTileDB();
 }
 function openKeyModal() {
-  els.keyInput.value = app.tiandituKey || '';
+  renderKeyRows(app.tiandituKeys);
   els.keyOrigin.textContent = (location.origin && location.origin !== 'null') ? location.origin : location.href.replace(/[^/]*$/, '');
+  updateKeyAndCacheUi();
   els.keyModal.classList.remove('hidden');
 }
 function resetTileCache() {
+  app.tileCache.forEach(function (rec) {
+    if (rec && rec.url) { try { URL.revokeObjectURL(rec.url); } catch (e) { /* ignore */ } }
+  });
   app.tileCache.clear();
   app.tileErrors = 0;
   app.tileLoaded = 0;
   app.tileErrorNotified = false;
+  app.keysAllFailedUntil = 0;
+  resetKeyStates();
   hideBanner();
+  updateKeyAndCacheUi();
 }
 function saveKey() {
-  const tk = (els.keyInput.value || '').trim();
-  if (!tk) { toast('请填入你自己的天地图浏览器端 tk，或点击“暂不启用底图”。', 'warn'); return; }
-  app.tiandituKey = tk;
-  try { localStorage.setItem(LS_KEY, tk); localStorage.setItem(LS_BASE, '1'); } catch (e) { /* ignore */ }
+  const keys = collectKeyRows();
+  if (!keys.length) { toast('请至少填入一个你自己的天地图浏览器端 tk，或点击“暂不启用底图”。', 'warn'); return; }
+  app.tiandituKeys = keys;
+  app.keyStatuses = keys.map(function () { return { cooldownUntil: 0, lastError: '' }; });
+  app.keyIndex = 0;
+  app.tiandituKey = keys[0];
+  try {
+    localStorage.setItem(LS_KEYS, JSON.stringify(keys));
+    localStorage.removeItem(LS_KEY);
+    localStorage.setItem(LS_BASE, '1');
+  } catch (e) { /* ignore */ }
   els.lyrBase.checked = true;
   els.keyModal.classList.add('hidden');
   resetTileCache();
-  toast('天地图密钥已保存，底图将重新加载。', 'ok');
+  toast('已保存 ' + keys.length + ' 个天地图 Key，底图将按顺序使用。', 'ok');
   invalidate();
 }
-function tileUrl(layer, z, x, y) {
+
+/* ---------- 瓦片 IndexedDB 缓存 ---------- */
+function openTileDB() {
+  if (app.tileDb) return Promise.resolve(app.tileDb);
+  return new Promise(function (resolve) {
+    if (!('indexedDB' in window)) { app.cacheReady = true; resolve(null); return; }
+    let req;
+    try { req = indexedDB.open(TILE_DB_NAME, TILE_DB_VERSION); } catch (e) { app.cacheReady = true; resolve(null); return; }
+    req.onupgradeneeded = function () {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(TILE_STORE)) {
+        const store = db.createObjectStore(TILE_STORE, { keyPath: 'key' });
+        store.createIndex('lastUsedAt', 'lastUsedAt', { unique: false });
+      }
+    };
+    req.onsuccess = function () { app.tileDb = req.result; resolve(req.result); };
+    req.onerror = function () { app.cacheReady = true; resolve(null); };
+  });
+}
+function initTileDB() {
+  openTileDB().then(function (db) {
+    if (!db) { app.cacheReady = true; updateKeyAndCacheUi(); return; }
+    let total = 0;
+    const tx = db.transaction(TILE_STORE, 'readwrite');
+    const store = tx.objectStore(TILE_STORE);
+    const req = store.openCursor();
+    req.onsuccess = function () {
+      const cur = req.result;
+      if (!cur) {
+        app.cacheBytes = total;
+        app.cacheReady = true;
+        updateKeyAndCacheUi();
+        enforceTileCacheLimit();
+        return;
+      }
+      const rec = cur.value;
+      const ttl = rec && rec.layer === 'cia' ? TILE_TTL_LABEL : TILE_TTL_IMG;
+      if (!rec || !rec.blob || !rec.createdAt || (Date.now() - rec.createdAt > ttl)) {
+        try { cur.delete(); } catch (e) { /* ignore */ }
+      } else {
+        total += rec.size || rec.blob.size || 0;
+      }
+      cur.continue();
+    };
+    req.onerror = function () { app.cacheReady = true; updateKeyAndCacheUi(); };
+  }).catch(function () { app.cacheReady = true; updateKeyAndCacheUi(); });
+}
+function tileCacheGet(key, ttl) {
+  return openTileDB().then(function (db) {
+    if (!db) return null;
+    return new Promise(function (resolve) {
+      const tx = db.transaction(TILE_STORE, 'readwrite');
+      const store = tx.objectStore(TILE_STORE);
+      const req = store.get(key);
+      req.onsuccess = function () {
+        const rec = req.result;
+        if (!rec || !rec.blob || !rec.createdAt || (Date.now() - rec.createdAt > ttl)) {
+          if (rec) { try { store.delete(key); } catch (e) { /* ignore */ } }
+          resolve(null);
+          return;
+        }
+        if (!rec.lastUsedAt || Date.now() - rec.lastUsedAt > 86400000) {
+          rec.lastUsedAt = Date.now();
+          try { store.put(rec); } catch (e) { /* ignore */ }
+        }
+        resolve(rec.blob);
+      };
+      req.onerror = function () { resolve(null); };
+    });
+  }).catch(function () { return null; });
+}
+function tileCachePut(key, blob, layer) {
+  return openTileDB().then(function (db) {
+    if (!db || !blob) return false;
+    return new Promise(function (resolve) {
+      const tx = db.transaction(TILE_STORE, 'readwrite');
+      const store = tx.objectStore(TILE_STORE);
+      const getReq = store.get(key);
+      getReq.onsuccess = function () {
+        const old = getReq.result;
+        if (old) app.cacheBytes = Math.max(0, app.cacheBytes - (old.size || 0));
+        const rec = { key: key, blob: blob, size: blob.size || 0, layer: layer, createdAt: Date.now(), lastUsedAt: Date.now() };
+        const putReq = store.put(rec);
+        putReq.onsuccess = function () {
+          app.cacheBytes += rec.size;
+          if (app.cacheBytes > TILE_CACHE_MAX) enforceTileCacheLimit();
+          updateKeyAndCacheUi();
+          resolve(true);
+        };
+        putReq.onerror = function () { resolve(false); };
+      };
+      getReq.onerror = function () { resolve(false); };
+    });
+  }).catch(function () { return false; });
+}
+async function enforceTileCacheLimit() {
+  if (app.cacheEvicting || !app.cacheReady || app.cacheBytes <= TILE_CACHE_TARGET) return;
+  app.cacheEvicting = true;
+  try {
+    const db = await openTileDB();
+    if (!db) return;
+    while (app.cacheBytes > TILE_CACHE_TARGET) {
+      const deleted = await new Promise(function (resolve) {
+        const tx = db.transaction(TILE_STORE, 'readwrite');
+        const store = tx.objectStore(TILE_STORE);
+        const req = store.index('lastUsedAt').openCursor();
+        let count = 0, bytes = 0;
+        req.onsuccess = function () {
+          const cur = req.result;
+          if (!cur || count >= 40) { resolve({ count: count, bytes: bytes }); return; }
+          const rec = cur.value;
+          bytes += rec.size || 0;
+          count++;
+          try { cur.delete(); } catch (e) { /* ignore */ }
+          cur.continue();
+        };
+        req.onerror = function () { resolve({ count: count, bytes: bytes }); };
+      });
+      if (!deleted.count) break;
+      app.cacheBytes = Math.max(0, app.cacheBytes - deleted.bytes);
+      updateKeyAndCacheUi();
+    }
+  } finally {
+    app.cacheEvicting = false;
+  }
+}
+async function clearTileDiskCache() {
+  const db = await openTileDB();
+  if (db) {
+    await new Promise(function (resolve) {
+      const tx = db.transaction(TILE_STORE, 'readwrite');
+      tx.objectStore(TILE_STORE).clear();
+      tx.oncomplete = function () { resolve(); };
+      tx.onerror = function () { resolve(); };
+    });
+  }
+  app.tileCache.forEach(function (rec) { if (rec && rec.url) { try { URL.revokeObjectURL(rec.url); } catch (e) { /* ignore */ } } });
+  app.tileCache.clear();
+  app.cacheBytes = 0;
+  app.cacheHits = 0;
+  app.cacheMisses = 0;
+  updateKeyAndCacheUi();
+  invalidate();
+}
+
+/* ---------- 瓦片网络请求与 Key 故障转移 ---------- */
+function tileUrl(layer, z, x, y, tk) {
   return 'https://t0.tianditu.gov.cn/' + layer + '_w/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&LAYER=' +
     layer + '&STYLE=default&TILEMATRIXSET=w&FORMAT=tiles&TILEMATRIX=' + z + '&TILEROW=' + y + '&TILECOL=' + x +
-    '&tk=' + encodeURIComponent(app.tiandituKey);
+    '&tk=' + encodeURIComponent(tk || '');
+}
+async function fetchTileBlob(layer, z, x, y) {
+  const n = app.tiandituKeys.length;
+  if (!n) throw new Error('未配置天地图 Key');
+  if (Date.now() < app.keysAllFailedUntil) throw new Error('所有 Key 冷却中');
+  let tried = 0, sawNetworkError = false;
+  while (tried < n) {
+    if (!advanceToUsableKey()) {
+      app.keysAllFailedUntil = Date.now() + 60000;
+      throw new Error('所有 Key 冷却中');
+    }
+    const idx = app.keyIndex;
+    const tk = app.tiandituKeys[idx];
+    let resp = null;
+    try {
+      resp = await fetch(tileUrl(layer, z, x, y, tk), { mode: 'cors', cache: 'default', credentials: 'omit' });
+    } catch (e) {
+      sawNetworkError = true;
+      markKeyFailure(idx, '网络错误', 15000);
+      tried++;
+      continue;
+    }
+    if (resp.ok) {
+      const blob = await resp.blob();
+      markKeySuccess(idx);
+      return blob;
+    }
+    let code = '';
+    try { const j = await resp.json(); code = String(j && (j.code || j.msg) || ''); } catch (e) { /* ignore */ }
+    if (resp.status === 429 || code.indexOf('302010') >= 0) { markKeyFailure(idx, '限流', 120000); tried++; continue; }
+    if (resp.status === 403 || code.indexOf('301012') >= 0 || code.indexOf('权限') >= 0) { markKeyFailure(idx, 'Key 权限/白名单', 300000); tried++; continue; }
+    if (resp.status === 404 || resp.status === 400) throw new Error('瓦片不存在');
+    markKeyFailure(idx, 'HTTP ' + resp.status, 30000);
+    tried++;
+  }
+  const err = new Error('所有 Key 均不可用');
+  err.networkFailure = sawNetworkError;
+  throw err;
+}
+function loadTileViaImage(rec, layer, z, x, y) {
+  const tk = app.tiandituKeys[app.keyIndex] || app.tiandituKeys[0] || '';
+  if (!tk) { rec.failed = true; rec.loading = false; return; }
+  const img = new Image();
+  rec.img = img;
+  img.onload = function () {
+    rec.loaded = true; rec.failed = false; rec.loading = false;
+    app.tileLoaded++;
+    trimMemoryTileCache();
+    invalidate();
+  };
+  img.onerror = function () {
+    rec.failed = true; rec.loading = false; app.tileErrors++;
+    setTimeout(function () { if (app.tileCache.get(rec.key) === rec) app.tileCache.delete(rec.key); invalidate(); }, 30000);
+    invalidate();
+  };
+  img.src = tileUrl(layer, z, x, y, tk);
+}
+function trimMemoryTileCache() {
+  while (app.tileCache.size > TILE_MEM_MAX) {
+    const first = app.tileCache.keys().next().value;
+    const rec = app.tileCache.get(first);
+    if (rec && rec.url) { try { URL.revokeObjectURL(rec.url); } catch (e) { /* ignore */ } }
+    app.tileCache.delete(first);
+  }
+}
+function attachTileBlob(rec, blob) {
+  if (!rec || !blob) return;
+  const url = URL.createObjectURL(blob);
+  rec.url = url;
+  const img = new Image();
+  img.onload = function () {
+    rec.img = img;
+    rec.loaded = true;
+    rec.failed = false;
+    rec.loading = false;
+    app.tileLoaded++;
+    if (rec.url) { try { URL.revokeObjectURL(rec.url); } catch (e) { /* ignore */ } rec.url = null; }
+    trimMemoryTileCache();
+    invalidate();
+  };
+  img.onerror = function () {
+    rec.failed = true;
+    rec.loading = false;
+    app.tileErrors++;
+    if (rec.url) { try { URL.revokeObjectURL(rec.url); } catch (e) { /* ignore */ } rec.url = null; }
+    invalidate();
+  };
+  img.src = url;
+}
+async function loadTile(rec, layer, z, x, y) {
+  const ttl = layer === 'cia' ? TILE_TTL_LABEL : TILE_TTL_IMG;
+  try {
+    const cached = await tileCacheGet(rec.key, ttl);
+    if (cached) {
+      app.cacheHits++;
+      attachTileBlob(rec, cached);
+      updateKeyAndCacheUi();
+      return;
+    }
+    app.cacheMisses++;
+    const blob = await fetchTileBlob(layer, z, x, y);
+    tileCachePut(rec.key, blob, layer);
+    attachTileBlob(rec, blob);
+    updateKeyAndCacheUi();
+  } catch (e) {
+    if (e && e.networkFailure && !app.tileFetchUnsupported) {
+      app.tileFetchUnsupported = true;
+      showBanner('当前浏览器无法直接读取天地图瓦片，已回退为普通图片加载；本次将不使用离线瓦片缓存。', 'info');
+      loadTileViaImage(rec, layer, z, x, y);
+      return;
+    }
+    rec.failed = true;
+    rec.loading = false;
+    app.tileErrors++;
+    if (!app.tileErrorNotified && app.tileErrors >= 6 && (app.tileLoaded === 0 || app.tileErrors >= 20)) {
+      app.tileErrorNotified = true;
+      showBanner('天地图底图加载失败（可能是 Key 限流/白名单/网络问题）。工具会尝试切换下一个 Key；也可点击地图左上角 ↻ 重试，或到“底图设置”检查 Key。不影响样点检查与编辑。', 'warn');
+    }
+    setTimeout(function () {
+      if (app.tileCache.get(rec.key) === rec) app.tileCache.delete(rec.key);
+      invalidate();
+    }, 30000);
+    invalidate();
+  }
 }
 function getTile(layer, z, x, y) {
   const key = layer + '/' + z + '/' + x + '/' + y;
   let rec = app.tileCache.get(key);
   if (rec) return rec;
-  const img = new Image();
-  rec = { img: img, loaded: false, failed: false };
+  rec = { key: key, img: null, loaded: false, failed: false, loading: true, url: null };
   app.tileCache.set(key, rec);
-  img.onload = function () {
-    rec.loaded = true;
-    app.tileLoaded++;
-    invalidate();
-  };
-  img.onerror = function () {
-    rec.failed = true;
-    app.tileErrors++;
-    if (!app.tileErrorNotified && app.tileErrors >= 6 && (app.tileLoaded === 0 || app.tileErrors >= 20)) {
-      app.tileErrorNotified = true;
-      showBanner('天地图底图加载失败（常见于 tk 请求限流 429/302010 或网络/白名单问题）。请稍等后点击地图左上角 ↻ 刷新重试，或点击“天地图”更换密钥；不影响样点检查与编辑。', 'warn');
-    }
-    /* 失败瓦片不永久缓存：15 秒后移除，下一次重绘自动重试 */
-    setTimeout(function () {
-      if (app.tileCache.get(key) === rec) app.tileCache.delete(key);
-      invalidate();
-    }, 15000);
-    invalidate();
-  };
-  img.src = tileUrl(layer, z, x, y);
+  trimMemoryTileCache();
+  loadTile(rec, layer, z, x, y);
   return rec;
 }
 function drawTiles(ctx, size) {
@@ -5034,8 +5494,10 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
 </script>
 </body>
 </html>
+
 
 
