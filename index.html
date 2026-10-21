@@ -417,6 +417,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li><b>导出前目视检查校验</b>：点击“导出成果”时，若本区仍有 02 市、县级点存在未勾选的目视检查项，会阻止导出并弹出提示；可打开独立的“待补充目视检查”悬浮面板，逐点补充完成后合并回本次修改点集继续导出。</li>
       <li><b>导出格式与命名</b>：导出结果同时包含 SHP 五件套和市县级样点 KML（可导入奥维等软件）；ZIP 文件名与“导出到文件夹”的文件夹名称均包含行政区名称。</li>
       <li><b>导出宽容度</b>：如果仍有无法自动或手动解决的间距问题，工具会持续提示，但允许停止编辑并继续导出；导出说明和校验报告会记录未解决的间距问题，请在最终成果中人工复核。</li>
+      <li><b>样点个数核对</b>：选择任务文件夹、切换行政区或导出时，会把实际省/市/县三级样点个数与《附件1 耕地质量长期定位调查监测任务分解表》的预期个数比对；不一致会弹窗提醒，但仍允许进入编辑、检查和正常导出，导出说明/校验报告会记录不一致情况。</li>
       <li><b>更新公告</b>：打开页面时会弹窗列出本次更新内容，背景不可操作；点击“明白了”后关闭，同一版本同一公告不会重复弹出。</li>
     </ul>
     <h3>三、天地图底图</h3>
@@ -583,6 +584,19 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
     <ul id="announcementList"></ul>
     <div class="modal-actions">
       <button id="btnAnnouncementOk" class="btn btn-primary">明白了</button>
+    </div>
+  </div>
+</div>
+
+<!-- 样点个数与任务分解表核对 -->
+<div id="countMismatchModal" class="modal hidden">
+  <div class="modal-card small">
+    <h2 id="countMismatchTitle">样点个数与任务分解表不一致</h2>
+    <div id="countMismatchContent" class="check-content"></div>
+    <div class="modal-actions">
+      <button id="btnCountMismatchCancel" class="btn hidden">取消导出</button>
+      <button id="btnCountMismatchOk" class="btn btn-primary">知道了，继续</button>
+      <button id="btnCountMismatchExport" class="btn btn-primary hidden">仍然导出</button>
     </div>
   </div>
 </div>
@@ -1010,6 +1024,25 @@ function clampToCircle(anchor, target, maxMeters, crs) {
     meters: maxMeters,
     clamped: true
   };
+}
+
+/* ---------- 任务分解表预期样点个数（附件1） ---------- */
+const TASK_REGION_COUNTS = { "哈尔滨市辖区": 18, "呼兰区": 24, "宾县": 34, "依兰县": 39, "方正县": 13, "巴彦县": 36, "木兰县": 21, "通河县": 21, "延寿县": 23, "阿城区": 15, "双城区": 38, "尚志市": 39, "五常市": 52, "齐齐哈尔市辖区": 12, "梅里斯区": 20, "龙江县": 59, "依安县": 44, "泰来县": 39, "甘南县": 54, "富裕县": 37, "克山县": 37, "克东县": 24, "拜泉县": 41, "讷河市": 75, "鸡西市辖区": 10, "鸡东县": 20, "虎林市": 73, "密山市": 57, "鹤岗市辖区": 13, "萝北县": 38, "绥滨县": 41, "双鸭山市辖区": 6, "友谊县": 21, "集贤县": 23, "宝清县": 75, "饶河县": 41, "大庆市辖区": 8, "大同区": 15, "肇州县": 23, "肇源县": 36, "林甸县": 29, "杜蒙县": 31, "伊春市辖区": 3, "汤旺县": 2, "丰林县": 2, "南岔县": 2, "嘉荫县": 18, "铁力市": 17, "佳木斯市辖区": 2, "佳木斯市郊区": 16, "桦南县": 36, "桦川县": 25, "汤原县": 25, "抚远县": 61, "同江市": 64, "富锦市": 97, "七台河市辖区": 26, "勃利县": 18, "牡丹江市辖区": 13, "东宁市": 13, "林口县": 34, "海林市": 18, "宁安市": 32, "穆棱市": 23, "爱辉区": 27, "嫩江县": 115, "逊克县": 39, "孙吴县": 23, "北安市": 58, "五大连池市": 65, "北林区": 34, "望奎县": 28, "兰西县": 29, "青冈县": 28, "庆安县": 32, "明水县": 23, "绥棱县": 26, "安达市": 22, "肇东市": 44, "海伦市": 53, "大兴安岭地区辖区": 15, "呼玛县": 15, "塔河县": 2 };
+const TASK_REGION_ALIASES = {
+  '杜尔伯特蒙古族自治县': '杜蒙县',
+  '梅里斯达斡尔族区': '梅里斯区',
+  '嫩江市': '嫩江县',
+  '抚远市': '抚远县'
+};
+function normalizeRegionName(name) {
+  return String(name == null ? '' : name).replace(/\s+/g, '').replace(/[（）()]/g, '');
+}
+function expectedSampleCount(regionName) {
+  const n0 = normalizeRegionName(regionName);
+  if (Object.prototype.hasOwnProperty.call(TASK_REGION_COUNTS, n0)) return TASK_REGION_COUNTS[n0];
+  const alias = TASK_REGION_ALIASES[n0];
+  if (alias && Object.prototype.hasOwnProperty.call(TASK_REGION_COUNTS, alias)) return TASK_REGION_COUNTS[alias];
+  return null;
 }
 
 /* ---------- 点与多边形 ---------- */
@@ -1572,7 +1605,8 @@ const ANNOUNCEMENT_ITEMS = [
   '天地图底图增加 ↻ 刷新重试按钮：失败瓦片不再永久缓存，会自动重试；若遇到 429/302010 限流可稍后重试或更换密钥。',
   '底图设置支持切换天地图 / 高德卫星图：高德使用卫星图层并自动完成 WGS84→GCJ-02 坐标转换（高德 Web服务静态图接口不支持卫星影像）。',
   '导出宽容度调整：仍有未解决的间距问题时，会继续提示，但允许停止编辑并导出成果，同时在导出说明/校验报告中记录这些未解决项。开启编辑模式后，顶部按钮会显示为“停止编辑”。',
-  '目视检查新增 200 m 橙色指示圈：与 100 m 蓝色圆环同时显示，两个圆均为高透明度，避免遮挡卫星影像；目视检查中的 20 m 移动瞄准圈保持不变。'
+  '目视检查新增 200 m 橙色指示圈：与 100 m 蓝色圆环同时显示，两个圆均为高透明度，避免遮挡卫星影像；目视检查中的 20 m 移动瞄准圈保持不变。',
+  '新增任务分解表样点个数核对：选择文件夹、切换行政区或导出时，会把实际省/市/县样点个数与《附件1 任务分解表》预期个数比对；不一致会弹窗提醒，但允许继续编辑和导出。'
 ];
 
 const app = {
@@ -1600,6 +1634,7 @@ const app = {
   gaodeState: { img: null, loaded: false, failed: false, center: null, zoom: null, token: 0, loading: false, requestedAt: 0 },
   gaodeTimer: null,
   amapMap: null, amapReady: false, amapLoading: false, amapLastSync: null, amapCallbacks: [],
+  regionCountChecks: new Map(), countMismatchPending: null, countValidateAllPromise: null, countValidatePromises: new Map(),
   pendingExport: null, loadToken: 0, refreshToken: 0,
   drag: null, moved: false,
   resultTab: 'check'
@@ -1642,6 +1677,8 @@ function init() {
     btnPendingFinish: $('btnPendingFinish'), btnPendingCancel: $('btnPendingCancel'),
     visualGateModal: $('visualGateModal'), visualGateContent: $('visualGateContent'),
     btnVisualGateCancel: $('btnVisualGateCancel'), btnVisualGateCheck: $('btnVisualGateCheck'),
+    countMismatchModal: $('countMismatchModal'), countMismatchTitle: $('countMismatchTitle'), countMismatchContent: $('countMismatchContent'),
+    btnCountMismatchOk: $('btnCountMismatchOk'), btnCountMismatchCancel: $('btnCountMismatchCancel'), btnCountMismatchExport: $('btnCountMismatchExport'),
     announcementModal: $('announcementModal'), announcementVersion: $('announcementVersion'),
     announcementList: $('announcementList'), btnAnnouncementOk: $('btnAnnouncementOk'),
     btnVisualFinish: $('btnVisualFinish'), btnVisualExit: $('btnVisualExit'),
@@ -1767,6 +1804,20 @@ function bindEvents() {
     if (e.target === els.visualGateModal) els.visualGateModal.classList.add('hidden');
   });
   els.btnVisualGateCancel.addEventListener('click', function () { els.visualGateModal.classList.add('hidden'); });
+  els.btnCountMismatchOk.addEventListener('click', function () {
+    els.countMismatchModal.classList.add('hidden');
+    app.countMismatchPending = null;
+  });
+  els.btnCountMismatchCancel.addEventListener('click', function () {
+    els.countMismatchModal.classList.add('hidden');
+    app.countMismatchPending = null;
+  });
+  els.btnCountMismatchExport.addEventListener('click', function () {
+    els.countMismatchModal.classList.add('hidden');
+    const cb = app.countMismatchPending;
+    app.countMismatchPending = null;
+    if (typeof cb === 'function') cb();
+  });
   els.btnAnnouncementOk.addEventListener('click', function () {
     try { localStorage.setItem(LS_ANNOUNCEMENT, announcementStorageKey()); } catch (e) { /* ignore */ }
     els.announcementModal.classList.add('hidden');
@@ -2669,6 +2720,7 @@ function selectGroup(index, preferredRegionIndex) {
   if (!groups.length || isNaN(index) || index < 0 || index >= groups.length) return;
   app.group = groups[index];
   els.groupSelect.value = String(index);
+  setTimeout(function () { try { validateAllRegionCounts(); } catch (e) { /* ignore */ } }, 300);
   const regions = app.group.regions;
   els.regionSelect.innerHTML = '';
   let firstValid = -1;
@@ -2730,6 +2782,7 @@ function selectRegion(index) {
       }
       maybePromptInitialProgress();
       maybePromptCurrentRegionProgress();
+      maybeShowRegionCountWarning();
       setStatus('已加载 ' + app.region.name + '，可开始检查与编辑。');
       invalidate();
     });
@@ -3664,6 +3717,132 @@ function cancelPendingInspection() {
   toast('已取消补充检查，未导出。', 'warn');
   setStatus('已取消补充目视检查。');
   invalidate();
+}
+
+/* ---------- 任务分解表样点个数核对 ---------- */
+function countCheckKey(region) { return (app.group ? app.group.label : '') + '|' + region.key; }
+async function countRegionLayer(region, level) {
+  const entry = region.files && region.files[level];
+  if (!entry || !entry.shp) return null;
+  const buf = await readFileArrayBuffer(entry.shp.file);
+  return parsePointsShp(buf).points.length;
+}
+async function validateRegionSampleCount(region) {
+  if (!region) return null;
+  const key = countCheckKey(region);
+  const cached = app.regionCountChecks.get(key);
+  if (cached && cached.status !== 'pending') return cached;
+  if (app.countValidatePromises.has(key)) return app.countValidatePromises.get(key);
+  const promise = (async function () {
+    const check = {
+      key: key, groupLabel: app.group ? app.group.label : '', regionKey: region.key, regionName: region.name,
+      expected: expectedSampleCount(region.name), counts: { prov: null, city: null, county: null },
+      status: 'pending', error: ''
+    };
+    try {
+      for (const level of LEVEL_ORDER) check.counts[level] = await countRegionLayer(region, level);
+      if (check.expected == null) check.status = 'unknown';
+      else if (check.counts.prov === check.expected && check.counts.city === check.expected && check.counts.county === check.expected) check.status = 'ok';
+      else check.status = 'mismatch';
+    } catch (e) {
+      check.status = 'error';
+      check.error = e && e.message ? e.message : String(e);
+    }
+    check.checkedAt = Date.now();
+    app.regionCountChecks.set(key, check);
+    return check;
+  })();
+  app.countValidatePromises.set(key, promise);
+  try { return await promise; } finally { app.countValidatePromises.delete(key); }
+}
+function countCheckText(c) {
+  if (!c) return '未核对';
+  const a = c.counts || {};
+  return '实际 省 ' + (a.prov == null ? '—' : a.prov) + ' / 市 ' + (a.city == null ? '—' : a.city) +
+    ' / 县 ' + (a.county == null ? '—' : a.county) + '，任务分解表预期 ' + (c.expected == null ? '未匹配' : c.expected);
+}
+function showCountMismatchModal(checks, mode, onConfirm) {
+  const list = (Array.isArray(checks) ? checks : [checks]).filter(Boolean);
+  if (!list.length) return;
+  app.countMismatchPending = typeof onConfirm === 'function' ? onConfirm : null;
+  const exportMode = mode === 'export';
+  els.countMismatchTitle.textContent = exportMode ? '导出前样点个数核对提醒' : '样点个数与任务分解表不一致';
+  let html = '';
+  html += '<div>以下行政区实际省、市、县三级样点个数与《附件1 耕地质量长期定位调查监测任务分解表》不一致：</div>';
+  html += '<ul>';
+  list.forEach(function (c) {
+    html += '<li><b>' + escapeHtml(c.regionName) + '</b>：' + escapeHtml(countCheckText(c)) + '</li>';
+  });
+  html += '</ul>';
+  if (exportMode) html += '<div class="warn">请先核查。你仍然可以选择“仍然导出”，导出成果会记录该不一致，请在最终成果中人工复核。</div>';
+  else html += '<div class="note">建议核查该行政区的 01/02 样点数据后再进行修改与检查；当前仍可继续操作。</div>';
+  els.countMismatchContent.innerHTML = html;
+  els.btnCountMismatchOk.classList.toggle('hidden', exportMode);
+  els.btnCountMismatchCancel.classList.toggle('hidden', !exportMode);
+  els.btnCountMismatchExport.classList.toggle('hidden', !exportMode);
+  els.countMismatchModal.classList.remove('hidden');
+}
+async function validateAllRegionCounts() {
+  if (!app.group) return [];
+  if (app.countValidateAllPromise) return app.countValidateAllPromise;
+  const group = app.group;
+  app.countValidateAllPromise = (async function () {
+    const checks = [];
+    for (const r of group.regions) {
+      if (!r.valid) continue;
+      try { checks.push(await validateRegionSampleCount(r)); } catch (e) { /* ignore */ }
+      if (app.group !== group) return checks;
+    }
+    const bad = checks.filter(function (c) { return c && c.status === 'mismatch'; });
+    if (bad.length) {
+      showBanner('样点个数核对：' + bad.map(function (c) { return c.regionName; }).join('、') +
+        ' 的省/市/县样点个数与任务分解表不一致；切换到这些行政区时会弹出提醒。', 'warn');
+    }
+    return checks;
+  })();
+  try { return await app.countValidateAllPromise; } finally { app.countValidateAllPromise = null; }
+}
+async function maybeShowRegionCountWarning() {
+  if (!app.region || !app.group) return;
+  if (!els.countMismatchModal.classList.contains('hidden')) return;
+  let check = app.regionCountChecks.get(countCheckKey(app.region));
+  if (!check || check.status === 'pending') {
+    try { check = await validateRegionSampleCount(app.region); } catch (e) { return; }
+  }
+  if (!check || app.region === null) return;
+  if (check.regionName !== app.region.name) return;
+  if (check.status === 'mismatch') showCountMismatchModal(check, 'region');
+  else if (check.status === 'unknown') {
+    showBanner('样点个数核对：未在任务分解表中找到“' + check.regionName + '”，无法自动比对。', 'warn');
+  }
+}
+function exportRegionsFromPatches() {
+  const keys = new Set();
+  app.patches.forEach(function (p, key) { keys.add(key.split('|')[0]); });
+  const out = [];
+  keys.forEach(function (rk) {
+    if (!app.group) return;
+    const r = app.group.regions.find(function (x) { return x.key === rk; });
+    if (r) out.push(r);
+  });
+  return out;
+}
+async function validateExportCounts() {
+  const regions = exportRegionsFromPatches();
+  const checks = [];
+  for (const r of regions) {
+    try { checks.push(await validateRegionSampleCount(r)); } catch (e) { /* ignore */ }
+  }
+  return checks;
+}
+function countWarningHtml(checks) {
+  const bad = (checks || []).filter(function (c) { return c && (c.status === 'mismatch' || c.status === 'unknown' || c.status === 'error'); });
+  if (!bad.length) return '';
+  let html = '<div class="warn" style="margin-bottom:8px;padding:7px 9px;border:1px solid #e0b23c;background:#fff8e8;border-radius:4px">' +
+    '<b>样点个数核对提醒：</b>以下行政区的省/市/县样点个数与任务分解表不一致或无法核对。<br>';
+  html += bad.map(function (c) { return escapeHtml(c.regionName) + '：' + escapeHtml(countCheckText(c)); }).join('<br>');
+  html += '<br>仍允许导出，导出说明/校验报告会记录该不一致。</div>';
+  return html;
 }
 
 function selectPoint(point) {
@@ -4900,6 +5079,12 @@ async function collectExportPackage() {
     }
   }
   const logRows = buildEditLogRows(app.editLog);
+  const exportCountChecks = await validateExportCounts();
+  exportCountChecks.forEach(function (c) {
+    if (!c) return;
+    const statusText = c.status === 'ok' ? '一致' : (c.status === 'unknown' ? '未匹配任务分解表' : (c.status === 'error' ? ('读取失败：' + c.error) : '不一致'));
+    checks.push('样点个数核对：' + c.regionName + ' / ' + countCheckText(c) + ' / ' + statusText);
+  });
   const unresolvedSpacing = app.analysis && app.analysis.violations ? app.analysis.violations : [];
   if (unresolvedSpacing.length) {
     const minText = isFinite(app.analysis.min) ? app.analysis.min.toFixed(2) + ' m' : '—';
@@ -4922,13 +5107,25 @@ async function collectExportPackage() {
   files.push({ name: '校验报告.txt', data: new TextEncoder().encode('校验时间：' + timestampText(new Date()) + '\r\n' + checks.join('\r\n')) });
   return { files: files, checks: checks, zip: buildZip(files) };
 }
-function openExportModal(opts) {
+async function openExportModal(opts) {
   opts = opts || {};
   if (!app.patches.size) { toast('当前没有修改可导出。', 'warn'); return; }
   if (!opts.skipVisualCheck) {
     const pending = getIncompleteVisualPoints();
     if (pending.length) {
       showVisualGate(pending);
+      return;
+    }
+  }
+  let countChecks = app.lastExportCountChecks || [];
+  if (!opts.skipCountCheck) {
+    countChecks = await validateExportCounts();
+    app.lastExportCountChecks = countChecks;
+    const badCounts = countChecks.filter(function (c) { return c && c.status === 'mismatch'; });
+    if (badCounts.length) {
+      showCountMismatchModal(badCounts, 'export', function () {
+        openExportModal({ skipCountCheck: true, skipVisualCheck: !!opts.skipVisualCheck });
+      });
       return;
     }
   }
@@ -4945,10 +5142,11 @@ function openExportModal(opts) {
       '<b>注意：仍有 ' + spacingViolations.length + ' 对样点间距不足 1500 m（最小 ' + minText + '）。</b><br>' +
       '可以停止编辑并继续导出；导出成果会保留现状，并在“导出说明/校验报告”中明确记录这些未解决的间距问题，请在最终成果中人工复核。</div>';
   }
+  const countWarning = countWarningHtml(countChecks);
   els.exportContent.innerHTML = '<div class="replace-details">' +
     '<div><b>修改记录：</b>' + app.editLog.length + ' 条</div>' +
     '<div><b>涉及行政区：</b>' + regions.size + ' 个　<b>涉及图层：</b>' + layers.size + ' 个</div>' +
-    spacingWarning +
+    spacingWarning + countWarning +
     '<div class="note">导出的包内包含被修改的 02 图层（完整五件套 .shp/.shx/.dbf/.prj/.cpg）、市县级样点 .kml（可直接导入奥维等软件）、修改记录、导出说明、校验报告。ZIP 文件名和“导出到文件夹”的文件夹名称均包含行政区名称。原文件夹不会被写入。推荐先下载 ZIP 检查无误后再替换成果。</div>' +
     '<div><b>最近修改：</b></div>' +
     '<ul>' + app.editLog.slice(-5).reverse().map(function (e) {
