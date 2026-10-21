@@ -81,7 +81,9 @@ button{font-family:inherit}
 .criteria .n{font-size:11px;color:var(--muted);line-height:1.45}
 .content{display:flex;flex-direction:column;gap:8px;min-height:0;min-width:0}
 .map-panel{position:relative;flex:1 1 auto;min-height:280px;background:#eef1f3;border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow);overflow:hidden}
-#map{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:none}
+#map{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair;touch-action:none;z-index:1;background:transparent}
+#amapBg{position:absolute;inset:0;z-index:0;display:none;overflow:hidden;background:#eef1f3;transform-origin:50% 50%}
+#amapBg>div{width:100%;height:100%}
 #map.panning{cursor:grabbing}
 .map-toolbar{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:4px;z-index:3}
 .map-toolbar button{width:30px;height:30px;border:1px solid #aab2bb;background:rgba(255,255,255,.95);border-radius:3px;font-size:16px;line-height:1;cursor:pointer;color:#344054;box-shadow:0 1px 2px rgba(0,0,0,.12)}
@@ -208,7 +210,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
     <button id="btnRedo" class="btn" disabled title="重做（Ctrl+Y）">重做</button>
     <button id="btnExport" class="btn" disabled>导出成果</button>
     <div class="ribbon-sep"></div>
-    <button id="btnBasemap" class="btn btn-ghost">天地图</button>
+    <button id="btnBasemap" class="btn btn-ghost">底图设置</button>
     <button id="btnHelp" class="btn btn-ghost">帮助</button>
   </div>
 </div>
@@ -275,14 +277,15 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <label class="chk"><input type="checkbox" id="lyrGrid" checked><span class="sym sym-grid"></span>05 区县格网</label>
       <label class="chk"><input type="checkbox" id="lyrOther" checked><span class="sym sym-other"></span>同文件夹其他行政区点</label>
       <label class="chk"><input type="checkbox" id="lyrCircle"><span class="sym sym-circle"></span>1.5 km 参考圈</label>
-      <label class="chk"><input type="checkbox" id="lyrBase" checked><span class="sym sym-base"></span>天地图影像底图</label>
-      <label class="chk"><input type="checkbox" id="lyrLabel" checked>天地图注记</label>
+      <label class="chk"><input type="checkbox" id="lyrBase" checked><span class="sym sym-base"></span>卫星影像底图</label>
+      <label class="chk"><input type="checkbox" id="lyrLabel" checked>天地图注记（仅天地图）</label>
       <label class="chk"><input type="checkbox" id="lyrMesh" checked>网格线</label>
     </div>
   </aside>
 
   <section class="content">
     <div class="map-panel" id="mapPanel">
+      <div id="amapBg"></div>
       <canvas id="map"></canvas>
       <div class="map-toolbar">
         <button id="btnZoomIn" title="放大">＋</button>
@@ -409,7 +412,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li><b>格网组合检查</b>：修改后关闭“编辑模式”时，工具会逐一检查当前行政区每个 05 格网是否保持“1 省级 + 1 市级 + 1 县级”组合；通过会提示，未通过可选择“继续编辑”或“强制保存”。</li>
       <li><b>一键调整样点</b>：对当前行政区自动查找因间距过近而冲突的 02 样点，从 03 候选池中选择同地类、与所有点保持 1500 m 以上的候选点进行批量替换，尽量优先落在原格网内。</li>
       <li><b>目视检查模式</b>：仅依次检查本区 02 市、县级样点（省级点不进入检查队列），地图显示 100 m 圆环和右侧悬浮面板，人工勾选“林地重合、河流距离、侵蚀沟避让、田垄检查（仅水田）”；面板内可开启编辑模式，用 Shift+单击替换或 Space+单击移动当前问题点；目视检查中按住 Space 移动时保持 100 m 视野，并在点位上显示黄色透明的 20 m 瞄准圈，不跳转到 20 m 放大视图；完成后自动做一次间距复核，通过后会询问是否导出成果。</li>
-      <li><b>天地图</b>：首次打开自动使用内置浏览器端密钥并隐式加载底图，不再弹出密钥填写窗口；顶部“天地图”按钮仍可更换密钥或关闭底图。</li>
+      <li><b>卫星底图</b>：顶部“底图设置”可在天地图和高德静态卫星图之间切换；高德会自动把 WGS84 坐标转换为 GCJ-02，并叠加当前屏幕范围的卫星影像。首次打开自动启用内置密钥并隐式加载，不再弹出密钥填写窗口。</li>
       <li><b>本地进度</b>：编辑、目视检查勾选会自动保存到浏览器本地（IndexedDB，失败时自动降级到 localStorage）。重新选择同一任务文件夹时，会提示是否恢复上次的编辑状态；每个行政区各保存一份进度。也可用“导出进度 / 导入进度”保存为 JSON 文件。</li>
       <li><b>导出前目视检查校验</b>：点击“导出成果”时，若本区仍有 02 市、县级点存在未勾选的目视检查项，会阻止导出并弹出提示；可打开独立的“待补充目视检查”悬浮面板，逐点补充完成后合并回本次修改点集继续导出。</li>
       <li><b>导出格式与命名</b>：导出结果同时包含 SHP 五件套和市县级样点 KML（可导入奥维等软件）；ZIP 文件名与“导出到文件夹”的文件夹名称均包含行政区名称。</li>
@@ -433,21 +436,35 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   </div>
 </div>
 
-<!-- 天地图密钥 -->
+<!-- 底图设置 -->
 <div id="keyModal" class="modal hidden">
   <div class="modal-card small">
-    <h2>天地图密钥</h2>
-    <div class="muted">用于加载天地图影像/注记底图；密钥只保存在本机浏览器，不会上传。</div>
+    <h2>底图设置</h2>
+    <div class="muted">可选择天地图或高德静态卫星图；密钥只保存在本机浏览器，不会上传。</div>
     <div class="form-row">
-      <label>浏览器端密钥（tk）</label>
-      <input id="keyInput" type="text" spellcheck="false" placeholder="请输入天地图 tk">
+      <label>底图提供方</label>
+      <select id="basemapProviderSelect">
+        <option value="gaode">高德地图 · 卫星影像</option>
+        <option value="tianditu">天地图 · 影像 + 注记</option>
+      </select>
     </div>
-    <div class="note">
-      当前页面来源：<b id="keyOrigin"></b><br>
-      已申请的白名单域名：<b>jinguo0201.github.io</b>。请确认当前页面来源在白名单内；不加载底图不影响检查与编辑。
+    <div id="gaodeKeyRow">
+      <div class="form-row">
+        <label>高德 Key（Web服务 / JS API 均可尝试）</label>
+        <input id="gaodeKeyInput" type="text" spellcheck="false" placeholder="请输入高德 Key">
+      </div>
+      <div class="note">高德官方 Web 服务“静态地图”接口不支持卫星底图，因此这里使用高德 JS API 卫星图层作为背景；工具会同步地图中心并自动完成 WGS84→GCJ-02 转换。若 Key 类型受限，请在高德控制台创建 Web端(JS API) Key。</div>
+    </div>
+    <div id="tiandituKeyRow">
+      <div class="form-row">
+        <label>天地图浏览器端密钥（tk）</label>
+        <input id="keyInput" type="text" spellcheck="false" placeholder="请输入天地图 tk">
+      </div>
+      <div class="note">当前页面来源：<b id="keyOrigin"></b><br>
+        已申请的白名单域名：<b>jinguo0201.github.io</b>。请确认当前页面来源在白名单内；不加载底图不影响检查与编辑。</div>
     </div>
     <div class="modal-actions">
-      <button id="btnKeyClear" class="btn">清除密钥</button>
+      <button id="btnKeyClear" class="btn">清除当前密钥</button>
       <button id="btnKeySkip" class="btn">暂不启用底图</button>
       <button id="btnKeySave" class="btn btn-primary">保存并启用</button>
     </div>
@@ -1425,7 +1442,50 @@ function buildEditLogRows(logEntries) {
   });
   return rows;
 }
-/* ---------- KML 导出 ---------- */
+/* ---------- WGS84 / GCJ-02 坐标转换（高德底图叠加用） ---------- */
+const GCJ_A = 6378245.0;
+const GCJ_EE = 0.00669342162296594323;
+function outOfChina(lon, lat) {
+  return !(lon > 73.66 && lon < 135.05 && lat > 3.86 && lat < 53.55);
+}
+function gcjTransformLat(x, y) {
+  let ret = -100.0 + 2.0 * x + 3.0 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x));
+  ret += (20.0 * Math.sin(6.0 * x * Math.PI) + 20.0 * Math.sin(2.0 * x * Math.PI)) * 2.0 / 3.0;
+  ret += (20.0 * Math.sin(y * Math.PI) + 40.0 * Math.sin(y / 3.0 * Math.PI)) * 2.0 / 3.0;
+  ret += (160.0 * Math.sin(y / 12.0 * Math.PI) + 320 * Math.sin(y * Math.PI / 30.0)) * 2.0 / 3.0;
+  return ret;
+}
+function gcjTransformLng(x, y) {
+  let ret = 300.0 + x + 2.0 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x));
+  ret += (20.0 * Math.sin(6.0 * x * Math.PI) + 20.0 * Math.sin(2.0 * x * Math.PI)) * 2.0 / 3.0;
+  ret += (20.0 * Math.sin(x * Math.PI) + 40.0 * Math.sin(x / 3.0 * Math.PI)) * 2.0 / 3.0;
+  ret += (150.0 * Math.sin(x / 12.0 * Math.PI) + 300.0 * Math.sin(x / 30.0 * Math.PI)) * 2.0 / 3.0;
+  return ret;
+}
+function wgs84ToGcj02(lon, lat) {
+  if (outOfChina(lon, lat)) return { lon: lon, lat: lat };
+  let dLat = gcjTransformLat(lon - 105.0, lat - 35.0);
+  let dLng = gcjTransformLng(lon - 105.0, lat - 35.0);
+  const radLat = lat / 180.0 * Math.PI;
+  let magic = Math.sin(radLat);
+  magic = 1 - GCJ_EE * magic * magic;
+  const sqrtMagic = Math.sqrt(magic);
+  dLat = (dLat * 180.0) / ((GCJ_A * (1 - GCJ_EE)) / (magic * sqrtMagic) * Math.PI);
+  dLng = (dLng * 180.0) / (GCJ_A / sqrtMagic * Math.cos(radLat) * Math.PI);
+  return { lon: lon + dLng, lat: lat + dLat };
+}
+function gcj02ToWgs84(lon, lat) {
+  if (outOfChina(lon, lat)) return { lon: lon, lat: lat };
+  let wgsLon = lon, wgsLat = lat;
+  for (let i = 0; i < 6; i++) {
+    const gcj = wgs84ToGcj02(wgsLon, wgsLat);
+    wgsLon -= gcj.lon - lon;
+    wgsLat -= gcj.lat - lat;
+  }
+  return { lon: wgsLon, lat: wgsLat };
+}
+
+
 function xmlEscape(value) {
   return String(value == null ? '' : value)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -1498,14 +1558,18 @@ function outputPathFor(regionName, level, ext) {
  * ============================================================ */
 
 const DEFAULT_TIANDITU_KEY = '0abb8008ce8fcf66a77a070213200286';
+const DEFAULT_GAODE_KEY = '6f3b62ecaa7166601f5208cf19e1bdec';
 const LS_KEY = 'spacingEditTool.tiandituKey';
+const LS_GAODE_KEY = 'spacingEditTool.gaodeKey';
+const LS_PROVIDER = 'spacingEditTool.basemapProvider';
 const LS_BASE = 'spacingEditTool.basemap';
 const LS_ANNOUNCEMENT = 'spacingEditTool.announcementSeen';
 const ANNOUNCEMENT_ITEMS = [
   '导出结果新增 KML 格式：市县级样点会同时输出 SHP 和 KML，KML 可直接导入奥维等软件查看。',
   '导出 ZIP 文件名和“导出到文件夹”的文件夹名称中新增明确的行政区名称。',
   '新增网站更新公告：每次版本调整后打开页面，会以弹窗列出本次更新内容。',
-  '天地图底图增加 ↻ 刷新重试按钮：失败瓦片不再永久缓存，会自动重试；若遇到 429/302010 限流可稍后重试或更换密钥。'
+  '天地图底图增加 ↻ 刷新重试按钮：失败瓦片不再永久缓存，会自动重试；若遇到 429/302010 限流可稍后重试或更换密钥。',
+  '底图设置支持切换天地图 / 高德卫星图：高德使用卫星图层并自动完成 WGS84→GCJ-02 坐标转换（高德 Web服务静态图接口不支持卫星影像）。'
 ];
 
 const app = {
@@ -1529,7 +1593,10 @@ const app = {
   view: { cx: 0, cy: 0, scale: 1 },
   hover: null, hoverIsCandidate: false,
   tileCache: new Map(), tileErrors: 0, tileLoaded: 0, tileErrorNotified: false,
-  tiandituKey: '', basemapEnabled: true,
+  tiandituKey: '', basemapEnabled: true, basemapProvider: 'gaode', gaodeKey: '',
+  gaodeState: { img: null, loaded: false, failed: false, center: null, zoom: null, token: 0, loading: false, requestedAt: 0 },
+  gaodeTimer: null,
+  amapMap: null, amapReady: false, amapLoading: false, amapLastSync: null, amapCallbacks: [],
   pendingExport: null, loadToken: 0, refreshToken: 0,
   drag: null, moved: false,
   resultTab: 'check'
@@ -1546,7 +1613,7 @@ function init() {
     folderInput: $('folderInput'), btnPick: $('btnPick'), btnPick2: $('btnPick2'),
     groupSelect: $('groupSelect'), regionSelect: $('regionSelect'), rootPath: $('rootPath'),
     health: $('health'), groupCount: $('groupCount'), banner: $('banner'),
-    mapPanel: $('mapPanel'), map: $('map'), mapEmpty: $('mapEmpty'), mapLoading: $('mapLoading'),
+    mapPanel: $('mapPanel'), map: $('map'), amapBg: $('amapBg'), mapEmpty: $('mapEmpty'), mapLoading: $('mapLoading'),
     hoverTip: $('hoverTip'), scalebarBar: $('scalebarBar'), scalebarText: $('scalebarText'),
     attribution: $('attribution'), modeHint: $('modeHint'),
     btnEditMode: $('btnEditMode'), btnCheck: $('btnCheck'), btnUndo: $('btnUndo'), btnRedo: $('btnRedo'),
@@ -1592,6 +1659,8 @@ function init() {
     lyrCircle: $('lyrCircle'), lyrBase: $('lyrBase'), lyrLabel: $('lyrLabel'), lyrMesh: $('lyrMesh'),
     helpModal: $('helpModal'), btnCloseHelp: $('btnCloseHelp'),
     keyModal: $('keyModal'), keyInput: $('keyInput'), keyOrigin: $('keyOrigin'),
+    basemapProviderSelect: $('basemapProviderSelect'), gaodeKeyInput: $('gaodeKeyInput'),
+    gaodeKeyRow: $('gaodeKeyRow'), tiandituKeyRow: $('tiandituKeyRow'),
     btnKeySave: $('btnKeySave'), btnKeySkip: $('btnKeySkip'), btnKeyClear: $('btnKeyClear'),
     replaceModal: $('replaceModal'), replaceContent: $('replaceContent'),
     btnReplaceCancel: $('btnReplaceCancel'), btnReplaceConfirm: $('btnReplaceConfirm'),
@@ -1738,14 +1807,24 @@ function bindEvents() {
   els.btnCloseHelp.addEventListener('click', function () { els.helpModal.classList.add('hidden'); });
   els.helpModal.addEventListener('click', function (e) { if (e.target === els.helpModal) els.helpModal.classList.add('hidden'); });
   els.btnKeySave.addEventListener('click', saveKey);
-  els.btnKeySkip.addEventListener('click', function () { els.keyModal.classList.add('hidden'); els.lyrBase.checked = false; });
+  els.basemapProviderSelect.addEventListener('change', updateProviderRows);
+  els.btnKeySkip.addEventListener('click', function () { els.keyModal.classList.add('hidden'); els.lyrBase.checked = false; resetTileCache(); invalidate(); });
   els.btnKeyClear.addEventListener('click', function () {
-    app.tiandituKey = '';
-    try { localStorage.removeItem(LS_KEY); } catch (e) { /* ignore */ }
+    const provider = els.basemapProviderSelect ? els.basemapProviderSelect.value : app.basemapProvider;
+    if (provider === 'gaode') {
+      app.gaodeKey = '';
+      if (els.gaodeKeyInput) els.gaodeKeyInput.value = '';
+      try { localStorage.removeItem(LS_GAODE_KEY); } catch (e) { /* ignore */ }
+      toast('已清除高德 Web 服务 Key', 'ok');
+    } else {
+      app.tiandituKey = '';
+      if (els.keyInput) els.keyInput.value = '';
+      try { localStorage.removeItem(LS_KEY); } catch (e) { /* ignore */ }
+      toast('已清除天地图密钥', 'ok');
+    }
     els.lyrBase.checked = false;
     els.keyModal.classList.add('hidden');
     resetTileCache();
-    toast('已清除天地图密钥', 'ok');
     invalidate();
   });
   els.keyModal.addEventListener('click', function (e) { if (e.target === els.keyModal) els.keyModal.classList.add('hidden'); });
@@ -1786,10 +1865,10 @@ function bindEvents() {
     if (cb) cb.addEventListener('change', invalidate);
   });
   els.lyrBase.addEventListener('change', function () {
-    if (els.lyrBase.checked && !app.tiandituKey) { openKeyModal(); return; }
+    if (els.lyrBase.checked && !currentProviderKey()) { openKeyModal(); return; }
     if (els.lyrBase.checked && app.crsMode !== 'geo') {
       els.lyrBase.checked = false;
-      toast('当前数据为投影坐标，暂不支持天地图底图叠加。', 'warn');
+      toast('当前数据为投影坐标，暂不支持卫星影像底图叠加。', 'warn');
       return;
     }
     if (els.lyrBase.checked) resetTileCache();
@@ -1820,6 +1899,7 @@ function resizeCanvas() {
   els.map.style.width = Math.max(1, rect.width) + 'px';
   els.map.style.height = Math.max(1, rect.height) + 'px';
   els.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (app.amapMap) { try { app.amapMap.resize(); } catch (e) { /* ignore */ } app.amapLastSync = null; }
   invalidate();
 }
 function mapSize() {
@@ -3972,13 +4052,26 @@ function draw() {
   if (!els || !els.ctx) return;
   const ctx = els.ctx;
   const size = mapSize();
+  const useAmapBg = app.basemapProvider === 'gaode' && els.lyrBase.checked && app.crsMode === 'geo' && !!app.gaodeKey;
   ctx.clearRect(0, 0, size.w, size.h);
-  ctx.fillStyle = '#eef1f3';
-  ctx.fillRect(0, 0, size.w, size.h);
+  if (!useAmapBg) {
+    ctx.fillStyle = '#eef1f3';
+    ctx.fillRect(0, 0, size.w, size.h);
+    if (els.amapBg) els.amapBg.style.display = 'none';
+  } else {
+    if (els.amapBg) els.amapBg.style.display = 'block';
+    ensureAmapMap();
+  }
   const hasData = app.ownPoints.length > 0;
   if (!hasData) { updateMapEmpty(); return; }
-  if (els.lyrBase.checked && app.tiandituKey && app.crsMode === 'geo') drawTiles(ctx, size);
-  else els.attribution.style.display = 'none';
+  if (useAmapBg) {
+    if (app.amapReady) syncAmapView();
+    els.attribution.style.display = 'none';
+  } else if (els.lyrBase.checked && app.crsMode === 'geo' && currentProviderKey()) {
+    drawTiles(ctx, size);
+  } else {
+    els.attribution.style.display = 'none';
+  }
   if (els.lyrMesh.checked) drawMesh(ctx, size);
   if (els.lyrGrid.checked) drawGridWorld(ctx);
   if (els.lyrCircle.checked) drawCircles(ctx);
@@ -4265,16 +4358,37 @@ function updateScalebar() {
 /* ============================================================
  * 天地图底图
  * ============================================================ */
+function currentProviderKey() {
+  return app.basemapProvider === 'gaode' ? app.gaodeKey : app.tiandituKey;
+}
+function updateProviderRows() {
+  const p = els.basemapProviderSelect ? els.basemapProviderSelect.value : app.basemapProvider;
+  if (els.gaodeKeyRow) els.gaodeKeyRow.style.display = p === 'gaode' ? '' : 'none';
+  if (els.tiandituKeyRow) els.tiandituKeyRow.style.display = p === 'tianditu' ? '' : 'none';
+  if (els.lyrLabel) els.lyrLabel.disabled = p === 'gaode';
+  if (els.btnBasemap) els.btnBasemap.textContent = '底图设置';
+}
 function initKeySettings() {
-  let stored = '';
-  try { stored = localStorage.getItem(LS_KEY) || ''; } catch (e) { /* ignore */ }
+  let stored = '', gaodeStored = '', provider = '';
+  try {
+    stored = localStorage.getItem(LS_KEY) || '';
+    gaodeStored = localStorage.getItem(LS_GAODE_KEY) || '';
+    provider = localStorage.getItem(LS_PROVIDER) || '';
+  } catch (e) { /* ignore */ }
   app.tiandituKey = stored || DEFAULT_TIANDITU_KEY;
+  app.gaodeKey = gaodeStored || DEFAULT_GAODE_KEY;
+  app.basemapProvider = (provider === 'tianditu' || provider === 'gaode') ? provider : 'gaode';
   els.lyrBase.checked = true;
   app.basemapEnabled = true;
+  if (els.basemapProviderSelect) els.basemapProviderSelect.value = app.basemapProvider;
+  updateProviderRows();
 }
 function openKeyModal() {
+  if (els.basemapProviderSelect) els.basemapProviderSelect.value = app.basemapProvider;
   els.keyInput.value = app.tiandituKey || DEFAULT_TIANDITU_KEY;
+  if (els.gaodeKeyInput) els.gaodeKeyInput.value = app.gaodeKey || DEFAULT_GAODE_KEY;
   els.keyOrigin.textContent = (location.origin && location.origin !== 'null') ? location.origin : location.href.replace(/[^/]*$/, '');
+  updateProviderRows();
   els.keyModal.classList.remove('hidden');
 }
 function resetTileCache() {
@@ -4282,17 +4396,35 @@ function resetTileCache() {
   app.tileErrors = 0;
   app.tileLoaded = 0;
   app.tileErrorNotified = false;
+  app.gaodeState = { img: null, loaded: false, failed: false, center: null, zoom: null, token: 0, loading: false, requestedAt: 0 };
+  app.amapLastSync = null;
+  if (app.gaodeTimer) { clearTimeout(app.gaodeTimer); app.gaodeTimer = null; }
   hideBanner();
 }
 function saveKey() {
-  const key = (els.keyInput.value || '').trim();
-  if (!key) { toast('请输入密钥，或点击“暂不启用底图”。', 'warn'); return; }
-  app.tiandituKey = key;
-  try { localStorage.setItem(LS_KEY, key); localStorage.setItem(LS_BASE, '1'); } catch (e) { /* ignore */ }
+  const provider = els.basemapProviderSelect ? els.basemapProviderSelect.value : app.basemapProvider;
+  const tk = (els.keyInput.value || '').trim();
+  const gk = (els.gaodeKeyInput.value || '').trim();
+  if (provider === 'gaode' && !gk) { toast('请输入高德 Web 服务 Key。', 'warn'); return; }
+  if (provider === 'tianditu' && !tk) { toast('请输入天地图密钥。', 'warn'); return; }
+  if (provider === 'gaode' && app.amapMap && gk && gk !== (app.amapKeyUsed || '')) {
+    /* AMap JS API 的 key 在脚本加载时绑定，修改后需要刷新页面才能用新 key 重新初始化 */
+    try { app.amapKeyUsed = gk; } catch (e) { /* ignore */ }
+  }
+  app.basemapProvider = provider;
+  app.tiandituKey = tk || app.tiandituKey || DEFAULT_TIANDITU_KEY;
+  app.gaodeKey = gk || app.gaodeKey || DEFAULT_GAODE_KEY;
+  try {
+    localStorage.setItem(LS_PROVIDER, provider);
+    localStorage.setItem(LS_KEY, app.tiandituKey);
+    localStorage.setItem(LS_GAODE_KEY, app.gaodeKey);
+    localStorage.setItem(LS_BASE, '1');
+  } catch (e) { /* ignore */ }
   els.lyrBase.checked = true;
   els.keyModal.classList.add('hidden');
   resetTileCache();
-  toast('天地图密钥已保存，底图将重新加载。', 'ok');
+  updateProviderRows();
+  toast((provider === 'gaode' ? '高德' : '天地图') + '底图已启用。', 'ok');
   invalidate();
 }
 function tileUrl(layer, z, x, y) {
@@ -4377,7 +4509,137 @@ function drawTiles(ctx, size) {
       }
     }
   }
+  els.attribution.innerHTML = '地图数据 © <a href="https://www.tianditu.gov.cn/" target="_blank" rel="noopener">天地图</a>';
   els.attribution.style.display = drawn > 0 || app.tileLoaded > 0 ? 'block' : 'none';
+}
+function gaodeStaticUrl(lon, lat, z) {
+  return 'https://restapi.amap.com/v3/staticmap?location=' + encodeURIComponent(lon.toFixed(8) + ',' + lat.toFixed(8)) +
+    '&zoom=' + z + '&size=1024*1024&scale=1&maptype=satellite&key=' + encodeURIComponent(app.gaodeKey);
+}
+function ensureAmapScript(cb) {
+  if (window.AMap) { cb(); return; }
+  app.amapCallbacks.push(cb);
+  if (app.amapLoading) return;
+  app.amapLoading = true;
+  const script = document.createElement('script');
+  script.src = 'https://webapi.amap.com/maps?v=2.0&key=' + encodeURIComponent(app.gaodeKey);
+  script.onload = function () {
+    app.amapLoading = false;
+    const cbs = app.amapCallbacks.slice();
+    app.amapCallbacks = [];
+    cbs.forEach(function (fn) { try { fn(); } catch (e) { /* ignore */ } });
+  };
+  script.onerror = function () {
+    app.amapLoading = false;
+    app.amapCallbacks = [];
+    showBanner('高德 JS API 加载失败：请检查网络或高德 Key 后重试；也可切换回天地图底图。', 'warn');
+  };
+  document.head.appendChild(script);
+}
+function ensureAmapMap() {
+  if (app.amapMap || app.amapLoading) return;
+  if (!app.gaodeKey) return;
+  ensureAmapScript(function () {
+    if (app.amapMap || !els.amapBg) return;
+    const div = document.createElement('div');
+    els.amapBg.innerHTML = '';
+    els.amapBg.appendChild(div);
+    els.amapBg.style.display = 'block';
+    const center = fromWorld({ x: app.view.cx, y: app.view.cy });
+    const gcj = wgs84ToGcj02(center.x, center.y);
+    try {
+      app.amapMap = new AMap.Map(div, {
+        viewMode: '2D', zoom: 10, center: [gcj.lon, gcj.lat],
+        layers: [new AMap.TileLayer.Satellite()], showLabel: false,
+        resizeEnable: false, dragEnable: false, zoomEnable: false,
+        doubleClickZoom: false, scrollWheel: false, keyboardEnable: false,
+        jogEnable: false, rotateEnable: false, pitchEnable: false
+      });
+      app.amapMap.on('complete', function () {
+        app.amapReady = true;
+        app.amapLastSync = null;
+        try { app.amapMap.setStatus({ dragEnable: false, zoomEnable: false, rotateEnable: false, pitchEnable: false, keyboardEnable: false, doubleClickZoom: false, scrollWheel: false, jogEnable: false }); } catch (e) { /* ignore */ }
+        syncAmapView();
+        invalidate();
+      });
+      setTimeout(function () { try { app.amapMap.resize(); } catch (e) { /* ignore */ } syncAmapView(); }, 150);
+    } catch (e) {
+      showBanner('高德卫星图初始化失败：' + (e && e.message ? e.message : e), 'warn');
+    }
+  });
+}
+function syncAmapView() {
+  if (!app.amapReady || !app.amapMap) return;
+  const center = fromWorld({ x: app.view.cx, y: app.view.cy });
+  const gcj = wgs84ToGcj02(center.x, center.y);
+  const zView = Math.log2(2 * Math.PI * MERC_R * app.view.scale / 256);
+  const z = Math.max(3, Math.min(18, Math.floor(zView)));
+  const factor = Math.pow(2, zView - z);
+  const sig = center.x.toFixed(7) + ',' + center.y.toFixed(7) + ',' + z + ',' + zView.toFixed(4);
+  if (app.amapLastSync === sig) return;
+  app.amapLastSync = sig;
+  try {
+    app.amapMap.setZoomAndCenter(z, [gcj.lon, gcj.lat], true);
+    if (els.amapBg) els.amapBg.style.transform = 'scale(' + factor.toFixed(4) + ')';
+  } catch (e) { /* ignore */ }
+}
+function drawGaodeBasemap(ctx, size) {
+  const st = app.gaodeState;
+  if (st.loaded && st.img && st.center) {
+    const zView = Math.log2(2 * Math.PI * MERC_R * app.view.scale / 256);
+    const factor = Math.pow(2, zView - st.zoom);
+    const w = st.img.naturalWidth * factor;
+    const h = st.img.naturalHeight * factor;
+    const s = screenPos(toWorld(st.center));
+    try { ctx.drawImage(st.img, s.x - w / 2, s.y - h / 2, w, h); } catch (e) { /* ignore */ }
+    els.attribution.innerHTML = '地图数据 © <a href="https://www.amap.com/" target="_blank" rel="noopener">高德地图</a>';
+    els.attribution.style.display = 'block';
+  } else {
+    els.attribution.style.display = 'none';
+  }
+  scheduleGaodeBasemap(size);
+}
+function scheduleGaodeBasemap(size) {
+  if (!els.lyrBase.checked || app.basemapProvider !== 'gaode' || !app.gaodeKey || app.crsMode !== 'geo') return;
+  const st = app.gaodeState;
+  if (st.loading) return;
+  if (st.failed && Date.now() - (st.failedAt || 0) < 15000) return;
+  const center = fromWorld({ x: app.view.cx, y: app.view.cy });
+  const zView = Math.log2(2 * Math.PI * MERC_R * app.view.scale / 256);
+  const z = Math.max(3, Math.min(17, Math.floor(zView)));
+  if (st.loaded && st.center && st.zoom === z) {
+    const oldScreen = screenPos(toWorld(st.center));
+    const moved = Math.hypot(oldScreen.x - size.w / 2, oldScreen.y - size.h / 2);
+    if (moved < Math.max(140, Math.max(size.w, size.h) * 0.12)) return;
+  }
+  if (app.gaodeTimer) clearTimeout(app.gaodeTimer);
+  app.gaodeTimer = setTimeout(requestGaodeBasemap, 320);
+}
+function requestGaodeBasemap() {
+  if (!els.lyrBase.checked || app.basemapProvider !== 'gaode' || !app.gaodeKey || app.crsMode !== 'geo') return;
+  const st = app.gaodeState;
+  const center = fromWorld({ x: app.view.cx, y: app.view.cy });
+  const zView = Math.log2(2 * Math.PI * MERC_R * app.view.scale / 256);
+  const z = Math.max(3, Math.min(17, Math.floor(zView)));
+  const gcj = wgs84ToGcj02(center.x, center.y);
+  const token = ++st.token;
+  st.loading = true;
+  st.requestedAt = Date.now();
+  const img = new Image();
+  img.onload = function () {
+    if (token !== st.token) return;
+    st.img = img; st.loaded = true; st.failed = false; st.loading = false;
+    st.center = { x: center.x, y: center.y };
+    st.zoom = z;
+    invalidate();
+  };
+  img.onerror = function () {
+    if (token !== st.token) return;
+    st.loaded = false; st.failed = true; st.loading = false; st.failedAt = Date.now();
+    showBanner('高德静态卫星图加载失败：请检查 Web 服务 Key、每日配额或网络后，点击 ↻ 重试。', 'warn');
+    invalidate();
+  };
+  img.src = gaodeStaticUrl(gcj.lon, gcj.lat, z);
 }
 
 /* ============================================================
