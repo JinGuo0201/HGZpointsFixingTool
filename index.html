@@ -145,6 +145,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 .banner.warn{background:#fff8e8;border-color:#f0ddb4;color:#8a5600}
 .banner.info{background:#eef6fd;border-color:#c5dff2;color:#1c5f8f}
 .modal{position:fixed;inset:0;background:rgba(15,23,32,.45);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal.announcement{z-index:90;background:rgba(15,23,32,.58)}
 .modal-card{background:#fff;width:min(760px,94vw);max-height:86vh;overflow:auto;border-radius:6px;box-shadow:0 20px 50px rgba(0,0,0,.3);padding:20px 24px}
 .modal-card.small{width:min(560px,94vw)}
 .modal-card h2{margin:0 0 6px;font-size:18px}
@@ -410,6 +411,8 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li><b>天地图</b>：首次打开自动使用内置浏览器端密钥并隐式加载底图，不再弹出密钥填写窗口；顶部“天地图”按钮仍可更换密钥或关闭底图。</li>
       <li><b>本地进度</b>：编辑、目视检查勾选会自动保存到浏览器本地（IndexedDB，失败时自动降级到 localStorage）。重新选择同一任务文件夹时，会提示是否恢复上次的编辑状态；每个行政区各保存一份进度。也可用“导出进度 / 导入进度”保存为 JSON 文件。</li>
       <li><b>导出前目视检查校验</b>：点击“导出成果”时，若本区仍有 02 市、县级点存在未勾选的目视检查项，会阻止导出并弹出提示；可打开独立的“待补充目视检查”悬浮面板，逐点补充完成后合并回本次修改点集继续导出。</li>
+      <li><b>导出格式与命名</b>：导出结果同时包含 SHP 五件套和市县级样点 KML（可导入奥维等软件）；ZIP 文件名与“导出到文件夹”的文件夹名称均包含行政区名称。</li>
+      <li><b>更新公告</b>：打开页面时会弹窗列出本次更新内容，背景不可操作；点击“明白了”后关闭，同一版本同一公告不会重复弹出。</li>
     </ul>
     <h3>三、天地图底图</h3>
     <ul>
@@ -548,6 +551,18 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
     <div class="modal-actions">
       <button id="btnVisualGateCancel" class="btn">取消导出</button>
       <button id="btnVisualGateCheck" class="btn btn-primary">去补充检查</button>
+    </div>
+  </div>
+</div>
+
+<!-- 网站更新公告 -->
+<div id="announcementModal" class="modal announcement hidden">
+  <div class="modal-card small">
+    <h2 id="announcementTitle">工具更新公告</h2>
+    <div class="muted" id="announcementVersion"></div>
+    <ul id="announcementList"></ul>
+    <div class="modal-actions">
+      <button id="btnAnnouncementOk" class="btn btn-primary">明白了</button>
     </div>
   </div>
 </div>
@@ -1408,6 +1423,47 @@ function buildEditLogRows(logEntries) {
   });
   return rows;
 }
+/* ---------- KML 导出 ---------- */
+function xmlEscape(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+}
+function buildRegionKml(regionName, layers) {
+  const esc = xmlEscape;
+  let out = '<?xml version="1.0" encoding="UTF-8"?>\r\n';
+  out += '<kml xmlns="http://www.opengis.net/kml/2.2">\r\n<Document>\r\n';
+  out += '  <name>' + esc(regionName + '市县级样点') + '</name>\r\n';
+  out += '  <description>' + esc('由环耕站布点调整&检测工具导出；坐标为 WGS84 经纬度。') + '</description>\r\n';
+  out += '  <Style id="level-city"><IconStyle><color>ff00a5ff</color><scale>0.9</scale></IconStyle></Style>\r\n';
+  out += '  <Style id="level-county"><IconStyle><color>ff00a651</color><scale>0.9</scale></IconStyle></Style>\r\n';
+  (layers || []).forEach(function (layer) {
+    if (!layer || !layer.points || !layer.points.length) return;
+    const label = LEVELS[layer.level] ? LEVELS[layer.level].label : layer.level;
+    out += '  <Folder>\r\n    <name>' + esc(label + '样点（' + layer.points.length + '）') + '</name>\r\n';
+    layer.points.forEach(function (p, i) {
+      const a = p.attrs || {};
+      const id = a.YDBH || a.OBJECTID || (label + '#' + (i + 1));
+      const desc = [
+        '编号：' + id,
+        '级别：' + label,
+        '行政区：' + (a.COUNTY || a.XZMC || regionName),
+        '乡镇：' + (a.XZMC || a.ZLDWMC || ''),
+        '地类：' + (a.DLMC || ''),
+        '任务批次：' + (a.BATCH || '')
+      ].filter(function (s) { return s && s.indexOf('：') >= 0 && s.split('：')[1] !== ''; }).join('\n');
+      out += '    <Placemark>\r\n';
+      out += '      <name>' + esc(id) + '</name>\r\n';
+      out += '      <styleUrl>#level-' + esc(layer.level) + '</styleUrl>\r\n';
+      out += '      <description>' + esc(desc) + '</description>\r\n';
+      out += '      <Point><coordinates>' + Number(p.x).toFixed(8) + ',' + Number(p.y).toFixed(8) + ',0</coordinates></Point>\r\n';
+      out += '    </Placemark>\r\n';
+    });
+    out += '  </Folder>\r\n';
+  });
+  out += '</Document>\r\n</kml>\r\n';
+  return out;
+}
 function buildExportManifest(opts) {
   const lines = [];
   lines.push('环耕站布点调整&检测工具 ' + TOOL_VERSION);
@@ -1442,6 +1498,12 @@ function outputPathFor(regionName, level, ext) {
 const DEFAULT_TIANDITU_KEY = '0abb8008ce8fcf66a77a070213200286';
 const LS_KEY = 'spacingEditTool.tiandituKey';
 const LS_BASE = 'spacingEditTool.basemap';
+const LS_ANNOUNCEMENT = 'spacingEditTool.announcementSeen';
+const ANNOUNCEMENT_ITEMS = [
+  '导出结果新增 KML 格式：市县级样点会同时输出 SHP 和 KML，KML 可直接导入奥维等软件查看。',
+  '导出 ZIP 文件名和“导出到文件夹”的文件夹名称中新增明确的行政区名称。',
+  '新增网站更新公告：每次版本调整后打开页面，会以弹窗列出本次更新内容。'
+];
 
 const app = {
   metas: [], structure: null, group: null, region: null,
@@ -1507,6 +1569,8 @@ function init() {
     btnPendingFinish: $('btnPendingFinish'), btnPendingCancel: $('btnPendingCancel'),
     visualGateModal: $('visualGateModal'), visualGateContent: $('visualGateContent'),
     btnVisualGateCancel: $('btnVisualGateCancel'), btnVisualGateCheck: $('btnVisualGateCheck'),
+    announcementModal: $('announcementModal'), announcementVersion: $('announcementVersion'),
+    announcementList: $('announcementList'), btnAnnouncementOk: $('btnAnnouncementOk'),
     btnVisualFinish: $('btnVisualFinish'), btnVisualExit: $('btnVisualExit'),
     visualResultModal: $('visualResultModal'), visualResultTitle: $('visualResultTitle'), visualResultContent: $('visualResultContent'),
     btnVisualResultClose: $('btnVisualResultClose'), btnVisualResultEdit: $('btnVisualResultEdit'), btnVisualResultExport: $('btnVisualResultExport'),
@@ -1554,6 +1618,23 @@ function init() {
   });
   setTimeout(resizeCanvas, 80);
   setStatus('就绪：请选择任务文件夹。');
+  initAnnouncement();
+}
+
+function initAnnouncement() {
+  let seen = '';
+  const currentKey = announcementStorageKey();
+  try { seen = localStorage.getItem(LS_ANNOUNCEMENT) || ''; } catch (e) { seen = ''; }
+  if (seen === currentKey) return;
+  if (!els.announcementModal) return;
+  els.announcementVersion.textContent = '版本 ' + TOOL_VERSION + ' · 本次更新内容';
+  els.announcementList.innerHTML = ANNOUNCEMENT_ITEMS.map(function (t) {
+    return '<li>' + escapeHtml(t) + '</li>';
+  }).join('');
+  els.announcementModal.classList.remove('hidden');
+}
+function announcementStorageKey() {
+  return TOOL_VERSION + ':' + hashString(ANNOUNCEMENT_ITEMS.join('\n'));
 }
 
 function bindEvents() {
@@ -1611,6 +1692,13 @@ function bindEvents() {
     if (e.target === els.visualGateModal) els.visualGateModal.classList.add('hidden');
   });
   els.btnVisualGateCancel.addEventListener('click', function () { els.visualGateModal.classList.add('hidden'); });
+  els.btnAnnouncementOk.addEventListener('click', function () {
+    try { localStorage.setItem(LS_ANNOUNCEMENT, announcementStorageKey()); } catch (e) { /* ignore */ }
+    els.announcementModal.classList.add('hidden');
+  });
+  els.announcementModal.addEventListener('click', function (e) {
+    if (e.target === els.announcementModal) return; /* 必须点击“明白了”关闭 */
+  });
   els.btnVisualGateCheck.addEventListener('click', function () {
     els.visualGateModal.classList.add('hidden');
     openPendingInspection();
@@ -4470,6 +4558,42 @@ async function collectExportPackage() {
     checks.push(region.name + ' / ' + LEVELS[g.level].label + '：记录数 ' + raw.shp.points.length + ' 不变，修改 ' + patches.length + ' 条，读回校验通过');
     if (out.warnings && out.warnings.length) checks.push('字段警告：' + out.warnings.join('；'));
   }
+  /* 为每个涉及行政区生成市县级样点 KML（含未修改的市/县图层） */
+  const kmlRegionSeen = new Set();
+  for (const g of groups.values()) {
+    if (kmlRegionSeen.has(g.regionKey)) continue;
+    kmlRegionSeen.add(g.regionKey);
+    const region = regionMap.get(g.regionKey);
+    if (!region) continue;
+    const layers = [];
+    let kmlOk = true;
+    for (const level of ['city', 'county']) {
+      if (!region.files[level]) continue;
+      const raw = await loadLayerRaw(region.files[level], level, region.name);
+      if (raw.crs.kind !== 'geographic') { kmlOk = false; break; }
+      const patchMap = new Map();
+      app.patches.forEach(function (patch, key) {
+        const parts = key.split('|');
+        if (parts[0] === region.key && parts[1] === level) patchMap.set(parseInt(parts[2], 10), patch);
+      });
+      const pts = raw.shp.points.map(function (pt, i) {
+        const patch = patchMap.get(i);
+        const baseRec = raw.dbf ? (raw.dbf.records[i] || {}) : {};
+        const attrs = patch && patch.attrs ? Object.assign({}, baseRec, patch.attrs) : baseRec;
+        return { x: patch ? patch.x : pt.x, y: patch ? patch.y : pt.y, attrs: attrs };
+      });
+      layers.push({ level: level, points: pts });
+    }
+    if (kmlOk && layers.length) {
+      const kml = buildRegionKml(region.name, layers);
+      files.push({ name: region.name + '市县级样点.kml', data: new TextEncoder().encode(kml) });
+      const cityCount = layers.reduce(function (n, l) { return n + (l.level === 'city' ? l.points.length : 0); }, 0);
+      const countyCount = layers.reduce(function (n, l) { return n + (l.level === 'county' ? l.points.length : 0); }, 0);
+      checks.push(region.name + ' / KML：市级 ' + cityCount + ' 个、县级 ' + countyCount + ' 个，已生成');
+    } else if (!kmlOk) {
+      checks.push(region.name + ' / KML：未生成（坐标系不是 WGS84 地理坐标）');
+    }
+  }
   const logRows = buildEditLogRows(app.editLog);
   files.push({ name: '修改记录.csv', data: new TextEncoder().encode(buildCsv(logRows)) });
   const manifest = buildExportManifest({
@@ -4478,6 +4602,7 @@ async function collectExportPackage() {
     checks: checks.concat([
       '01 省级样点：只读，未写入',
       '导出图层：仅 02 市县级样点',
+      '导出格式：SHP（02 图层）+ KML（市县级样点）',
       '记录数：与原始数据一致（未增删点）'
     ])
   });
@@ -4503,7 +4628,7 @@ function openExportModal(opts) {
   els.exportContent.innerHTML = '<div class="replace-details">' +
     '<div><b>修改记录：</b>' + app.editLog.length + ' 条</div>' +
     '<div><b>涉及行政区：</b>' + regions.size + ' 个　<b>涉及图层：</b>' + layers.size + ' 个</div>' +
-    '<div class="note">导出的包内只包含被修改的 02 图层（完整五件套 .shp/.shx/.dbf/.prj/.cpg）以及修改记录、导出说明、校验报告。原文件夹不会被写入。推荐先下载 ZIP 检查无误后再替换成果。</div>' +
+    '<div class="note">导出的包内包含被修改的 02 图层（完整五件套 .shp/.shx/.dbf/.prj/.cpg）、市县级样点 .kml（可直接导入奥维等软件）、修改记录、导出说明、校验报告。ZIP 文件名和“导出到文件夹”的文件夹名称均包含行政区名称。原文件夹不会被写入。推荐先下载 ZIP 检查无误后再替换成果。</div>' +
     '<div><b>最近修改：</b></div>' +
     '<ul>' + app.editLog.slice(-5).reverse().map(function (e) {
       return '<li>' + escapeHtml(e.region + ' ' + LEVELS[e.level].label + ' ' + e.id + '：' + e.actionLabel + ' ' + e.beforeCoord + ' → ' + e.afterCoord) + '</li>';
@@ -4511,6 +4636,20 @@ function openExportModal(opts) {
   els.exportModal.classList.remove('hidden');
   els.btnExportZip.disabled = false;
   els.btnExportFolder.disabled = !('showDirectoryPicker' in window);
+}
+function getExportRegionLabel() {
+  const names = [];
+  if (app.group && app.group.regions) {
+    app.patches.forEach(function (patch, key) {
+      const rk = key.split('|')[0];
+      const r = app.group.regions.find(function (x) { return x.key === rk; });
+      if (r && names.indexOf(r.name) < 0) names.push(r.name);
+    });
+  }
+  if (!names.length && app.region) names.push(app.region.name);
+  if (!names.length) return '未知行政区';
+  if (names.length <= 2) return names.join('_');
+  return names.slice(0, 2).join('_') + '等' + names.length + '个行政区';
 }
 async function downloadExportZip() {
   els.btnExportZip.disabled = true;
@@ -4520,7 +4659,7 @@ async function downloadExportZip() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = '样点修改成果_' + sanitizeFileName(app.group.label) + '_' + timestampForFile() + '.zip';
+    a.download = '样点修改成果_' + sanitizeFileName(getExportRegionLabel()) + '_' + sanitizeFileName(app.group.label) + '_' + timestampForFile() + '.zip';
     document.body.appendChild(a);
     a.click();
     setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 800);
@@ -4540,7 +4679,7 @@ async function exportToFolder() {
   try {
     const dir = await window.showDirectoryPicker({ mode: 'readwrite' });
     const pkg = await collectExportPackage();
-    const rootName = '修改成果_' + timestampForFile();
+    const rootName = '修改成果_' + sanitizeFileName(getExportRegionLabel()) + '_' + timestampForFile();
     const root = await dir.getDirectoryHandle(rootName, { create: true });
     for (const f of pkg.files) {
       const parts = f.name.split('/');
