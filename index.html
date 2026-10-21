@@ -386,7 +386,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li><b>问题检查</b>：点击顶部“问题检查”按钮，中央窗口会显示当前正在检查的行政区、点数、检查范围等信息，并强制至少显示 2 秒后给出检查结果。</li>
       <li><b>格网组合检查</b>：修改后关闭“编辑模式”时，工具会逐一检查当前行政区每个 05 格网是否保持“1 省级 + 1 市级 + 1 县级”组合；通过会提示，未通过可选择“继续编辑”或“强制保存”。</li>
       <li><b>一键调整样点</b>：对当前行政区自动查找因间距过近而冲突的 02 样点，从 03 候选池中选择同地类、与所有点保持 1500 m 以上的候选点进行批量替换，尽量优先落在原格网内。</li>
-      <li><b>目视检查模式</b>：仅依次检查本区 02 市、县级样点（省级点不进入检查队列），地图显示 100 m 圆环和右侧悬浮面板，人工勾选“林地重合、河流距离、侵蚀沟避让、田垄检查（仅水田）”；面板内可开启编辑模式，用 Shift+单击替换或 Space+单击移动当前问题点；完成后自动做一次间距复核，通过后会询问是否导出成果。</li>
+      <li><b>目视检查模式</b>：仅依次检查本区 02 市、县级样点（省级点不进入检查队列），地图显示 100 m 圆环和右侧悬浮面板，人工勾选“林地重合、河流距离、侵蚀沟避让、田垄检查（仅水田）”；面板内可开启编辑模式，用 Shift+单击替换或 Space+单击移动当前问题点；目视检查中按住 Space 移动时保持 100 m 视野，并在点位上显示黄色透明的 20 m 瞄准圈，不跳转到 20 m 放大视图；完成后自动做一次间距复核，通过后会询问是否导出成果。</li>
       <li><b>天地图</b>：首次打开自动使用内置浏览器端密钥并隐式加载底图，不再弹出密钥填写窗口；顶部“天地图”按钮仍可更换密钥或关闭底图。</li>
       <li><b>本地进度</b>：编辑、目视检查勾选会自动保存到浏览器本地（IndexedDB，失败时自动降级到 localStorage）。重新选择同一任务文件夹时，会提示是否恢复上次的编辑状态；每个行政区各保存一份进度。也可用“导出进度 / 导入进度”保存为 JSON 文件。</li>
     </ul>
@@ -1563,7 +1563,13 @@ function bindEvents() {
   els.btnVisualNext.addEventListener('click', function () { visualStep(1); });
   els.btnVisualEditMode.addEventListener('click', function () {
     if (!app.visualMode) return;
-    setEditMode(!app.editMode);
+    if (!app.editMode) {
+      setEditMode(true);
+      const vp = currentVisualPoint();
+      if (vp) selectPoint(vp);
+    } else {
+      setEditMode(false);
+    }
   });
   els.btnVisualExit.addEventListener('click', function () { setVisualMode(false); });
   els.btnVisualFinish.addEventListener('click', finishVisualCheck);
@@ -2799,6 +2805,10 @@ function toggleEditMode() {
     else setEditMode(false);
   } else {
     setEditMode(true);
+    if (app.visualMode) {
+      const vp = currentVisualPoint();
+      if (vp) selectPoint(vp);
+    }
   }
 }
 function delay(ms) { return new Promise(function (resolve) { setTimeout(resolve, ms); }); }
@@ -3123,6 +3133,10 @@ function setVisualMode(on) {
     }
     updateVisualPanel();
     centerVisualPoint();
+    if (app.editMode) {
+      const vp = currentVisualPoint();
+      if (vp) selectPoint(vp);
+    }
     setStatus('目视检查模式：右侧面板逐点检查，勾选四项；地图蓝色圆环半径为 100 m。');
     invalidate();
   } else {
@@ -3424,22 +3438,27 @@ function startMoveMode() {
   const others = app.current.filter(function (p) {
     return !(p.region === sel.region && p.level === sel.level && p.idx === sel.idx);
   });
-  /* 放大到能看清 20 m 圆环的尺度 */
+  /* 普通编辑模式放大到 20 m；目视检查模式保持当前 100 m 显示尺度 */
+  const wasVisual = !!app.visualMode;
   const prevView = { cx: app.view.cx, cy: app.view.cy, scale: app.view.scale };
-  const centerWorld = toWorld(sel);
-  app.view.cx = centerWorld.x;
-  app.view.cy = centerWorld.y;
-  const radiusWorld = metersToWorld(MOVE_LIMIT_M, sel.y);
-  const size = mapSize();
-  app.view.scale = Math.min(size.w, size.h) * 0.3 / Math.max(1e-9, radiusWorld);
+  if (!wasVisual) {
+    const centerWorld = toWorld(sel);
+    app.view.cx = centerWorld.x;
+    app.view.cy = centerWorld.y;
+    const radiusWorld = metersToWorld(MOVE_LIMIT_M, sel.y);
+    const size = mapSize();
+    app.view.scale = Math.min(size.w, size.h) * 0.3 / Math.max(1e-9, radiusWorld);
+  }
   app.moveState = {
     anchor: { x: sel.x, y: sel.y },
     index: buildSpatialIndex(others, app.crs),
     target: { x: sel.x, y: sel.y },
     meters: 0, clamped: false, spacing: { ok: true, conflict: null, distance: null },
-    prevView: prevView
+    prevView: prevView, visualMove: wasVisual
   };
-  showModeHint('移动模式：在 20 m 圆环内单击确定新位置；松开空格取消');
+  showModeHint(wasVisual
+    ? '目视检查移动模式：在黄色 20 m 瞄准圈内单击确定新位置；松开空格取消'
+    : '移动模式：在 20 m 圆环内单击确定新位置；松开空格取消');
   updateMoveTargetFromSelected();
   invalidate();
 }
@@ -3664,8 +3683,8 @@ function draw() {
   drawOwnPoints(ctx);
   if (els.lyrPool.checked && app.selected && app.editMode) drawCandidates(ctx);
   drawSelection(ctx);
-  drawMoveState(ctx);
   if (app.visualMode) drawVisualOverlay(ctx);
+  drawMoveState(ctx);
   updateScalebar();
   updateMapEmpty();
 }
@@ -3824,15 +3843,32 @@ function drawMoveState(ctx) {
   const center = screenPos(toWorld(anchor));
   const radiusPx = metersToWorld(MOVE_LIMIT_M, anchor.y) * app.view.scale;
   const t = screenPos(toWorld(app.moveState.target));
+  const visualMove = !!app.moveState.visualMove;
   ctx.save();
-  /* 20m 圆环 */
+  /* 20m 圆环：目视检查模式下使用黄色透明瞄准圈，且不改变地图缩放 */
   ctx.beginPath(); ctx.arc(center.x, center.y, radiusPx, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(0,121,193,0.9)'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.stroke();
+  if (visualMove) {
+    ctx.fillStyle = 'rgba(255, 200, 30, 0.28)';
+    ctx.strokeStyle = 'rgba(206, 148, 0, 0.95)';
+    ctx.lineWidth = 2.5;
+    ctx.setLineDash([5, 4]);
+  } else {
+    ctx.fillStyle = 'rgba(0,121,193,0.06)';
+    ctx.strokeStyle = 'rgba(0,121,193,0.9)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+  }
+  ctx.fill();
+  ctx.stroke();
   ctx.setLineDash([]);
-  ctx.fillStyle = 'rgba(0,121,193,0.06)'; ctx.fill();
   /* 圆心 */
   ctx.beginPath(); ctx.arc(center.x, center.y, 3, 0, Math.PI * 2);
   ctx.fillStyle = '#111'; ctx.fill();
+  if (visualMove) {
+    ctx.font = '600 12px "Microsoft YaHei", sans-serif';
+    ctx.fillStyle = 'rgba(130, 88, 0, 0.95)';
+    ctx.fillText('20 m 瞄准圈', center.x + radiusPx * 0.45, center.y - radiusPx * 0.7);
+  }
   /* 目标位置与连线 */
   const ok = app.moveState.spacing.ok;
   ctx.beginPath(); ctx.moveTo(center.x, center.y); ctx.lineTo(t.x, t.y);
