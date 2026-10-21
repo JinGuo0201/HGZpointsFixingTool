@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.3</title>
+<title>环耕站布点调整&amp;检测工具 v2.4</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -195,7 +195,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.3</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.4</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -275,9 +275,9 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <label class="chk"><input type="checkbox" id="lyrGrid" checked><span class="sym sym-grid"></span>05 区县格网</label>
       <label class="chk"><input type="checkbox" id="lyrOther" checked><span class="sym sym-other"></span>同文件夹其他行政区点</label>
       <label class="chk"><input type="checkbox" id="lyrCircle"><span class="sym sym-circle"></span>1.5 km 参考圈</label>
-      <label class="chk"><input type="checkbox" id="lyrBase"><span class="sym sym-base"></span>天地图影像底图</label>
-      <label class="chk"><input type="checkbox" id="lyrLabel" checked>天地图注记</label>
-      <div class="tiny" id="basemapState" style="margin:2px 0 4px;color:#8a949e">底图未启用</div>
+      <label class="chk"><input type="checkbox" id="lyrBase" disabled><span class="sym sym-base"></span>天地图影像（仅目视检查）</label>
+      <label class="chk" style="display:none"><input type="checkbox" id="lyrLabel">天地图注记</label>
+      <div class="tiny" id="basemapState" style="margin:2px 0 4px;color:#8a949e">底图未启用（进入目视检查后按目标 200 m 加载）</div>
       <label class="chk"><input type="checkbox" id="lyrMesh" checked>网格线</label>
     </div>
   </aside>
@@ -290,6 +290,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
         <button id="btnZoomOut" title="缩小">－</button>
         <button id="btnFit" title="显示全部">⤢</button>
         <button id="btnRefreshTiles" title="刷新底图 / 重试加载">↻</button>
+        <button id="btnLoadViewTiles" title="加载当前视野全部影像（会消耗较多额度）" disabled>全图</button>
       </div>
       <div class="map-empty" id="mapEmpty">
         <div class="empty-card">
@@ -382,14 +383,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.3 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.4 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 帮助 -->
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.3 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v2.4 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -421,9 +422,9 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
     </ul>
     <h3>三、天地图底图</h3>
     <ul>
-      <li>工具支持天地图影像/注记（WMTS）。首次使用不预填密钥，需在“底图设置”中填写自己的浏览器端 tk 后才会启用。</li>
-      <li>可填写多个 Key，按列表从上到下使用；当前 Key 限流/权限/网络报错时自动静默切换下一个。全部 Key 不可用时暂停 60 秒并提示，点击 ↻ 可立即重试。</li>
-      <li>瓦片会持久缓存到本机 IndexedDB，上限 450 MB，按最近使用自动淘汰；缓存命中不会请求天地图，也不消耗 Key 额度。可在“底图设置”查看用量并清空缓存。</li>
+      <li>底图默认关闭；间距调整阶段强制不请求、不加载、不存储任何瓦片，避免消耗 Key 额度。</li>
+      <li>进入目视检查后，只为当前目标样点 200 m 外圈范围内的瓦片加载影像，不铺满屏幕、不额外加载注记；可用地图左上角“全图”按钮手动加载当前视野全部影像（会额外消耗额度）。</li>
+      <li>不自动预加载、不持久化存储瓦片；可填写多个 Key，按列表从上到下使用，当前 Key 限流/权限/网络报错时自动静默切换下一个。全部 Key 不可用时暂停 60 秒并提示，点击 ↻ 可立即重试。</li>
       <li>密钥可能绑定了域名白名单（如 jinguo0201.github.io）；本地双击打开或域名不符时底图可能加载失败，不影响检查和编辑。</li>
       <li>同一 Key 并发/高频请求可能触发天地图限流（HTTP 429，code 302010）；多 Key 可缓解但不能绕过天地图服务条款。</li>
       <li>建议在 HTTPS 页面（如 GitHub Pages）使用，以获得完整的地图加载能力。</li>
@@ -451,13 +452,13 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
     </div>
     <div class="tiny" id="keyStatus" style="margin:6px 0;color:#475467">底图状态：未启用</div>
     <div class="note" style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
-      <span>底图瓦片缓存：<b id="cacheStatus">正在统计…</b></span>
-      <button id="btnClearCache" class="btn mini">清空底图缓存</button>
+      <span>底图加载：仅目视检查目标 200 m 范围；可用地图左上角“全图”手动加载当前视野。不持久化存储瓦片。</span>
+      <button id="btnClearCache" class="btn mini" style="display:none">清除旧缓存</button>
     </div>
     <div class="modal-actions">
       <button id="btnKeyClear" class="btn">清除全部 Key</button>
       <button id="btnKeySkip" class="btn">暂不启用底图</button>
-      <button id="btnKeySave" class="btn btn-primary">保存并启用</button>
+      <button id="btnKeySave" class="btn btn-primary">保存 Key</button>
     </div>
   </div>
 </div>
@@ -607,14 +608,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v2.3 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v2.4 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.3';
+const TOOL_VERSION = 'v2.4';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1532,10 +1533,11 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v2.3 —— 界面与交互
+ * 环耕站布点调整与检测工具 v2.4 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
@@ -1552,9 +1554,9 @@ const TILE_TTL_IMG = 30 * 24 * 3600 * 1000;
 const TILE_TTL_LABEL = 7 * 24 * 3600 * 1000;
 const LS_ANNOUNCEMENT = 'spacingEditTool.announcementSeen';
 const ANNOUNCEMENT_ITEMS = [
-  '底图设置支持填写多个天地图 Key：优先使用第 1 个，当前 Key 限流/报错时自动静默切换到下一个，全部不可用时暂停 60 秒并提示。',
-  '新增底图瓦片持久缓存：使用 IndexedDB 缓存已加载瓦片，上限 450 MB，按最近使用自动淘汰；缓存命中不消耗 Key 额度，切换 Key 或刷新页面后仍可复用。',
-  '编辑/目视检查选中样点时，优先显示同一 05 格网内的候选点；同格网没有可替换候选时，才开放其他格网候选并弹出横幅提示。'
+  '底图改为按需加载：间距调整阶段强制不请求、不加载、不存储任何瓦片；只有进入目视检查后，才按当前目标样点 200 m 外圈范围加载影像。',
+  '地图左上角新增“全图”按钮：仅在需要时手动加载当前视野全部影像；不再自动预加载、不持久化存储瓦片，显著减少天地图 Key 消耗。',
+  '多 Key 顺序切换保留：当前 Key 限流/报错时静默切换下一个；全部不可用时暂停 60 秒并提示。'
 ];
 
 const app = {
@@ -1577,9 +1579,10 @@ const app = {
   crsMode: 'geo', crs: { kind: 'geographic', unitScale: 1 },
   view: { cx: 0, cy: 0, scale: 1 },
   hover: null, hoverIsCandidate: false,
-  tileCache: new Map(), tileErrors: 0, tileLoaded: 0, tileErrorNotified: false,
   tiandituKey: '', basemapEnabled: false,
   tiandituKeys: [], keyIndex: 0, keyStatuses: [], keysAllFailedUntil: 0,
+  tileCache: new Map(), tileErrors: 0, tileLoaded: 0, tileErrorNotified: false,
+  viewTilesSnapshot: null,
   tileDb: null, cacheBytes: 0, cacheReady: false, cacheEvicting: false,
   cacheHits: 0, cacheMisses: 0, tileFetchUnsupported: false,
   regionCountChecks: new Map(), countMismatchPending: null, countValidateAllPromise: null, countValidatePromises: new Map(),
@@ -1642,6 +1645,7 @@ function init() {
     checkPane: $('checkPane'), logPane: $('logPane'), tabCheck: $('tabCheck'), tabLog: $('tabLog'),
     statusLeft: $('statusLeft'), statusRight: $('statusRight'),
     btnZoomIn: $('btnZoomIn'), btnZoomOut: $('btnZoomOut'), btnFit: $('btnFit'), btnRefreshTiles: $('btnRefreshTiles'),
+    btnLoadViewTiles: $('btnLoadViewTiles'),
     lyrProv: $('lyrProv'), lyrCity: $('lyrCity'), lyrCounty: $('lyrCounty'),
     lyrPool: $('lyrPool'), lyrGrid: $('lyrGrid'), lyrOther: $('lyrOther'),
     lyrCircle: $('lyrCircle'), lyrBase: $('lyrBase'), lyrLabel: $('lyrLabel'), lyrMesh: $('lyrMesh'),
@@ -1877,6 +1881,11 @@ function bindEvents() {
     if (cb) cb.addEventListener('change', invalidate);
   });
   els.lyrBase.addEventListener('change', function () {
+    if (els.lyrBase.checked && !inspectionActive()) {
+      els.lyrBase.checked = false;
+      toast('间距调整阶段不加载底图；进入目视检查后才会按目标点 200 m 范围加载。', 'warn');
+      return;
+    }
     if (els.lyrBase.checked && !app.tiandituKeys.length) {
       els.lyrBase.checked = false;
       openKeyModal();
@@ -1887,6 +1896,7 @@ function bindEvents() {
       toast('当前数据为投影坐标，暂不支持天地图影像底图叠加。', 'warn');
       return;
     }
+    app.viewTilesSnapshot = null;
     if (els.lyrBase.checked) resetTileCache();
     updateKeyAndCacheUi();
     invalidate();
@@ -1896,7 +1906,16 @@ function bindEvents() {
   els.btnFit.addEventListener('click', function () { fitView(); invalidate(); });
   els.btnRefreshTiles.addEventListener('click', function () {
     resetTileCache();
-    toast('已清空底图缓存，正在重新请求天地图瓦片…', 'info');
+    toast('已清空当前会话底图缓存，正在重新请求目标范围瓦片…', 'info');
+    invalidate();
+  });
+  els.btnLoadViewTiles.addEventListener('click', function () {
+    if (!inspectionActive()) { toast('仅目视检查时可加载底图；间距调整阶段强制不加载。', 'warn'); return; }
+    if (!app.tiandituKeys.length) { toast('请先在“底图设置”中填入天地图 Key。', 'warn'); openKeyModal(); return; }
+    app.viewTilesSnapshot = makeViewTileSnapshot();
+    els.lyrBase.checked = true;
+    updateKeyAndCacheUi();
+    toast('已加载当前视野范围影像；不会自动预加载其他区域。', 'info');
     invalidate();
   });
   bindMapEvents();
@@ -3380,6 +3399,8 @@ function setVisualMode(on) {
     if (!app.editMode) { /* 保持当前状态 */ }
     app.visualMode = true;
     app.visualPrevView = { cx: app.view.cx, cy: app.view.cy, scale: app.view.scale };
+    app.viewTilesSnapshot = null;
+    enableInspectionBasemap();
     els.btnVisualMode.classList.add('active');
     els.visualPanel.classList.remove('hidden');
     app.visualPoints = app.ownPoints.filter(function (p) { return p.level === 'city' || p.level === 'county'; });
@@ -3401,6 +3422,7 @@ function setVisualMode(on) {
     invalidate();
   } else {
     app.visualMode = false;
+    disableInspectionBasemap();
     els.btnVisualMode.classList.remove('active');
     els.visualPanel.classList.add('hidden');
     app.visualPoints = [];
@@ -3431,6 +3453,7 @@ function currentInspectionPoint() {
 }
 function visualStep(delta) {
   if (!app.visualMode || !app.visualPoints.length) return;
+  app.viewTilesSnapshot = null;
   const n = app.visualPoints.length;
   app.visualIndex = (app.visualIndex + delta + n) % n;
   updateVisualPanel();
@@ -3444,6 +3467,7 @@ function visualStep(delta) {
 function centerVisualPoint() {
   const p = currentVisualPoint();
   if (!p) return;
+  app.viewTilesSnapshot = null;
   const w = toWorld(p);
   app.view.cx = w.x; app.view.cy = w.y;
   const radiusWorld = metersToWorld(100, p.y);
@@ -3576,6 +3600,7 @@ function openPendingInspection(points) {
   };
   if (els.visualPanel) els.visualPanel.classList.add('hidden');
   els.pendingPanel.classList.remove('hidden');
+  enableInspectionBasemap();
   renderPendingPanel();
   centerPendingPoint();
   setStatus('待补充目视检查：请逐点勾选未完成项，全部完成后继续导出。');
@@ -3588,6 +3613,7 @@ function currentPendingPoint() {
 function centerPendingPoint() {
   const p = currentPendingPoint();
   if (!p) return;
+  app.viewTilesSnapshot = null;
   const w = toWorld(p);
   app.view.cx = w.x; app.view.cy = w.y;
   const radiusWorld = metersToWorld(100, p.y);
@@ -3662,6 +3688,8 @@ function finishPendingInspection() {
   if (wasVisual && app.visualMode) {
     els.visualPanel.classList.remove('hidden');
     updateVisualPanel();
+  } else {
+    disableInspectionBasemap();
   }
   toast('补充目视检查已完成，已合并到本次修改点集，继续导出。', 'ok');
   setStatus('目视检查已全部完成，继续导出成果。');
@@ -3675,6 +3703,8 @@ function cancelPendingInspection() {
   if (wasVisual && app.visualMode) {
     els.visualPanel.classList.remove('hidden');
     updateVisualPanel();
+  } else {
+    disableInspectionBasemap();
   }
   toast('已取消补充检查，未导出。', 'warn');
   setStatus('已取消补充目视检查。');
@@ -4230,7 +4260,7 @@ function draw() {
   ctx.fillRect(0, 0, size.w, size.h);
   const hasData = app.ownPoints.length > 0;
   if (!hasData) { updateMapEmpty(); return; }
-  if (els.lyrBase.checked && app.crsMode === 'geo' && app.tiandituKeys.length) drawTiles(ctx, size);
+  if (inspectionActive() && els.lyrBase.checked && app.crsMode === 'geo' && app.tiandituKeys.length) drawTiles(ctx, size);
   else els.attribution.style.display = 'none';
   if (els.lyrMesh.checked) drawMesh(ctx, size);
   if (els.lyrGrid.checked) drawGridWorld(ctx);
@@ -4559,19 +4589,18 @@ function updateKeyAndCacheUi() {
   if (!els) return;
   const n = app.tiandituKeys.length;
   if (els.basemapState) {
-    if (!els.lyrBase || !els.lyrBase.checked || !n) els.basemapState.textContent = '底图未启用';
+    if (!inspectionActive()) els.basemapState.textContent = '底图未启用（进入目视检查后按目标 200 m 加载）';
+    else if (!els.lyrBase || !els.lyrBase.checked || !n) els.basemapState.textContent = '目视检查：底图关闭';
     else if (app.keysAllFailedUntil > Date.now()) els.basemapState.textContent = '底图：所有 Key 暂不可用，稍后自动重试';
     else els.basemapState.textContent = '底图：Key ' + (app.keyIndex + 1) + ' / ' + n + ' · ' + keyStatusText(app.keyIndex);
   }
   if (els.keyStatus) {
-    if (!n) els.keyStatus.textContent = '底图状态：未启用（请在上面添加自己的天地图 tk）';
+    if (!n) els.keyStatus.textContent = '底图状态：未配置 Key（进入目视检查时按需加载）';
+    else if (!inspectionActive()) els.keyStatus.textContent = '底图状态：已保存 ' + n + ' 个 Key；进入目视检查后按目标 200 m 加载';
     else if (app.keysAllFailedUntil > Date.now()) els.keyStatus.textContent = '底图状态：所有 Key 暂不可用，' + Math.ceil((app.keysAllFailedUntil - Date.now()) / 1000) + ' 秒后重试';
     else els.keyStatus.textContent = '底图状态：当前使用第 ' + (app.keyIndex + 1) + ' / ' + n + ' 个 Key · ' + keyStatusText(app.keyIndex);
   }
-  if (els.cacheStatus) {
-    if (!app.cacheReady) els.cacheStatus.textContent = '正在统计…';
-    else els.cacheStatus.textContent = formatBytes(app.cacheBytes) + ' / 450 MB · 命中 ' + app.cacheHits + ' / 请求 ' + (app.cacheHits + app.cacheMisses);
-  }
+  if (els.cacheStatus) els.cacheStatus.textContent = '不持久化瓦片缓存';
 }
 function addKeyRow(value) {
   if (!els || !els.keyRows) return;
@@ -4666,11 +4695,18 @@ function initKeySettings() {
   app.keyStatuses = list.map(function () { return { cooldownUntil: 0, lastError: '' }; });
   app.keyIndex = 0;
   app.tiandituKey = list[0] || '';
-  app.basemapEnabled = list.length > 0;
-  els.lyrBase.checked = list.length > 0;
+  app.basemapEnabled = false;
+  app.cacheReady = true;
+  els.lyrBase.checked = false;
+  els.lyrBase.disabled = true;
+  els.lyrLabel.checked = false;
+  els.lyrLabel.disabled = true;
+  if (els.btnLoadViewTiles) els.btnLoadViewTiles.disabled = true;
+  app.viewTilesSnapshot = null;
   updateKeyAndCacheUi();
-  if (!list.length) showBanner('天地图底图未启用：请点击“底图设置”填入你自己的天地图浏览器端 tk。不加载底图不影响检查与编辑。', 'info');
-  initTileDB();
+  if (!list.length) showBanner('天地图底图未启用：请点击“底图设置”填入你自己的天地图浏览器端 tk；进入目视检查后才会按目标点 200 m 范围加载。', 'info');
+  /* 不再持久化存储任何瓦片，启动时删除旧版本缓存 */
+  try { indexedDB.deleteDatabase(TILE_DB_NAME); } catch (e) { /* ignore */ }
 }
 function openKeyModal() {
   renderKeyRows(app.tiandituKeys);
@@ -4686,6 +4722,7 @@ function resetTileCache() {
   app.tileErrors = 0;
   app.tileLoaded = 0;
   app.tileErrorNotified = false;
+  app.viewTilesSnapshot = null;
   app.keysAllFailedUntil = 0;
   resetKeyStates();
   hideBanner();
@@ -4703,10 +4740,12 @@ function saveKey() {
     localStorage.removeItem(LS_KEY);
     localStorage.setItem(LS_BASE, '1');
   } catch (e) { /* ignore */ }
-  els.lyrBase.checked = true;
+  els.lyrBase.checked = inspectionActive() && keys.length > 0;
+  els.lyrBase.disabled = !inspectionActive();
   els.keyModal.classList.add('hidden');
   resetTileCache();
-  toast('已保存 ' + keys.length + ' 个天地图 Key，底图将按顺序使用。', 'ok');
+  updateKeyAndCacheUi();
+  toast('已保存 ' + keys.length + ' 个天地图 Key；进入目视检查后按目标 200 m 范围启用底图。', 'ok');
   invalidate();
 }
 
@@ -4949,20 +4988,9 @@ function attachTileBlob(rec, blob) {
   img.src = url;
 }
 async function loadTile(rec, layer, z, x, y) {
-  const ttl = layer === 'cia' ? TILE_TTL_LABEL : TILE_TTL_IMG;
   try {
-    const cached = await tileCacheGet(rec.key, ttl);
-    if (cached) {
-      app.cacheHits++;
-      attachTileBlob(rec, cached);
-      updateKeyAndCacheUi();
-      return;
-    }
-    app.cacheMisses++;
     const blob = await fetchTileBlob(layer, z, x, y);
-    tileCachePut(rec.key, blob, layer);
     attachTileBlob(rec, blob);
-    updateKeyAndCacheUi();
   } catch (e) {
     if (e && e.networkFailure && !app.tileFetchUnsupported) {
       app.tileFetchUnsupported = true;
@@ -4994,56 +5022,101 @@ function getTile(layer, z, x, y) {
   loadTile(rec, layer, z, x, y);
   return rec;
 }
-function drawTiles(ctx, size) {
-  const scale = app.view.scale;
-  if (!(scale > 0)) return;
-  const zFloat = Math.log2(2 * Math.PI * MERC_R * scale / 256);
-  const z = Math.max(3, Math.min(18, Math.ceil(zFloat)));
+function enableInspectionBasemap() {
+  if (!els) return;
+  els.lyrBase.disabled = false;
+  els.lyrBase.checked = app.tiandituKeys.length > 0;
+  els.lyrBase.title = '目视检查时仅加载目标点 200 m 范围影像';
+  els.lyrLabel.checked = false;
+  els.lyrLabel.disabled = true;
+  els.btnLoadViewTiles.disabled = !app.tiandituKeys.length;
+  app.viewTilesSnapshot = null;
+  resetTileCache();
+  updateKeyAndCacheUi();
+  if (!app.tiandituKeys.length) showBanner('目视检查需要天地图底图，但当前未配置 Key；底图保持关闭，请到“底图设置”填入自己的 Key。', 'info');
+}
+function disableInspectionBasemap() {
+  if (!els) return;
+  els.lyrBase.checked = false;
+  els.lyrBase.disabled = true;
+  els.lyrLabel.checked = false;
+  els.lyrLabel.disabled = true;
+  if (els.btnLoadViewTiles) els.btnLoadViewTiles.disabled = true;
+  app.viewTilesSnapshot = null;
+  resetTileCache();
+  updateKeyAndCacheUi();
+}
+function inspectionActive() {
+  return !!app.visualMode || !!(app.pendingInspect && app.pendingInspect.active);
+}
+function tileZForScale(scale) {
+  return Math.max(3, Math.min(18, Math.ceil(Math.log2(2 * Math.PI * MERC_R * scale / 256))));
+}
+function tileRangeForWorld(minX, maxX, minY, maxY, z) {
   const n = Math.pow(2, z);
   const tileWorld = (2 * Math.PI * MERC_R) / n;
+  return {
+    tx0: Math.max(0, Math.floor((minX + Math.PI * MERC_R) / tileWorld)),
+    tx1: Math.min(n - 1, Math.floor((maxX + Math.PI * MERC_R) / tileWorld)),
+    ty0: Math.max(0, Math.floor((Math.PI * MERC_R - maxY) / tileWorld)),
+    ty1: Math.min(n - 1, Math.floor((Math.PI * MERC_R - minY) / tileWorld))
+  };
+}
+function tileCoordsInRange(range, limit) {
+  const out = [];
+  for (let ty = range.ty0; ty <= range.ty1; ty++) {
+    for (let tx = range.tx0; tx <= range.tx1; tx++) {
+      out.push({ x: tx, y: ty });
+      if (limit && out.length >= limit) return out;
+    }
+  }
+  return out;
+}
+function focusTileCoords(z) {
+  const p = currentInspectionPoint();
+  if (!p) return [];
+  const w = toWorld(p);
+  const r = metersToWorld(200, p.y);
+  const range = tileRangeForWorld(w.x - r, w.x + r, w.y - r, w.y + r, z);
+  /* 目标点 200 m 外圈可能落在 1–4 张瓦片内；最多取 9 张，不加载额外区域 */
+  return tileCoordsInRange(range, 9);
+}
+function makeViewTileSnapshot() {
+  const size = mapSize();
+  const z = tileZForScale(app.view.scale);
   const tl = worldPos({ x: 0, y: 0 }), br = worldPos({ x: size.w, y: size.h });
   const minX = Math.min(tl.x, br.x), maxX = Math.max(tl.x, br.x);
   const minY = Math.min(tl.y, br.y), maxY = Math.max(tl.y, br.y);
-  const tx0 = Math.max(0, Math.floor((minX + Math.PI * MERC_R) / tileWorld));
-  const tx1 = Math.min(n - 1, Math.floor((maxX + Math.PI * MERC_R) / tileWorld));
-  const ty0 = Math.max(0, Math.floor((Math.PI * MERC_R - maxY) / tileWorld));
-  const ty1 = Math.min(n - 1, Math.floor((Math.PI * MERC_R - minY) / tileWorld));
+  const range = tileRangeForWorld(minX, maxX, minY, maxY, z);
+  return { z: z, coords: tileCoordsInRange(range, 120) };
+}
+function drawTiles(ctx, size) {
+  const scale = app.view.scale;
+  if (!(scale > 0) || !inspectionActive()) return;
+  const zNow = tileZForScale(scale);
+  let z = zNow;
+  let coords = focusTileCoords(zNow);
+  if (app.viewTilesSnapshot && app.viewTilesSnapshot.z === zNow) {
+    z = app.viewTilesSnapshot.z;
+    coords = app.viewTilesSnapshot.coords;
+  }
+  if (!coords.length) { els.attribution.style.display = 'none'; return; }
+  const n = Math.pow(2, z);
+  const tileWorld = (2 * Math.PI * MERC_R) / n;
   let drawn = 0;
-  for (let ty = ty0; ty <= ty1; ty++) {
-    for (let tx = tx0; tx <= tx1; tx++) {
-      const rec = getTile('img', z, tx, ty);
-      const leftWorld = -Math.PI * MERC_R + tx * tileWorld;
-      const topWorld = Math.PI * MERC_R - ty * tileWorld;
-      const sLeft = (leftWorld - app.view.cx) * scale + size.w / 2;
-      const sTop = size.h / 2 - (topWorld - app.view.cy) * scale;
-      const side = tileWorld * scale + 0.6;
-      if (rec.loaded) {
-        try { ctx.drawImage(rec.img, sLeft, sTop, side, side); drawn++; } catch (e) { /* ignore */ }
-      }
+  coords.forEach(function (c) {
+    const rec = getTile('img', z, c.x, c.y);
+    const leftWorld = -Math.PI * MERC_R + c.x * tileWorld;
+    const topWorld = Math.PI * MERC_R - c.y * tileWorld;
+    const sLeft = (leftWorld - app.view.cx) * scale + size.w / 2;
+    const sTop = size.h / 2 - (topWorld - app.view.cy) * scale;
+    const side = tileWorld * scale + 0.6;
+    if (rec.loaded) {
+      try { ctx.drawImage(rec.img, sLeft, sTop, side, side); drawn++; } catch (e) { /* ignore */ }
     }
-  }
-  if (els.lyrLabel.checked && drawn > 0) {
-    const lz = Math.max(3, z);
-    const ln = Math.pow(2, lz);
-    const lTileWorld = (2 * Math.PI * MERC_R) / ln;
-    const ltx0 = Math.max(0, Math.floor((minX + Math.PI * MERC_R) / lTileWorld));
-    const ltx1 = Math.min(ln - 1, Math.floor((maxX + Math.PI * MERC_R) / lTileWorld));
-    const lty0 = Math.max(0, Math.floor((Math.PI * MERC_R - maxY) / lTileWorld));
-    const lty1 = Math.min(ln - 1, Math.floor((Math.PI * MERC_R - minY) / lTileWorld));
-    for (let ty = lty0; ty <= lty1; ty++) {
-      for (let tx = ltx0; tx <= ltx1; tx++) {
-        const rec = getTile('cia', lz, tx, ty);
-        if (!rec.loaded) continue;
-        const leftWorld = -Math.PI * MERC_R + tx * lTileWorld;
-        const topWorld = Math.PI * MERC_R - ty * lTileWorld;
-        const sLeft = (leftWorld - app.view.cx) * scale + size.w / 2;
-        const sTop = size.h / 2 - (topWorld - app.view.cy) * scale;
-        try { ctx.drawImage(rec.img, sLeft, sTop, lTileWorld * scale + 0.6, lTileWorld * scale + 0.6); } catch (e) { /* ignore */ }
-      }
-    }
-  }
+  });
   els.attribution.innerHTML = '地图数据 © <a href="https://www.tianditu.gov.cn/" target="_blank" rel="noopener">天地图</a>';
-  els.attribution.style.display = drawn > 0 || app.tileLoaded > 0 ? 'block' : 'none';
+  els.attribution.style.display = drawn > 0 ? 'block' : 'none';
 }
 /* ============================================================
  * 悬浮提示
@@ -5495,9 +5568,11 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
 </script>
 </body>
 </html>
+
 
 
 
