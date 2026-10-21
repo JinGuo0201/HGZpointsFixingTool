@@ -117,6 +117,8 @@ button{font-family:inherit}
 .visual-panel .vp-nav{display:flex;gap:6px;margin-top:7px}
 .visual-panel .vp-nav button{flex:1}
 .visual-panel .vp-note{font-size:11px;color:#8a949e;line-height:1.45;margin-top:5px}
+.pending-panel{border-color:#e0b23c;box-shadow:0 6px 20px rgba(150,105,0,.22)}
+.pending-panel .vp-head{color:#8a5a00}
 .results-panel{flex:0 0 232px;background:var(--panel);border:1px solid var(--border);border-radius:4px;box-shadow:var(--shadow);display:flex;flex-direction:column;min-height:0;overflow:hidden}
 .result-head{display:flex;align-items:center;gap:10px;padding:6px 10px;border-bottom:1px solid #e6e9ed;min-height:36px;flex-wrap:wrap}
 .tabs{display:flex;gap:2px}
@@ -328,6 +330,24 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
         <button id="btnVisualExit" class="btn mini wide" style="margin-top:4px">退出目视检查</button>
         <div class="vp-note">仅检查 02 市、县级样点，省级 01 点不进入队列。地图中的蓝色圆环半径为 100 m，可用于判断样点距道路的距离；四项检查请结合天地图影像人工判断后勾选。可在本面板开启编辑模式，直接替换或移动当前问题点。</div>
       </div>
+      <div id="pendingPanel" class="visual-panel pending-panel hidden">
+        <div class="vp-head"><span>待补充目视检查</span><span id="pendingProgress" class="tiny">0 / 0</span></div>
+        <div id="pendingInfo" class="vp-info"></div>
+        <div class="vp-checks">
+          <label class="chk"><input type="checkbox" id="pendingChkForest"> 林地重合</label>
+          <label class="chk"><input type="checkbox" id="pendingChkRiver"> 河流距离</label>
+          <label class="chk"><input type="checkbox" id="pendingChkGully"> 侵蚀沟避让</label>
+          <label class="chk" id="pendingLblRidge"><input type="checkbox" id="pendingChkRidge"> 田垄检查（水田）</label>
+        </div>
+        <div class="vp-progress" id="pendingCheckNote"></div>
+        <div class="vp-nav">
+          <button id="btnPendingPrev" class="btn mini">上一点</button>
+          <button id="btnPendingNext" class="btn mini">下一点</button>
+        </div>
+        <button id="btnPendingFinish" class="btn btn-primary wide" style="margin-top:6px" disabled>完成补充检查并导出</button>
+        <button id="btnPendingCancel" class="btn mini wide" style="margin-top:4px">取消补充检查</button>
+        <div class="vp-note">这里只显示尚未完成检查的 02 市、县级点。全部勾选完成后才能继续导出；检查结果会合并到本次修改点集中一起导出。</div>
+      </div>
     </div>
 
     <div class="results-panel">
@@ -389,6 +409,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li><b>目视检查模式</b>：仅依次检查本区 02 市、县级样点（省级点不进入检查队列），地图显示 100 m 圆环和右侧悬浮面板，人工勾选“林地重合、河流距离、侵蚀沟避让、田垄检查（仅水田）”；面板内可开启编辑模式，用 Shift+单击替换或 Space+单击移动当前问题点；目视检查中按住 Space 移动时保持 100 m 视野，并在点位上显示黄色透明的 20 m 瞄准圈，不跳转到 20 m 放大视图；完成后自动做一次间距复核，通过后会询问是否导出成果。</li>
       <li><b>天地图</b>：首次打开自动使用内置浏览器端密钥并隐式加载底图，不再弹出密钥填写窗口；顶部“天地图”按钮仍可更换密钥或关闭底图。</li>
       <li><b>本地进度</b>：编辑、目视检查勾选会自动保存到浏览器本地（IndexedDB，失败时自动降级到 localStorage）。重新选择同一任务文件夹时，会提示是否恢复上次的编辑状态；每个行政区各保存一份进度。也可用“导出进度 / 导入进度”保存为 JSON 文件。</li>
+      <li><b>导出前目视检查校验</b>：点击“导出成果”时，若本区仍有 02 市、县级点存在未勾选的目视检查项，会阻止导出并弹出提示；可打开独立的“待补充目视检查”悬浮面板，逐点补充完成后合并回本次修改点集继续导出。</li>
     </ul>
     <h3>三、天地图底图</h3>
     <ul>
@@ -515,6 +536,18 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <button id="btnVisualResultClose" class="btn">关闭</button>
       <button id="btnVisualResultEdit" class="btn hidden">继续编辑</button>
       <button id="btnVisualResultExport" class="btn btn-primary hidden">导出成果</button>
+    </div>
+  </div>
+</div>
+
+<!-- 目视检查未完成时的导出提示 -->
+<div id="visualGateModal" class="modal hidden">
+  <div class="modal-card small">
+    <h2>目视检查尚未完成</h2>
+    <div id="visualGateContent" class="check-content"></div>
+    <div class="modal-actions">
+      <button id="btnVisualGateCancel" class="btn">取消导出</button>
+      <button id="btnVisualGateCheck" class="btn btn-primary">去补充检查</button>
     </div>
   </div>
 </div>
@@ -1419,6 +1452,7 @@ const app = {
   gridWorld: [], gridCellInfo: [], gridBaseline: null, gridWarnings: [],
   checkRunning: false, gridCheckRunning: false, autoRunning: false,
   visualMode: false, visualPoints: [], visualIndex: 0, visualChecks: new Map(), visualPrevView: null,
+  pendingInspect: null,
   initialViolationCount: null,
   workspaceId: '', progressDoc: null, progressReady: false, progressPrompted: false,
   progressPromptedRegions: new Set(), pendingRestore: null, progressSaveTimer: null,
@@ -1468,6 +1502,13 @@ function init() {
     chkForest: $('chkForest'), chkRiver: $('chkRiver'), chkGully: $('chkGully'), chkRidge: $('chkRidge'),
     lblRidge: $('lblRidge'), visualCheckNote: $('visualCheckNote'),
     btnVisualPrev: $('btnVisualPrev'), btnVisualNext: $('btnVisualNext'), btnVisualEditMode: $('btnVisualEditMode'),
+    pendingPanel: $('pendingPanel'), pendingProgress: $('pendingProgress'), pendingInfo: $('pendingInfo'),
+    pendingChkForest: $('pendingChkForest'), pendingChkRiver: $('pendingChkRiver'), pendingChkGully: $('pendingChkGully'),
+    pendingChkRidge: $('pendingChkRidge'), pendingLblRidge: $('pendingLblRidge'), pendingCheckNote: $('pendingCheckNote'),
+    btnPendingPrev: $('btnPendingPrev'), btnPendingNext: $('btnPendingNext'),
+    btnPendingFinish: $('btnPendingFinish'), btnPendingCancel: $('btnPendingCancel'),
+    visualGateModal: $('visualGateModal'), visualGateContent: $('visualGateContent'),
+    btnVisualGateCancel: $('btnVisualGateCancel'), btnVisualGateCheck: $('btnVisualGateCheck'),
     btnVisualFinish: $('btnVisualFinish'), btnVisualExit: $('btnVisualExit'),
     visualResultModal: $('visualResultModal'), visualResultTitle: $('visualResultTitle'), visualResultContent: $('visualResultContent'),
     btnVisualResultClose: $('btnVisualResultClose'), btnVisualResultEdit: $('btnVisualResultEdit'), btnVisualResultExport: $('btnVisualResultExport'),
@@ -1561,6 +1602,21 @@ function bindEvents() {
   els.btnAutoClose.addEventListener('click', function () { if (!app.autoRunning) els.autoModal.classList.add('hidden'); });
   els.btnVisualPrev.addEventListener('click', function () { visualStep(-1); });
   els.btnVisualNext.addEventListener('click', function () { visualStep(1); });
+  els.btnPendingPrev.addEventListener('click', function () { pendingStep(-1); });
+  els.btnPendingNext.addEventListener('click', function () { pendingStep(1); });
+  [els.pendingChkForest, els.pendingChkRiver, els.pendingChkGully, els.pendingChkRidge].forEach(function (cb) {
+    if (cb) cb.addEventListener('change', onPendingCheckChange);
+  });
+  els.btnPendingFinish.addEventListener('click', finishPendingInspection);
+  els.btnPendingCancel.addEventListener('click', cancelPendingInspection);
+  els.visualGateModal.addEventListener('click', function (e) {
+    if (e.target === els.visualGateModal) els.visualGateModal.classList.add('hidden');
+  });
+  els.btnVisualGateCancel.addEventListener('click', function () { els.visualGateModal.classList.add('hidden'); });
+  els.btnVisualGateCheck.addEventListener('click', function () {
+    els.visualGateModal.classList.add('hidden');
+    openPendingInspection();
+  });
   els.btnVisualEditMode.addEventListener('click', function () {
     if (!app.visualMode) return;
     if (!app.editMode) {
@@ -1895,6 +1951,9 @@ function resetAll() {
   if (els && els.switchModal) els.switchModal.classList.add('hidden');
   if (els && els.autoModal) els.autoModal.classList.add('hidden');
   if (els && els.visualResultModal) els.visualResultModal.classList.add('hidden');
+  if (els && els.pendingPanel) els.pendingPanel.classList.add('hidden');
+  if (els && els.visualGateModal) els.visualGateModal.classList.add('hidden');
+  app.pendingInspect = null;
   if (els && els.btnAutoAdjust) els.btnAutoAdjust.disabled = true;
   if (els && els.btnVisualMode) { els.btnVisualMode.disabled = true; els.btnVisualMode.classList.remove('active'); }
   app.crsMode = 'geo'; app.crs = { kind: 'geographic', unitScale: 1 };
@@ -2459,6 +2518,8 @@ function selectRegion(index) {
   app.gridWorld = []; app.gridCellInfo = []; app.gridBaseline = null; app.gridWarnings = []; app.poolRaw = null; app.candidates = []; app.candidateEval = null; app.candidateDisplay = [];
   app.initialViolationCount = null;
   if (app.visualMode) setVisualMode(false);
+  if (app.pendingInspect) { app.pendingInspect = null; if (els.pendingPanel) els.pendingPanel.classList.add('hidden'); }
+  if (els.visualGateModal) els.visualGateModal.classList.add('hidden');
   clearResults();
   updateMapEmpty();
   invalidate();
@@ -3115,6 +3176,10 @@ function isVisualPointComplete(p) {
   return true;
 }
 function setVisualMode(on) {
+  if (app.pendingInspect && app.pendingInspect.active) {
+    toast('请先完成或取消补充目视检查。', 'warn');
+    return;
+  }
   if (on) {
     if (!app.regionData || !app.region) { toast('请先加载行政区。', 'warn'); return; }
     if (!app.editMode) { /* 保持当前状态 */ }
@@ -3163,12 +3228,22 @@ function toggleVisualMode() {
 function currentVisualPoint() {
   return app.visualPoints.length ? app.visualPoints[app.visualIndex] : null;
 }
+function currentInspectionPoint() {
+  if (app.pendingInspect && app.pendingInspect.active && app.pendingInspect.points.length) {
+    return app.pendingInspect.points[app.pendingInspect.index] || null;
+  }
+  return currentVisualPoint();
+}
 function visualStep(delta) {
   if (!app.visualMode || !app.visualPoints.length) return;
   const n = app.visualPoints.length;
   app.visualIndex = (app.visualIndex + delta + n) % n;
   updateVisualPanel();
   centerVisualPoint();
+  if (app.editMode) {
+    const p = currentVisualPoint();
+    if (p) selectPoint(p);
+  }
   invalidate();
 }
 function centerVisualPoint() {
@@ -3272,6 +3347,140 @@ async function finishVisualCheck() {
   }
   els.visualResultContent.innerHTML = html;
   els.visualResultModal.classList.remove('hidden');
+}
+/* ---------- 导出前目视检查完整性校验 / 待补充检查面板 ---------- */
+function getCityCountyVisualPoints() {
+  return app.ownPoints.filter(function (p) { return p.level === 'city' || p.level === 'county'; });
+}
+function getIncompleteVisualPoints() {
+  return getCityCountyVisualPoints().filter(function (p) { return !isVisualPointComplete(p); });
+}
+function showVisualGate(pending) {
+  const total = getCityCountyVisualPoints().length;
+  const list = pending.slice(0, 10).map(function (p) { return LEVELS[p.level].label + ' ' + p.id; });
+  let html = '';
+  html += '<div><b>行政区：</b>' + escapeHtml(app.region ? app.region.name : '') + '</div>';
+  html += '<div class="bad">还有 <b>' + pending.length + '</b> 个 02 市、县级点存在未勾选的目视检查项（本区共 ' + total + ' 个）。</div>';
+  html += '<div style="margin-top:5px">未完成点示例：</div><ul>' + list.map(function (t) { return '<li>' + escapeHtml(t) + '</li>'; }).join('') + '</ul>';
+  if (pending.length > list.length) html += '<div>…其余 ' + (pending.length - list.length) + ' 个省略</div>';
+  html += '<div class="note">需要先对这些点补充完成四项目视检查，工具会打开独立的“待补充目视检查”面板；全部完成后可继续导出。</div>';
+  els.visualGateContent.innerHTML = html;
+  els.visualGateModal.classList.remove('hidden');
+}
+function openPendingInspection(points) {
+  const list = (points || getIncompleteVisualPoints()).slice();
+  if (!list.length) { openExportModal({ skipVisualCheck: true }); return; }
+  app.pendingInspect = {
+    points: list,
+    index: 0,
+    active: true,
+    wasVisualMode: !!app.visualMode
+  };
+  if (els.visualPanel) els.visualPanel.classList.add('hidden');
+  els.pendingPanel.classList.remove('hidden');
+  renderPendingPanel();
+  centerPendingPoint();
+  setStatus('待补充目视检查：请逐点勾选未完成项，全部完成后继续导出。');
+  invalidate();
+}
+function currentPendingPoint() {
+  if (!app.pendingInspect || !app.pendingInspect.points.length) return null;
+  return app.pendingInspect.points[app.pendingInspect.index] || null;
+}
+function centerPendingPoint() {
+  const p = currentPendingPoint();
+  if (!p) return;
+  const w = toWorld(p);
+  app.view.cx = w.x; app.view.cy = w.y;
+  const radiusWorld = metersToWorld(100, p.y);
+  const size = mapSize();
+  app.view.scale = Math.min(size.w, size.h) * 0.30 / Math.max(1e-9, radiusWorld);
+  invalidate();
+}
+function pendingAllDone() {
+  if (!app.pendingInspect) return false;
+  return app.pendingInspect.points.every(function (p) { return isVisualPointComplete(p); });
+}
+function renderPendingPanel() {
+  if (!app.pendingInspect) return;
+  const p = currentPendingPoint();
+  const total = app.pendingInspect.points.length;
+  if (!p) {
+    els.pendingInfo.innerHTML = '<span class="ok">所有待补充点均已完成。</span>';
+    els.pendingProgress.textContent = '0 / 0';
+    els.btnPendingFinish.disabled = false;
+    return;
+  }
+  const f = visualFlags(p);
+  const done = app.pendingInspect.points.filter(function (q) { return isVisualPointComplete(q); }).length;
+  els.pendingProgress.textContent = (app.pendingInspect.index + 1) + ' / ' + total;
+  els.pendingInfo.innerHTML =
+    '<div><b>级别：</b>' + escapeHtml(LEVELS[p.level] ? LEVELS[p.level].label : p.level) + '</div>' +
+    '<div><b>编号：</b>' + escapeHtml(p.id || '—') + '</div>' +
+    '<div><b>行政区：</b>' + escapeHtml(p.region) + '</div>' +
+    '<div><b>地类：</b>' + escapeHtml(p.dlmc || '—') + '</div>' +
+    '<div><b>坐标：</b>' + escapeHtml(coordText(p)) + '</div>';
+  els.pendingChkForest.checked = !!f.forest;
+  els.pendingChkRiver.checked = !!f.river;
+  els.pendingChkGully.checked = !!f.gully;
+  const ridgeOk = isRidgeApplicable(p);
+  els.pendingChkRidge.checked = !!f.ridge;
+  els.pendingChkRidge.disabled = !ridgeOk;
+  if (!ridgeOk) els.pendingLblRidge.classList.add('disabled');
+  else els.pendingLblRidge.classList.remove('disabled');
+  els.pendingCheckNote.innerHTML = '本批待补充完成：<b>' + done + ' / ' + total + '</b>';
+  els.btnPendingFinish.disabled = !pendingAllDone();
+  els.btnPendingPrev.disabled = total <= 1;
+  els.btnPendingNext.disabled = total <= 1;
+}
+function pendingStep(delta) {
+  if (!app.pendingInspect || !app.pendingInspect.points.length) return;
+  const n = app.pendingInspect.points.length;
+  app.pendingInspect.index = (app.pendingInspect.index + delta + n) % n;
+  renderPendingPanel();
+  centerPendingPoint();
+  invalidate();
+}
+function onPendingCheckChange() {
+  const p = currentPendingPoint();
+  if (!p) return;
+  const f = visualFlags(p);
+  f.forest = !!els.pendingChkForest.checked;
+  f.river = !!els.pendingChkRiver.checked;
+  f.gully = !!els.pendingChkGully.checked;
+  f.ridge = isRidgeApplicable(p) ? !!els.pendingChkRidge.checked : false;
+  app.visualChecks.set(visualKey(p), f);
+  scheduleProgressSave();
+  renderPendingPanel();
+  updateVisualPanel();
+  invalidate();
+}
+function finishPendingInspection() {
+  if (!app.pendingInspect) return;
+  if (!pendingAllDone()) { toast('还有待补充点未完成检查，暂不能导出。', 'warn'); return; }
+  const wasVisual = app.pendingInspect.wasVisualMode;
+  app.pendingInspect = null;
+  els.pendingPanel.classList.add('hidden');
+  if (wasVisual && app.visualMode) {
+    els.visualPanel.classList.remove('hidden');
+    updateVisualPanel();
+  }
+  toast('补充目视检查已完成，已合并到本次修改点集，继续导出。', 'ok');
+  setStatus('目视检查已全部完成，继续导出成果。');
+  openExportModal({ skipVisualCheck: true });
+}
+function cancelPendingInspection() {
+  if (!app.pendingInspect) return;
+  const wasVisual = app.pendingInspect.wasVisualMode;
+  app.pendingInspect = null;
+  els.pendingPanel.classList.add('hidden');
+  if (wasVisual && app.visualMode) {
+    els.visualPanel.classList.remove('hidden');
+    updateVisualPanel();
+  }
+  toast('已取消补充检查，未导出。', 'warn');
+  setStatus('已取消补充目视检查。');
+  invalidate();
 }
 
 function selectPoint(point) {
@@ -3683,7 +3892,7 @@ function draw() {
   drawOwnPoints(ctx);
   if (els.lyrPool.checked && app.selected && app.editMode) drawCandidates(ctx);
   drawSelection(ctx);
-  if (app.visualMode) drawVisualOverlay(ctx);
+  if (app.visualMode || (app.pendingInspect && app.pendingInspect.active)) drawVisualOverlay(ctx);
   drawMoveState(ctx);
   updateScalebar();
   updateMapEmpty();
@@ -3884,7 +4093,7 @@ function drawMoveState(ctx) {
   ctx.restore();
 }
 function drawVisualOverlay(ctx) {
-  const p = currentVisualPoint();
+  const p = currentInspectionPoint();
   if (!p) return;
   const w = toWorld(p);
   const s = screenPos(w);
@@ -4278,8 +4487,16 @@ async function collectExportPackage() {
   files.push({ name: '校验报告.txt', data: new TextEncoder().encode('校验时间：' + timestampText(new Date()) + '\r\n' + checks.join('\r\n')) });
   return { files: files, checks: checks, zip: buildZip(files) };
 }
-function openExportModal() {
+function openExportModal(opts) {
+  opts = opts || {};
   if (!app.patches.size) { toast('当前没有修改可导出。', 'warn'); return; }
+  if (!opts.skipVisualCheck) {
+    const pending = getIncompleteVisualPoints();
+    if (pending.length) {
+      showVisualGate(pending);
+      return;
+    }
+  }
   const regions = new Set(), layers = new Set();
   app.patches.forEach(function (p, key) {
     const parts = key.split('|');
