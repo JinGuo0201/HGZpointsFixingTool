@@ -288,6 +288,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
         <button id="btnZoomIn" title="放大">＋</button>
         <button id="btnZoomOut" title="缩小">－</button>
         <button id="btnFit" title="显示全部">⤢</button>
+        <button id="btnRefreshTiles" title="刷新底图 / 重试加载">↻</button>
       </div>
       <div class="map-empty" id="mapEmpty">
         <div class="empty-card">
@@ -418,6 +419,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
     <ul>
       <li>工具支持天地图影像/注记（WMTS）。首次使用需填写浏览器端密钥，保存在本机浏览器缓存中。</li>
       <li>密钥可能绑定了域名白名单（如 jinguo0201.github.io）；本地双击打开或域名不符时底图可能加载失败，不影响检查和编辑。</li>
+      <li>同一密钥并发/高频请求可能触发天地图限流（HTTP 429，code 302010），即使账户额度未用完也会暂时无法加载底图；请稍后点击地图左上角 ↻ 重试，或更换为独立的浏览器端密钥。</li>
       <li>本项目约定的浏览器端密钥已预填；如无法加载，请检查网络、密钥有效期与白名单。</li>
       <li>建议在 HTTPS 页面（如 GitHub Pages）使用，以获得完整的地图加载能力。</li>
     </ul>
@@ -1502,7 +1504,8 @@ const LS_ANNOUNCEMENT = 'spacingEditTool.announcementSeen';
 const ANNOUNCEMENT_ITEMS = [
   '导出结果新增 KML 格式：市县级样点会同时输出 SHP 和 KML，KML 可直接导入奥维等软件查看。',
   '导出 ZIP 文件名和“导出到文件夹”的文件夹名称中新增明确的行政区名称。',
-  '新增网站更新公告：每次版本调整后打开页面，会以弹窗列出本次更新内容。'
+  '新增网站更新公告：每次版本调整后打开页面，会以弹窗列出本次更新内容。',
+  '天地图底图增加 ↻ 刷新重试按钮：失败瓦片不再永久缓存，会自动重试；若遇到 429/302010 限流可稍后重试或更换密钥。'
 ];
 
 const app = {
@@ -1583,7 +1586,7 @@ function init() {
     logTable: $('logTable'), logEmpty: $('logEmpty'), logCount: $('logCount'),
     checkPane: $('checkPane'), logPane: $('logPane'), tabCheck: $('tabCheck'), tabLog: $('tabLog'),
     statusLeft: $('statusLeft'), statusRight: $('statusRight'),
-    btnZoomIn: $('btnZoomIn'), btnZoomOut: $('btnZoomOut'), btnFit: $('btnFit'),
+    btnZoomIn: $('btnZoomIn'), btnZoomOut: $('btnZoomOut'), btnFit: $('btnFit'), btnRefreshTiles: $('btnRefreshTiles'),
     lyrProv: $('lyrProv'), lyrCity: $('lyrCity'), lyrCounty: $('lyrCounty'),
     lyrPool: $('lyrPool'), lyrGrid: $('lyrGrid'), lyrOther: $('lyrOther'),
     lyrCircle: $('lyrCircle'), lyrBase: $('lyrBase'), lyrLabel: $('lyrLabel'), lyrMesh: $('lyrMesh'),
@@ -1741,6 +1744,7 @@ function bindEvents() {
     try { localStorage.removeItem(LS_KEY); } catch (e) { /* ignore */ }
     els.lyrBase.checked = false;
     els.keyModal.classList.add('hidden');
+    resetTileCache();
     toast('已清除天地图密钥', 'ok');
     invalidate();
   });
@@ -1788,11 +1792,17 @@ function bindEvents() {
       toast('当前数据为投影坐标，暂不支持天地图底图叠加。', 'warn');
       return;
     }
+    if (els.lyrBase.checked) resetTileCache();
     invalidate();
   });
   els.btnZoomIn.addEventListener('click', function () { zoomAtCenter(1.25); });
   els.btnZoomOut.addEventListener('click', function () { zoomAtCenter(0.8); });
   els.btnFit.addEventListener('click', function () { fitView(); invalidate(); });
+  els.btnRefreshTiles.addEventListener('click', function () {
+    resetTileCache();
+    toast('已清空底图缓存，正在重新请求天地图瓦片…', 'info');
+    invalidate();
+  });
   bindMapEvents();
   document.addEventListener('keydown', onKeyDown);
   document.addEventListener('keyup', onKeyUp);
@@ -4267,6 +4277,13 @@ function openKeyModal() {
   els.keyOrigin.textContent = (location.origin && location.origin !== 'null') ? location.origin : location.href.replace(/[^/]*$/, '');
   els.keyModal.classList.remove('hidden');
 }
+function resetTileCache() {
+  app.tileCache.clear();
+  app.tileErrors = 0;
+  app.tileLoaded = 0;
+  app.tileErrorNotified = false;
+  hideBanner();
+}
 function saveKey() {
   const key = (els.keyInput.value || '').trim();
   if (!key) { toast('请输入密钥，或点击“暂不启用底图”。', 'warn'); return; }
@@ -4274,7 +4291,8 @@ function saveKey() {
   try { localStorage.setItem(LS_KEY, key); localStorage.setItem(LS_BASE, '1'); } catch (e) { /* ignore */ }
   els.lyrBase.checked = true;
   els.keyModal.classList.add('hidden');
-  toast('天地图密钥已保存，底图将在联网时加载。', 'ok');
+  resetTileCache();
+  toast('天地图密钥已保存，底图将重新加载。', 'ok');
   invalidate();
 }
 function tileUrl(layer, z, x, y) {
@@ -4297,10 +4315,15 @@ function getTile(layer, z, x, y) {
   img.onerror = function () {
     rec.failed = true;
     app.tileErrors++;
-    if (!app.tileErrorNotified && app.tileErrors >= 6 && app.tileLoaded === 0) {
+    if (!app.tileErrorNotified && app.tileErrors >= 6 && (app.tileLoaded === 0 || app.tileErrors >= 20)) {
       app.tileErrorNotified = true;
-      showBanner('天地图底图加载失败：请检查网络、密钥以及域名白名单（jinguo0201.github.io）。底图不可用不影响样点检查与编辑。', 'warn');
+      showBanner('天地图底图加载失败（常见于 tk 请求限流 429/302010 或网络/白名单问题）。请稍等后点击地图左上角 ↻ 刷新重试，或点击“天地图”更换密钥；不影响样点检查与编辑。', 'warn');
     }
+    /* 失败瓦片不永久缓存：15 秒后移除，下一次重绘自动重试 */
+    setTimeout(function () {
+      if (app.tileCache.get(key) === rec) app.tileCache.delete(key);
+      invalidate();
+    }, 15000);
     invalidate();
   };
   img.src = tileUrl(layer, z, x, y);
