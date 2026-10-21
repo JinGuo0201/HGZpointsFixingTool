@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.0-beta</title>
+<title>环耕站布点调整&amp;检测工具 v2.1</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -194,7 +194,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.0-beta</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.1</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -379,14 +379,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.0-beta · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.1 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 帮助 -->
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.0-beta · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v2.1 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -569,14 +569,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 样点间距检查与编辑工具 v2.0 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v2.1 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.0-beta';
+const TOOL_VERSION = 'v2.1';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1410,11 +1410,9 @@ function buildEditLogRows(logEntries) {
 }
 function buildExportManifest(opts) {
   const lines = [];
-  lines.push('样点间距检查与编辑工具 ' + TOOL_VERSION);
+  lines.push('环耕站布点调整&检测工具 ' + TOOL_VERSION);
   lines.push('导出时间：' + timestampText(new Date()));
   lines.push('任务组：' + (opts.group || ''));
-  lines.push('导出说明：本包只包含被修改的 02_市县级样点 图层（完整 shp/shx/dbf/prj/cpg 五件套），未修改 01/03/04/05。');
-  lines.push('使用方式：将本包中的文件按原名替换到成果目录的 02_市县级样点 下，并在 ArcGIS/QGIS 中打开核对。');
   lines.push('');
   lines.push('修改清单：');
   (opts.entries || []).forEach(function (e) {
@@ -1438,7 +1436,7 @@ function outputPathFor(regionName, level, ext) {
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 样点间距检查与编辑工具 v2.0-beta —— 界面与交互
+ * 环耕站布点调整与检测工具 v2.1 —— 界面与交互
  * ============================================================ */
 
 const DEFAULT_TIANDITU_KEY = '0abb8008ce8fcf66a77a070213200286';
@@ -4631,6 +4629,8 @@ if (typeof document !== 'undefined' && document.getElementById) {
   else init();
 }
 
+
 </script>
 </body>
 </html>
+
