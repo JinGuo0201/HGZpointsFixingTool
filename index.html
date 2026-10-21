@@ -333,7 +333,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
         <button id="btnVisualEditMode" class="btn mini wide" style="margin-top:6px">开启编辑模式</button>
         <button id="btnVisualFinish" class="btn btn-primary wide" style="margin-top:4px">完成检查</button>
         <button id="btnVisualExit" class="btn mini wide" style="margin-top:4px">退出目视检查</button>
-        <div class="vp-note">仅检查 02 市、县级样点，省级 01 点不进入队列。地图中的蓝色圆环半径为 100 m，可用于判断样点距道路的距离；四项检查请结合天地图影像人工判断后勾选。可在本面板开启编辑模式，直接替换或移动当前问题点。</div>
+        <div class="vp-note">仅检查 02 市、县级样点，省级 01 点不进入队列。地图中蓝色圆环半径为 100 m、橙色外圈为 200 m（均为高透明度），可用于判断样点距道路、河流等距离；四项检查请结合卫星影像人工判断后勾选。可在本面板开启编辑模式，直接替换或移动当前问题点。</div>
       </div>
       <div id="pendingPanel" class="visual-panel pending-panel hidden">
         <div class="vp-head"><span>待补充目视检查</span><span id="pendingProgress" class="tiny">0 / 0</span></div>
@@ -411,7 +411,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li><b>问题检查</b>：点击顶部“问题检查”按钮，中央窗口会显示当前正在检查的行政区、点数、检查范围等信息，并强制至少显示 2 秒后给出检查结果。</li>
       <li><b>格网组合检查</b>：修改后关闭“编辑模式”时，工具会逐一检查当前行政区每个 05 格网是否保持“1 省级 + 1 市级 + 1 县级”组合；通过会提示，未通过可选择“继续编辑”或“强制保存”。</li>
       <li><b>一键调整样点</b>：对当前行政区自动查找因间距过近而冲突的 02 样点，从 03 候选池中选择同地类、与所有点保持 1500 m 以上的候选点进行批量替换，尽量优先落在原格网内。</li>
-      <li><b>目视检查模式</b>：仅依次检查本区 02 市、县级样点（省级点不进入检查队列），地图显示 100 m 圆环和右侧悬浮面板，人工勾选“林地重合、河流距离、侵蚀沟避让、田垄检查（仅水田）”；面板内可开启编辑模式，用 Shift+单击替换或 Space+单击移动当前问题点；目视检查中按住 Space 移动时保持 100 m 视野，并在点位上显示黄色透明的 20 m 瞄准圈，不跳转到 20 m 放大视图；完成后自动做一次间距复核，通过后会询问是否导出成果。</li>
+      <li><b>目视检查模式</b>：仅依次检查本区 02 市、县级样点（省级点不进入检查队列），地图同时显示 100 m 蓝色圆环和 200 m 橙色指示圈（均为高透明度），并显示右侧悬浮面板，人工勾选“林地重合、河流距离、侵蚀沟避让、田垄检查（仅水田）”；面板内可开启编辑模式，用 Shift+单击替换或 Space+单击移动当前问题点；目视检查中按住 Space 移动时保持当前视野，并在点位上显示黄色透明的 20 m 瞄准圈，不跳转到 20 m 放大视图；完成后自动做一次间距复核，通过后会询问是否导出成果。</li>
       <li><b>卫星底图</b>：顶部“底图设置”可在天地图和高德静态卫星图之间切换；高德会自动把 WGS84 坐标转换为 GCJ-02，并叠加当前屏幕范围的卫星影像。首次打开自动启用内置密钥并隐式加载，不再弹出密钥填写窗口。</li>
       <li><b>本地进度</b>：编辑、目视检查勾选会自动保存到浏览器本地（IndexedDB，失败时自动降级到 localStorage）。重新选择同一任务文件夹时，会提示是否恢复上次的编辑状态；每个行政区各保存一份进度。也可用“导出进度 / 导入进度”保存为 JSON 文件。</li>
       <li><b>导出前目视检查校验</b>：点击“导出成果”时，若本区仍有 02 市、县级点存在未勾选的目视检查项，会阻止导出并弹出提示；可打开独立的“待补充目视检查”悬浮面板，逐点补充完成后合并回本次修改点集继续导出。</li>
@@ -1571,7 +1571,8 @@ const ANNOUNCEMENT_ITEMS = [
   '新增网站更新公告：每次版本调整后打开页面，会以弹窗列出本次更新内容。',
   '天地图底图增加 ↻ 刷新重试按钮：失败瓦片不再永久缓存，会自动重试；若遇到 429/302010 限流可稍后重试或更换密钥。',
   '底图设置支持切换天地图 / 高德卫星图：高德使用卫星图层并自动完成 WGS84→GCJ-02 坐标转换（高德 Web服务静态图接口不支持卫星影像）。',
-  '导出宽容度调整：仍有未解决的间距问题时，会继续提示，但允许停止编辑并导出成果，同时在导出说明/校验报告中记录这些未解决项。开启编辑模式后，顶部按钮会显示为“停止编辑”。'
+  '导出宽容度调整：仍有未解决的间距问题时，会继续提示，但允许停止编辑并导出成果，同时在导出说明/校验报告中记录这些未解决项。开启编辑模式后，顶部按钮会显示为“停止编辑”。',
+  '目视检查新增 200 m 橙色指示圈：与 100 m 蓝色圆环同时显示，两个圆均为高透明度，避免遮挡卫星影像；目视检查中的 20 m 移动瞄准圈保持不变。'
 ];
 
 const app = {
@@ -3381,7 +3382,7 @@ function setVisualMode(on) {
       const vp = currentVisualPoint();
       if (vp) selectPoint(vp);
     }
-    setStatus('目视检查模式：右侧面板逐点检查，勾选四项；地图蓝色圆环半径为 100 m。');
+    setStatus('目视检查模式：右侧面板逐点检查，勾选四项；地图蓝色圆环 100 m、橙色外圈 200 m。');
     invalidate();
   } else {
     app.visualMode = false;
@@ -3432,7 +3433,7 @@ function centerVisualPoint() {
   app.view.cx = w.x; app.view.cy = w.y;
   const radiusWorld = metersToWorld(100, p.y);
   const size = mapSize();
-  app.view.scale = Math.min(size.w, size.h) * 0.30 / Math.max(1e-9, radiusWorld);
+  app.view.scale = Math.min(size.w, size.h) * 0.24 / Math.max(1e-9, radiusWorld);
   invalidate();
 }
 function updateVisualPanel() {
@@ -3576,7 +3577,7 @@ function centerPendingPoint() {
   app.view.cx = w.x; app.view.cy = w.y;
   const radiusWorld = metersToWorld(100, p.y);
   const size = mapSize();
-  app.view.scale = Math.min(size.w, size.h) * 0.30 / Math.max(1e-9, radiusWorld);
+  app.view.scale = Math.min(size.w, size.h) * 0.24 / Math.max(1e-9, radiusWorld);
   invalidate();
 }
 function pendingAllDone() {
@@ -4292,15 +4293,26 @@ function drawVisualOverlay(ctx) {
   if (!p) return;
   const w = toWorld(p);
   const s = screenPos(w);
-  const radius = Math.max(6, metersToWorld(100, p.y) * app.view.scale);
+  const r100 = Math.max(5, metersToWorld(100, p.y) * app.view.scale);
+  const r200 = Math.max(10, metersToWorld(200, p.y) * app.view.scale);
   ctx.save();
+  /* 外圈 200 m：橙色、高透明度，避免遮挡影像 */
   ctx.beginPath();
-  ctx.arc(s.x, s.y, radius, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(24,130,205,0.10)';
+  ctx.arc(s.x, s.y, r200, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(230,126,34,0.025)';
+  ctx.fill();
+  ctx.setLineDash([9, 6]);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(214,112,20,0.82)';
+  ctx.stroke();
+  /* 内圈 100 m：蓝色、高透明度 */
+  ctx.beginPath();
+  ctx.arc(s.x, s.y, r100, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(24,130,205,0.05)';
   ctx.fill();
   ctx.setLineDash([7, 5]);
   ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(18,110,180,0.9)';
+  ctx.strokeStyle = 'rgba(18,110,180,0.88)';
   ctx.stroke();
   ctx.setLineDash([]);
   ctx.lineWidth = 1;
@@ -4313,9 +4325,11 @@ function drawVisualOverlay(ctx) {
   ctx.arc(s.x, s.y, 4, 0, Math.PI * 2);
   ctx.fillStyle = '#0b6fb2';
   ctx.fill();
-  ctx.fillStyle = '#0b5f96';
   ctx.font = '600 12px "Microsoft YaHei", sans-serif';
-  ctx.fillText('100 m', s.x + radius * 0.55, s.y - radius * 0.8);
+  ctx.fillStyle = '#0b5f96';
+  ctx.fillText('100 m', s.x + r100 * 0.55, s.y - r100 * 0.8);
+  ctx.fillStyle = 'rgba(174,86,10,0.95)';
+  ctx.fillText('200 m', s.x + r200 * 0.5, s.y - r200 * 0.78);
   ctx.restore();
 }
 function drawSymbol(ctx, x, y, level, active) {
