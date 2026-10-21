@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.1</title>
+<title>环耕站布点调整&amp;检测工具 v2.2</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -197,7 +197,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.1</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.2</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -384,14 +384,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.1 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.2 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 帮助 -->
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.1 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v2.2 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -618,14 +618,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v2.1 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v2.2 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.1';
+const TOOL_VERSION = 'v2.2';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1585,10 +1585,11 @@ function outputPathFor(regionName, level, ext) {
 }
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v2.1 —— 界面与交互
+ * 环耕站布点调整与检测工具 v2.2 —— 界面与交互
  * ============================================================ */
 
 const DEFAULT_TIANDITU_KEY = '0abb8008ce8fcf66a77a070213200286';
@@ -1599,14 +1600,8 @@ const LS_PROVIDER = 'spacingEditTool.basemapProvider';
 const LS_BASE = 'spacingEditTool.basemap';
 const LS_ANNOUNCEMENT = 'spacingEditTool.announcementSeen';
 const ANNOUNCEMENT_ITEMS = [
-  '导出结果新增 KML 格式：市县级样点会同时输出 SHP 和 KML，KML 可直接导入奥维等软件查看。',
-  '导出 ZIP 文件名和“导出到文件夹”的文件夹名称中新增明确的行政区名称。',
-  '新增网站更新公告：每次版本调整后打开页面，会以弹窗列出本次更新内容。',
-  '天地图底图增加 ↻ 刷新重试按钮：失败瓦片不再永久缓存，会自动重试；若遇到 429/302010 限流可稍后重试或更换密钥。',
-  '底图设置支持切换天地图 / 高德卫星图：高德使用卫星图层并自动完成 WGS84→GCJ-02 坐标转换（高德 Web服务静态图接口不支持卫星影像）。',
-  '导出宽容度调整：仍有未解决的间距问题时，会继续提示，但允许停止编辑并导出成果，同时在导出说明/校验报告中记录这些未解决项。开启编辑模式后，顶部按钮会显示为“停止编辑”。',
   '目视检查新增 200 m 橙色指示圈：与 100 m 蓝色圆环同时显示，两个圆均为高透明度，避免遮挡卫星影像；目视检查中的 20 m 移动瞄准圈保持不变。',
-  '新增任务分解表样点个数核对：选择文件夹、切换行政区或导出时，会把实际省/市/县样点个数与《附件1 任务分解表》预期个数比对；不一致会弹窗提醒，但允许继续编辑和导出。'
+  '新增任务分解表样点个数一致性检查：选择文件夹、切换行政区或导出时，实际省/市/县样点个数与《附件1 任务分解表》预期个数比对；不一致会弹窗提醒，但仍允许编辑、检查和导出。'
 ];
 
 const app = {
@@ -5289,7 +5284,9 @@ if (typeof document !== 'undefined' && document.getElementById) {
 }
 
 
+
 </script>
 </body>
 </html>
+
 
