@@ -5077,9 +5077,24 @@ function focusTileCoords(z) {
   if (!p) return [];
   const w = toWorld(p);
   const r = metersToWorld(200, p.y);
+  const n = Math.pow(2, z);
+  const tileWorld = (2 * Math.PI * MERC_R) / n;
   const range = tileRangeForWorld(w.x - r, w.x + r, w.y - r, w.y + r, z);
-  /* 目标点 200 m 外圈可能落在 1–4 张瓦片内；最多取 9 张，不加载额外区域 */
-  return tileCoordsInRange(range, 9);
+  const out = [];
+  for (let ty = range.ty0; ty <= range.ty1; ty++) {
+    for (let tx = range.tx0; tx <= range.tx1; tx++) {
+      const left = -Math.PI * MERC_R + tx * tileWorld;
+      const right = left + tileWorld;
+      const top = Math.PI * MERC_R - ty * tileWorld;
+      const bottom = top - tileWorld;
+      const nx = Math.max(left, Math.min(w.x, right));
+      const ny = Math.max(bottom, Math.min(w.y, top));
+      const dx = w.x - nx, dy = w.y - ny;
+      if (dx * dx + dy * dy <= r * r) out.push({ x: tx, y: ty });
+      if (out.length >= 9) return out;
+    }
+  }
+  return out;
 }
 function makeViewTileSnapshot() {
   const size = mapSize();
