@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.12</title>
+<title>环耕站布点调整&amp;检测工具 v2.13</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -197,7 +197,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.12</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.13</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -255,6 +255,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <div class="tiny" id="progressState" style="margin:0 0 6px;color:#8a949e">本地进度：未启用</div>
       <div class="selection-box" id="selectionPanel"><span class="sel-empty">未选择样点</span></div>
       <div class="candidate-stats" id="candidateStats"></div>
+      <button id="btnCandidateGradeMore" class="btn mini wide" style="margin:2px 0 4px" disabled>显示 ±1 级候选（增加可选点）</button>
       <button id="btnReplaceNearest" class="btn mini wide" style="margin:2px 0 4px" disabled>一键替换为最近合格候选</button>
       <div class="mini-row">
         <button id="btnUndo2" class="btn mini" disabled>撤销</button>
@@ -428,14 +429,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.12 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.13 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 帮助 -->
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.12 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v2.13 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -452,7 +453,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li><b>旱地耕地等级</b>：工具会读取 04 耕地质量等级栅格（支持 8 位/16 位 LZW GeoTIFF）；选择行政区后会在后台静默预读并缓存旱地 02 点和候选点等级。鼠标悬停旱地点、选中样点面板、目视检查面板都会显示“耕地等级”；选中旱地问题点时，合格候选点上方会标注其耕地等级，便于优先选择同值/相邻等级候选。</li>
       <li>Shift+单击替换：候选点必须与问题点地类一致（旱地与水浇地视为同一“旱地类”，可互换，但显示仍保留各自名称），且与当前所有样点（含相邻行政区）间距严格大于 1500 m；不合格候选点会变灰并禁止选择。</li>
       <li><b>候选点格网优先</b>：选中问题点后，若同一 05 格网内存在合格候选，只显示同格网候选；同格网没有可替换候选时，才开放其他格网候选，并弹出横幅提示，跨格网替换可能影响格网组合。</li>
-      <li><b>候选点耕地等级分级</b>：旱地类问题点优先只显示同等级候选；没有同等级才开放 ±1 级；仍没有才开放 ±2 级，并在替换弹窗中提醒跨多级替换。没有符合等级的候选时按存疑处理。</li>
+      <li><b>候选点耕地等级分级</b>：旱地类问题点优先只显示同等级候选；没有同等级才开放 ±1 级；仍没有才开放 ±2 级。若同等级候选都不合格，可点击“显示 ±1 级候选（增加可选点）”按钮逐级放宽候选；选择 ±2 级候选会弹窗提醒跨多级替换。</li>
       <li><b>GDDJBZ 备注字段</b>：发生 ±2 级跨级替换的点，导出 02 DBF 时自动新增 GDDJBZ 字段，写入“跨多个耕地质量等级替换”；未发生跨级替换时字段结构保持不变。</li>
       <li><b>候选点距离辅助圈</b>：选中问题点后，鼠标悬停在其他合格候选点上时，会以该候选点为圆心显示 100 m 和 200 m 亮品红色虚线指示圈（带白色描边），便于判断候选点与周围地物的实际距离。</li>
       <li>Space+单击移动：以当前点位为圆心、20 m 为半径显示可操作圆环；光标超出圆环会自动限制在圆环边界；移动后同样校验 1500 m 间距。</li>
@@ -659,14 +660,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v2.12 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v2.13 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.12';
+const TOOL_VERSION = 'v2.13';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1663,10 +1664,11 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v2.12 —— 界面与交互
+ * 环耕站布点调整与检测工具 v2.13 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
@@ -1702,9 +1704,9 @@ const DEFAULT_POINT_STYLES = {
   other: { shape: 'circle', color: '#8a939e' }
 };
 const ANNOUNCEMENT_ITEMS = [
-  '候选点按耕地等级分级过滤：有同等级候选时只显示同等级；没有则开放 ±1 级；仍没有才开放 ±2 级，并在替换弹窗中提醒“跨多级耕地质量替换”。',
-  '跨多级替换备注：发生 ±2 级替换的点，在导出的 02 DBF 中新增 GDDJBZ 字段，写入“跨多个耕地质量等级替换”供后续复核；未跨级替换时导出字段结构不变。',
-  '旱地与水浇地仍视为同一“旱地类”可互换；一键自动调整同样按同等级→±1→±2优先，并在修改记录中说明等级情况。'
+  '候选点等级增加“+1 级候选”切换按钮：同等级候选不一定都合格时，可逐级放宽到 ±1、±2 级，方便增加可选点；选择 ±2 级候选仍会弹窗提醒。',
+  '跨多级替换备注：发生 ±2 级替换的点，在导出的 02 DBF 中新增 GDDJBZ 字段，写入“跨多个耕地质量等级替换”；未跨级时字段结构不变。',
+  '旱地与水浇地仍视为同一“旱地类”可互换；一键自动调整按同等级→±1→±2优先，并在修改记录中说明等级情况。'
 ];
 
 const app = {
@@ -1735,6 +1737,7 @@ const app = {
   cacheHits: 0, cacheMisses: 0, tileFetchUnsupported: false,
   regionCountChecks: new Map(), countMismatchPending: null, countValidateAllPromise: null, countValidatePromises: new Map(),
   rasterInfoCache: new Map(), gradeCache: new Map(), candidateGrades: new Map(), gradeToken: 0, hoverGradeToken: 0,
+  candidateGradeExtra: 0, candidateBaseTier: null, candidateMaxDiff: null,
   pointStyles: {
     prov: { shape: 'diamond', color: '#1a6fdb' },
     city: { shape: 'triangle', color: '#d9720b' },
@@ -1814,6 +1817,7 @@ function init() {
     helpModal: $('helpModal'), btnCloseHelp: $('btnCloseHelp'),
     keyModal: $('keyModal'), keyRows: $('keyRows'), btnAddKey: $('btnAddKey'), keyOrigin: $('keyOrigin'),
     keyStatus: $('keyStatus'), cacheStatus: $('cacheStatus'), btnClearCache: $('btnClearCache'), basemapState: $('basemapState'),
+    btnCandidateGradeMore: $('btnCandidateGradeMore'),
     btnKeySave: $('btnKeySave'), btnKeySkip: $('btnKeySkip'), btnKeyClear: $('btnKeyClear'),
     replaceModal: $('replaceModal'), replaceContent: $('replaceContent'),
     btnReplaceCancel: $('btnReplaceCancel'), btnReplaceConfirm: $('btnReplaceConfirm'),
@@ -1881,6 +1885,11 @@ function bindEvents() {
     const nearest = app.candidateDisplay.find(function (x) { return x.eligible; });
     if (!nearest) { toast('当前没有合格候选点，请按存疑上报处理。', 'warn'); return; }
     openReplaceModal(nearest.cand, nearest);
+  });
+  els.btnCandidateGradeMore.addEventListener('click', function () {
+    if (!app.selected || app.candidateBaseTier == null || app.candidateBaseTier >= 2) return;
+    app.candidateGradeExtra = (app.candidateGradeExtra || 0) + 1;
+    evaluateCandidatesIfAny();
   });
   els.btnUndo.addEventListener('click', undo);
   els.btnRedo.addEventListener('click', redo);
@@ -4442,6 +4451,9 @@ function selectPoint(point) {
   }
   app.selected = point;
   app.moveState = null;
+  app.candidateGradeExtra = 0;
+  app.candidateBaseTier = null;
+  app.candidateMaxDiff = null;
   hideModeHint();
   updateSelectionPanel();
   evaluateCandidatesIfAny();
@@ -4454,12 +4466,34 @@ function clearSelection() {
   app.candidateDisplay = [];
   app.candidateGrades.clear();
   app.gradeToken++;
+  app.candidateGradeExtra = 0;
+  app.candidateBaseTier = null;
+  app.candidateMaxDiff = null;
   app.moveState = null;
   els.candidateStats.innerHTML = '';
+  if (els.btnCandidateGradeMore) { els.btnCandidateGradeMore.disabled = true; els.btnCandidateGradeMore.textContent = '显示 ±1 级候选（增加可选点）'; }
   if (els.btnReplaceNearest) { els.btnReplaceNearest.disabled = true; els.btnReplaceNearest.textContent = '一键替换为最近合格候选'; }
   hideModeHint();
   updateSelectionPanel();
   invalidate();
+}
+function updateCandidateGradeMoreButton() {
+  if (!els || !els.btnCandidateGradeMore) return;
+  const base = app.candidateBaseTier;
+  const max = app.candidateMaxDiff;
+  if (base == null) {
+    els.btnCandidateGradeMore.disabled = true;
+    els.btnCandidateGradeMore.textContent = '显示 ±1 级候选（当前点无等级信息）';
+  } else if (base === 3) {
+    els.btnCandidateGradeMore.disabled = true;
+    els.btnCandidateGradeMore.textContent = '没有 ±2 级以内的可放宽候选';
+  } else if (max >= 2) {
+    els.btnCandidateGradeMore.disabled = true;
+    els.btnCandidateGradeMore.textContent = '已显示至 ±2 级候选';
+  } else {
+    els.btnCandidateGradeMore.disabled = false;
+    els.btnCandidateGradeMore.textContent = '显示 ±' + (max + 1) + ' 级候选（增加可选点）';
+  }
 }
 async function evaluateCandidatesIfAny() {
   if (!app.selected || !app.editMode || !app.candidates.length) {
@@ -4487,6 +4521,8 @@ async function evaluateCandidatesIfAny() {
       };
     });
     app.candidateGradeTier = null;
+    app.candidateBaseTier = null;
+    app.candidateMaxDiff = null;
     let gradeNotice = '';
     if (isDrylandDlmc(sel.dlmc)) {
       const selGrade = await samplePointGrade(sel);
@@ -4503,20 +4539,29 @@ async function evaluateCandidatesIfAny() {
         });
         const knownGrades = eligibleRows.filter(function (x) { return x.gradeValue != null; }).length;
         if (minDiff <= 2) {
-          app.candidateGradeTier = minDiff;
+          app.candidateBaseTier = minDiff;
+          const maxDiff = Math.min(2, minDiff + (app.candidateGradeExtra || 0));
+          app.candidateMaxDiff = maxDiff;
+          app.candidateGradeTier = maxDiff;
           rows = rows.filter(function (item) {
             if (item.gradeValue == null) return false;
             item.gradeDiff = Math.abs(item.gradeValue - selGrade);
-            return item.gradeDiff === minDiff;
+            return item.gradeDiff <= maxDiff;
           });
           rows.forEach(function (item) { item.selectedGrade = selGrade; });
-          if (minDiff === 0) gradeNotice = '同耕地等级候选 ' + rows.filter(function (x) { return x.eligible; }).length + ' 个，仅显示同等级候选。';
-          else if (minDiff === 1) gradeNotice = '没有同等级候选，已开放相邻 ±1 级候选。';
-          else if (minDiff === 2) {
+          if (maxDiff > minDiff) {
+            gradeNotice = '已额外开放到 ±' + maxDiff + ' 级候选；选择跨多级候选时会弹出提醒，导出会写入 GDDJBZ。';
+          } else if (minDiff === 0) {
+            gradeNotice = '同耕地等级候选 ' + rows.filter(function (x) { return x.eligible; }).length + ' 个，仅显示同等级候选。';
+          } else if (minDiff === 1) {
+            gradeNotice = '没有同等级候选，已开放相邻 ±1 级候选。';
+          } else {
             gradeNotice = '没有同等级或 ±1 级候选，已开放 ±2 级候选；替换时会弹出跨级提醒，导出时写入 GDDJBZ。';
             showBanner('该点位没有同等级或 ±1 级的合格候选，已开放 ±2 级候选；替换时会弹出提醒，导出时标注 GDDJBZ。', 'warn');
           }
         } else if (knownGrades > 0) {
+          app.candidateBaseTier = 3;
+          app.candidateMaxDiff = 3;
           app.candidateGradeTier = 3;
           rows = [];
           gradeNotice = '没有同等级、±1 或 ±2 级的合格候选，按存疑处理；不开放更高等级差候选。';
@@ -4524,6 +4569,7 @@ async function evaluateCandidatesIfAny() {
         }
       }
     }
+    updateCandidateGradeMoreButton();
     rows.sort(function (a, b) {
       if (a.sameGrid !== b.sameGrid) return a.sameGrid ? -1 : 1;
       return a.dist - b.dist;
@@ -6478,9 +6524,11 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
 </script>
 </body>
 </html>
+
 
 
 
