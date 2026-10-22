@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.14</title>
+<title>环耕站布点调整&amp;检测工具 v2.15</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -125,7 +125,9 @@ button{font-family:inherit}
 .bottom-dock{flex:0 0 auto;display:flex;flex-direction:column;min-height:0;gap:0}
 .bottom-dock.collapsed .results-panel{flex-basis:0;height:0;max-height:0;opacity:0;pointer-events:none;transform:translateY(14px);border-top-width:0;border-bottom-width:0}
 .bottom-dock.collapsed .task-progress{border-radius:4px}
-.task-progress{background:#f7f9fb;border:1px solid var(--border);border-radius:4px 4px 0 0;padding:6px 9px;display:flex;flex-direction:column;gap:4px}
+.task-progress{background:#f7f9fb;border:1px solid var(--border);border-radius:4px 4px 0 0;padding:5px 9px 6px;display:flex;flex-direction:column;gap:4px}
+.task-progress .tp-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:#5b6673;line-height:18px}
+.task-progress .tp-head button{padding:1px 7px;font-size:11px;line-height:16px}
 .task-progress .tp-row{display:flex;align-items:center;gap:8px;font-size:11px;color:#5b6673}
 .task-progress .tp-label{width:70px;flex:0 0 auto;white-space:nowrap}
 .task-progress .tp-track{position:relative;flex:1 1 auto;height:15px;background:#e9edf2;border-radius:8px;overflow:hidden}
@@ -208,7 +210,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.14</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.15</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -413,6 +415,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
     <div class="bottom-dock" id="bottomDock">
       <div class="task-progress" id="taskProgress">
+        <div class="tp-head"><span>任务进度</span><button id="btnBottomToggle" class="btn mini">收起面板</button></div>
         <div class="tp-row">
           <span class="tp-label">本区目视检查</span>
           <div class="tp-track"><div class="tp-fill green" id="taskProgressGreen"></div><span class="tp-text" id="taskProgressGreenText">0 / 0</span></div>
@@ -430,7 +433,6 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
         </div>
         <span class="badge badge-idle" id="resultBadge">未检查</span>
         <span id="summaryText">请选择任务文件夹与行政区。</span>
-        <button id="btnBottomToggle" class="btn mini" style="margin-left:auto">收起面板</button>
       </div>
       <div class="table-wrap" id="checkPane">
         <table class="data" id="resultTable">
@@ -453,18 +455,19 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.14 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.15 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 帮助 -->
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.14 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v2.15 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
       <li>选择行政区，工具自动加载 01 省级点、02 市/县级点、03 样点池、05 格网，并做间距检查。</li>
+      <li><b>省级点间距离特例</b>：若所有间距不合格项都是“省级点 ↔ 省级点”，因省级点不可移动，工具按全部样点间距通过处理，不再显示红色违规提示；其他任何级别组合的违规仍正常提示。</li>
       <li>开启"编辑模式"，用 Ctrl+单击选中一条 02 问题点；Shift+单击 03 候选点替换；按住 Space+单击在 20 m 圆环内移动。</li>
       <li>每次修改都会做间距、类型、20 m 半径校验，并写入修改记录。</li>
       <li>点击"导出成果"：生成修改后的 02 SHP 五件套（新文件，不覆盖原文件）+ 修改记录 + 校验报告。</li>
@@ -685,14 +688,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v2.14 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v2.15 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.14';
+const TOOL_VERSION = 'v2.15';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1691,10 +1694,11 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v2.14 —— 界面与交互
+ * 环耕站布点调整与检测工具 v2.15 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
@@ -1730,9 +1734,9 @@ const DEFAULT_POINT_STYLES = {
   other: { shape: 'circle', color: '#8a939e' }
 };
 const ANNOUNCEMENT_ITEMS = [
-  '底部面板新增任务进度统计：绿色进度条为本行政区目视检查进度，蓝色进度条为当前任务组全部行政区目视检查总进度，条内显示“完成数 / 总数”。',
-  '底部面板支持收起/展开，带平滑过渡动画；进入目视检查模式时面板默认收起，两个进度条仍固定在显示区域最下方，随勾选实时更新。',
-  '候选等级放宽按钮、±2 级替换提醒和 GDDJBZ 跨级备注继续保留。'
+  '底部任务进度区新增“收起面板 / 展开面板”按钮：面板收起后按钮仍显示在进度条旁，可随时重新打开结果列表；进入目视检查时默认收起。',
+  '间距检查规则优化：若所有间距不合格项均为“省级点 ↔ 省级点”，因省级点不可移动，按全部样点间距通过处理，不再显示红色违规提示。',
+  '任务进度双进度条、候选等级放宽、GDDJBZ 跨级备注等功能继续保留。'
 ];
 
 const app = {
@@ -3571,11 +3575,15 @@ async function buildAllCurrentPoints() {
 function computeAnalysis(own, others) {
   const violations = [];
   let pairs = 0, min = Infinity, minPair = null;
+  let editableMin = Infinity, editableMinPair = null;
   function consider(a, b, type) {
     let d;
     try { d = distanceBetween(a, b, app.crs); } catch (e) { return; }
     pairs++;
     if (d < min) { min = d; minPair = { a: a, b: b, type: type, dist: d }; }
+    if (!(a.level === 'prov' && b.level === 'prov') && d < editableMin) {
+      editableMin = d; editableMinPair = { a: a, b: b, type: type, dist: d };
+    }
     if (d <= THRESHOLD_M) violations.push({ a: a, b: b, type: type, dist: d });
   }
   for (let i = 0; i < own.length; i++) {
@@ -3583,7 +3591,21 @@ function computeAnalysis(own, others) {
     for (let k = 0; k < others.length; k++) consider(own[i], others[k], '跨区');
   }
   violations.sort(function (x, y) { return x.dist - y.dist; });
-  return { pairs: pairs, min: min, minPair: minPair, violations: violations, pass: violations.length === 0 };
+  /* 只有省级—省级点对违规时，因省级点不可移动，按全部通过处理，避免显性报错。 */
+  const provinceOnly = violations.length > 0 && violations.every(function (v) {
+    return v.a.level === 'prov' && v.b.level === 'prov';
+  });
+  const effective = provinceOnly ? [] : violations;
+  return {
+    pairs: pairs,
+    min: provinceOnly ? editableMin : min,
+    minPair: provinceOnly ? editableMinPair : minPair,
+    violations: effective,
+    allViolations: violations,
+    provinceOnlyIgnored: provinceOnly,
+    provinceOnlyCount: provinceOnly ? violations.length : 0,
+    pass: effective.length === 0
+  };
 }
 function refreshAll() {
   const token = ++app.refreshToken;
@@ -6660,9 +6682,11 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
 </script>
 </body>
 </html>
+
 
 
 
