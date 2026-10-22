@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.8</title>
+<title>环耕站布点调整&amp;检测工具 v2.10</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -197,7 +197,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.8</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.10</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -274,13 +274,56 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <label class="chk"><input type="checkbox" id="lyrCity" checked><span class="sym sym-city"></span>市级样点（02，可编辑）</label>
       <label class="chk"><input type="checkbox" id="lyrCounty" checked><span class="sym sym-county"></span>县级样点（02，可编辑）</label>
       <label class="chk"><input type="checkbox" id="lyrPool" checked><span class="sym sym-pool-ok"></span>03 样点池（候选）</label>
-      <label class="chk"><input type="checkbox" id="lyrGrid" checked><span class="sym sym-grid"></span>05 区县格网</label>
+      <label class="chk"><input type="checkbox" id="lyrGrid"><span class="sym sym-grid"></span>05 区县格网</label>
       <label class="chk"><input type="checkbox" id="lyrOther" checked><span class="sym sym-other"></span>同文件夹其他行政区点</label>
       <label class="chk"><input type="checkbox" id="lyrCircle"><span class="sym sym-circle"></span>1.5 km 参考圈</label>
       <label class="chk"><input type="checkbox" id="lyrBase" disabled><span class="sym sym-base"></span>天地图影像（仅目视检查）</label>
       <label class="chk" style="display:none"><input type="checkbox" id="lyrLabel">天地图注记</label>
       <div class="tiny" id="basemapState" style="margin:2px 0 4px;color:#8a949e">底图未启用（进入目视检查后按点加载默认视野一次）</div>
-      <label class="chk"><input type="checkbox" id="lyrMesh" checked>网格线</label>
+      <label class="chk"><input type="checkbox" id="lyrMesh">网格线</label>
+    </div>
+
+    <div class="section">
+      <div class="panel-title">符号样式</div>
+      <div class="form-row" style="margin-bottom:5px">
+        <label style="width:72px">点图层</label>
+        <select id="pointStyleLayer">
+          <option value="prov">省级样点（01）</option>
+          <option value="city">市级样点（02）</option>
+          <option value="county">县级样点（02）</option>
+          <option value="pool">03 候选池</option>
+          <option value="other">其他行政区点</option>
+        </select>
+      </div>
+      <div id="shapePicker" style="display:flex;flex-wrap:wrap;gap:4px;margin:3px 0 6px"></div>
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
+        <span class="tiny">颜色</span>
+        <input id="pointHue" type="range" min="0" max="360" step="1" value="140" style="flex:1;height:16px;border-radius:8px;background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)">
+        <span id="pointColorSwatch" style="width:20px;height:20px;border:1px solid #8b95a1;border-radius:3px;background:#1e7d3a"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <span class="tiny">RGB</span>
+        <input id="pointRgbInput" type="text" placeholder="rgb(30,125,80)" spellcheck="false" style="flex:1;min-width:0">
+        <button id="btnPointStyleReset" class="btn mini" title="恢复当前图层默认样式">默认</button>
+      </div>
+      <div class="tiny" style="margin-top:5px;border-top:1px dashed #d5dbe2;padding-top:6px">区县格网样式</div>
+      <div style="display:flex;align-items:center;gap:5px;margin:4px 0">
+        <span class="tiny" style="width:52px">边框粗细</span>
+        <input id="gridWidth" type="range" min="0" max="6" step="0.5" value="1" style="flex:1">
+        <span class="tiny" id="gridWidthVal" style="width:28px">1</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;margin:4px 0">
+        <span class="tiny" style="width:52px">边框颜色</span>
+        <input id="gridBorderColor" type="color" value="#5a6978" style="width:38px;height:24px;padding:0">
+        <span class="tiny" style="width:52px">填充</span>
+        <input id="gridFillColor" type="color" value="#5a6978" style="width:38px;height:24px;padding:0">
+        <label class="tiny" style="display:flex;align-items:center;gap:2px"><input id="gridNoFill" type="checkbox" checked>无</label>
+      </div>
+      <div style="display:flex;align-items:center;gap:5px;margin:4px 0">
+        <span class="tiny" style="width:52px">填充透明度</span>
+        <input id="gridFillOpacity" type="range" min="0" max="100" step="1" value="4" style="flex:1">
+        <span class="tiny" id="gridFillOpacityVal" style="width:28px">4%</span>
+      </div>
     </div>
   </aside>
 
@@ -385,14 +428,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.8 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.10 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 帮助 -->
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.8 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v2.10 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -405,7 +448,8 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
     <ul>
       <li><b>01 省级样点强制锁定</b>：即使在编辑模式下，也不能替换、移动或选中省级点；单击省级点会提示“强制锁定”。</li>
       <li>只有 02 图层可编辑；03/05 只读。</li>
-      <li><b>旱地耕地等级</b>：工具会读取 04 耕地质量等级栅格；鼠标悬停旱地点、选中样点面板、目视检查面板都会显示“耕地等级”；选中旱地问题点时，合格候选点上方会标注其耕地等级，便于优先选择同值/相邻等级候选。</li>
+      <li><b>符号样式</b>：左下角“符号样式”可分别切换省级、市级、县级、03 候选池、其他行政区点的形状（10 种）与颜色（RGB 色带或 RGB 代码）；05 区县格网可设置边框粗细/颜色、填充颜色与透明度，默认不显示格网。</li>
+      <li><b>旱地耕地等级</b>：工具会读取 04 耕地质量等级栅格（支持 8 位/16 位 LZW GeoTIFF）；选择行政区后会在后台静默预读并缓存旱地 02 点和候选点等级。鼠标悬停旱地点、选中样点面板、目视检查面板都会显示“耕地等级”；选中旱地问题点时，合格候选点上方会标注其耕地等级，便于优先选择同值/相邻等级候选。</li>
       <li>Shift+单击替换：候选点必须与问题点地类一致，且与当前所有样点（含相邻行政区）间距严格大于 1500 m；不合格候选点会变灰并禁止选择。</li>
       <li><b>候选点格网优先</b>：选中问题点后，若同一 05 格网内存在合格候选，只显示同格网候选；同格网没有可替换候选时，才开放其他格网候选，并弹出横幅提示，跨格网替换可能影响格网组合。</li>
       <li><b>候选点距离辅助圈</b>：选中问题点后，鼠标悬停在其他合格候选点上时，会以该候选点为圆心显示 100 m 和 200 m 亮品红色虚线指示圈（带白色描边），便于判断候选点与周围地物的实际距离。</li>
@@ -613,14 +657,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v2.8 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v2.10 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.8';
+const TOOL_VERSION = 'v2.10';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1570,10 +1614,12 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v2.8 —— 界面与交互
+ * 环耕站布点调整与检测工具 v2.10 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
@@ -1589,10 +1635,29 @@ const TILE_MEM_MAX = 128;
 const TILE_TTL_IMG = 30 * 24 * 3600 * 1000;
 const TILE_TTL_LABEL = 7 * 24 * 3600 * 1000;
 const LS_ANNOUNCEMENT = 'spacingEditTool.announcementSeen';
+const POINT_SHAPES = [
+  { id: 'circle', label: '●', name: '圆形' },
+  { id: 'square', label: '■', name: '正方形' },
+  { id: 'triangle', label: '▲', name: '三角形' },
+  { id: 'triangleDown', label: '▼', name: '倒三角' },
+  { id: 'diamond', label: '◆', name: '菱形' },
+  { id: 'pentagon', label: '⬟', name: '五边形' },
+  { id: 'hexagon', label: '⬢', name: '六边形' },
+  { id: 'star', label: '★', name: '五角星' },
+  { id: 'cross', label: '✚', name: '十字' },
+  { id: 'x', label: '✕', name: '叉号' }
+];
+const DEFAULT_POINT_STYLES = {
+  prov: { shape: 'diamond', color: '#1a6fdb' },
+  city: { shape: 'triangle', color: '#d9720b' },
+  county: { shape: 'square', color: '#1f8f3e' },
+  pool: { shape: 'circle', color: '#1e7d3a' },
+  other: { shape: 'circle', color: '#8a939e' }
+};
 const ANNOUNCEMENT_ITEMS = [
-  '候选点距离辅助圈颜色优化：悬停合格候选点时，100 m / 200 m 圈改为亮品红色并加白色描边，避免与绿色候选点和影像重叠；',
-  '旱地样点继续显示耕地等级：悬停、选中面板、目视检查面板及合格候选点上方均标注 04 栅格读取的等级。',
-  '底图仍为按点加载：目视检查每个目标点加载默认视野一次，缩放后需点击“全图”手动加载；不预加载、不持久化存储瓦片。'
+  '修复旱地耕地等级读取：支持双城区等 16 位 TIFF 栅格；选择行政区后后台静默预读 04 栅格并缓存全部旱地 02 点和候选点等级，面板可快速显示。',
+  '图层符号样式：左侧“符号样式”可分别为省级、市级、县级、03 候选池和其他行政区点选择 10 种形状，并通过 RGB 色带或 RGB 代码调整颜色。',
+  '05 区县格网支持边框粗细、边框颜色、填充颜色（可无填充）和填充透明度；区县格网和网格线默认关闭显示。'
 ];
 
 const app = {
@@ -1623,6 +1688,15 @@ const app = {
   cacheHits: 0, cacheMisses: 0, tileFetchUnsupported: false,
   regionCountChecks: new Map(), countMismatchPending: null, countValidateAllPromise: null, countValidatePromises: new Map(),
   rasterInfoCache: new Map(), gradeCache: new Map(), candidateGrades: new Map(), gradeToken: 0, hoverGradeToken: 0,
+  pointStyles: {
+    prov: { shape: 'diamond', color: '#1a6fdb' },
+    city: { shape: 'triangle', color: '#d9720b' },
+    county: { shape: 'square', color: '#1f8f3e' },
+    pool: { shape: 'circle', color: '#1e7d3a' },
+    other: { shape: 'circle', color: '#8a939e' }
+  },
+  gridStyle: { width: 1, border: '#5a6978', fill: '#5a6978', noFill: true, opacity: 4 },
+  styleLayer: 'city',
   pendingExport: null, loadToken: 0, refreshToken: 0,
   drag: null, moved: false,
   resultTab: 'check'
@@ -1686,6 +1760,10 @@ function init() {
     lyrProv: $('lyrProv'), lyrCity: $('lyrCity'), lyrCounty: $('lyrCounty'),
     lyrPool: $('lyrPool'), lyrGrid: $('lyrGrid'), lyrOther: $('lyrOther'),
     lyrCircle: $('lyrCircle'), lyrBase: $('lyrBase'), lyrLabel: $('lyrLabel'), lyrMesh: $('lyrMesh'),
+    pointStyleLayer: $('pointStyleLayer'), shapePicker: $('shapePicker'), pointHue: $('pointHue'),
+    pointColorSwatch: $('pointColorSwatch'), pointRgbInput: $('pointRgbInput'), btnPointStyleReset: $('btnPointStyleReset'),
+    gridWidth: $('gridWidth'), gridWidthVal: $('gridWidthVal'), gridBorderColor: $('gridBorderColor'),
+    gridFillColor: $('gridFillColor'), gridNoFill: $('gridNoFill'), gridFillOpacity: $('gridFillOpacity'), gridFillOpacityVal: $('gridFillOpacityVal'),
     helpModal: $('helpModal'), btnCloseHelp: $('btnCloseHelp'),
     keyModal: $('keyModal'), keyRows: $('keyRows'), btnAddKey: $('btnAddKey'), keyOrigin: $('keyOrigin'),
     keyStatus: $('keyStatus'), cacheStatus: $('cacheStatus'), btnClearCache: $('btnClearCache'), basemapState: $('basemapState'),
@@ -1702,6 +1780,7 @@ function init() {
   bindEvents();
   resizeCanvas();
   initKeySettings();
+  initStyleControls();
   updateEditUI();
   updateUndoRedoButtons();
   setTab('check');
@@ -1844,6 +1923,57 @@ function bindEvents() {
     openExportModal();
   });
   els.btnExport.addEventListener('click', openExportModal);
+  els.pointStyleLayer.addEventListener('change', function () {
+    app.styleLayer = els.pointStyleLayer.value;
+    syncPointStyleControls();
+  });
+  els.shapePicker.addEventListener('click', function (e) {
+    const btn = e.target && e.target.closest ? e.target.closest('[data-shape]') : null;
+    if (!btn) return;
+    const st = app.pointStyles[app.styleLayer];
+    if (!st) return;
+    st.shape = btn.getAttribute('data-shape');
+    syncPointStyleControls();
+    invalidate();
+  });
+  els.pointHue.addEventListener('input', function () {
+    const st = app.pointStyles[app.styleLayer];
+    if (!st) return;
+    st.color = hslToHex(Number(els.pointHue.value), 0.78, 0.42);
+    syncPointStyleControls();
+    invalidate();
+  });
+  els.pointRgbInput.addEventListener('change', applyPointRgbInput);
+  els.pointRgbInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); applyPointRgbInput(); } });
+  els.btnPointStyleReset.addEventListener('click', function () {
+    delete app.pointStyles[app.styleLayer];
+    app.pointStyles[app.styleLayer] = JSON.parse(JSON.stringify(DEFAULT_POINT_STYLES[app.styleLayer]));
+    syncPointStyleControls();
+    invalidate();
+  });
+  els.gridWidth.addEventListener('input', function () {
+    app.gridStyle.width = Number(els.gridWidth.value);
+    updateGridStyleControls();
+    invalidate();
+  });
+  els.gridBorderColor.addEventListener('input', function () {
+    app.gridStyle.border = els.gridBorderColor.value;
+    invalidate();
+  });
+  els.gridFillColor.addEventListener('input', function () {
+    app.gridStyle.fill = els.gridFillColor.value;
+    invalidate();
+  });
+  els.gridNoFill.addEventListener('change', function () {
+    app.gridStyle.noFill = !!els.gridNoFill.checked;
+    updateGridStyleControls();
+    invalidate();
+  });
+  els.gridFillOpacity.addEventListener('input', function () {
+    app.gridStyle.opacity = Number(els.gridFillOpacity.value);
+    updateGridStyleControls();
+    invalidate();
+  });
   els.btnBasemap.addEventListener('click', openKeyModal);
   els.btnHelp.addEventListener('click', function () { els.helpModal.classList.remove('hidden'); });
   els.btnCloseHelp.addEventListener('click', function () { els.helpModal.classList.add('hidden'); });
@@ -2808,6 +2938,7 @@ function selectRegion(index) {
       maybePromptInitialProgress();
       maybePromptCurrentRegionProgress();
       maybeShowRegionCountWarning();
+      preloadRegionGrades(app.region);
       setStatus('已加载 ' + app.region.name + '，可开始检查与编辑。');
       invalidate();
     });
@@ -2893,10 +3024,12 @@ function parseTiffInfo(buf) {
   const stripOffsets = tags[273], stripCounts = tags[279];
   const rowsPerStrip = first(278) || height;
   if (!width || !height) throw new Error('TIFF 尺寸缺失');
-  if (samples !== 1 || bits[0] !== 8) throw new Error('暂不支持多波段/非 8 位 TIFF');
+  if (samples !== 1 || (bits[0] !== 8 && bits[0] !== 16)) throw new Error('暂不支持多波段/非 8/16 位 TIFF');
+  const bytesPerPixel = bits[0] === 16 ? 2 : 1;
   if (compression !== 1 && compression !== 5) throw new Error('暂不支持的 TIFF 压缩方式：' + compression);
   const info = {
     buf: buf, view: view, little: little, width: width, height: height,
+    bitDepth: bits[0], bytesPerPixel: bytesPerPixel,
     compression: compression, predictor: predictor, tiled: !!(tileW && tileH && tileOffsets && tileCounts),
     tileW: tileW || 0, tileH: tileH || 0, tileOffsets: tileOffsets || [], tileCounts: tileCounts || [],
     stripOffsets: stripOffsets || [], stripCounts: stripCounts || [], rowsPerStrip: rowsPerStrip,
@@ -2956,15 +3089,26 @@ function tiffLzwDecode(bytes, expected) {
 }
 function decodeTiffBlock(info, offset, byteCount, width, height) {
   let raw;
+  const expected = width * height * (info.bytesPerPixel || 1);
   if (info.compression === 1) raw = new Uint8Array(info.buf, offset, byteCount);
-  else raw = tiffLzwDecode(new Uint8Array(info.buf, offset, byteCount), width * height);
+  else raw = tiffLzwDecode(new Uint8Array(info.buf, offset, byteCount), expected);
   if (info.predictor === 2) {
-    for (let y = 0; y < height; y++) {
-      const row = y * width;
-      for (let x = 1; x < width; x++) raw[row + x] = (raw[row + x] + raw[row + x - 1]) & 255;
+    if ((info.bytesPerPixel || 1) === 1) {
+      for (let y = 0; y < height; y++) {
+        const row = y * width;
+        for (let x = 1; x < width; x++) raw[row + x] = (raw[row + x] + raw[row + x - 1]) & 255;
+      }
     }
   }
   return raw;
+}
+function tiffBlockValue(info, block, pixelIndex) {
+  if ((info.bytesPerPixel || 1) === 2) {
+    const off = pixelIndex * 2;
+    if (off + 1 >= block.length) return null;
+    return info.little ? (block[off] | (block[off + 1] << 8)) : ((block[off] << 8) | block[off + 1]);
+  }
+  return block[pixelIndex];
 }
 function tiffSample(info, lon, lat) {
   if (!info || !info.geo) return null;
@@ -2984,7 +3128,7 @@ function tiffSample(info, lon, lat) {
       info.tileCache.set(ti, block);
     }
     const px = col % info.tileW, py = row % info.tileH;
-    value = block[py * info.tileW + px];
+    value = tiffBlockValue(info, block, py * info.tileW + px);
   } else {
     const si = Math.floor(row / info.rowsPerStrip);
     if (si >= info.stripOffsets.length) return null;
@@ -2994,7 +3138,7 @@ function tiffSample(info, lon, lat) {
       block = decodeTiffBlock(info, info.stripOffsets[si], info.stripCounts[si], info.width, rows);
       info.tileCache.set('s' + si, block);
     }
-    value = block[(row - si * info.rowsPerStrip) * info.width + col];
+    value = tiffBlockValue(info, block, (row - si * info.rowsPerStrip) * info.width + col);
   }
   if (!isFinite(value)) return null;
   if (value < 1 || value > 10) return null;
@@ -3076,6 +3220,34 @@ async function samplePointGrade(point) {
 function gradeText(value) {
   return value == null ? '无等级信息' : String(value) + ' 级';
 }
+async function preloadRegionGrades(region) {
+  if (!region || !region.files || !region.files.raster) return;
+  const target = region;
+  try {
+    const info = await loadRasterInfo(target);
+    if (!info || app.region !== target) return;
+    const points = [];
+    (app.ownPoints || []).forEach(function (p) { if (String(p.dlmc || '').indexOf('旱地') >= 0) points.push(p); });
+    (app.candidates || []).forEach(function (p) { if (String(p.dlmc || '').indexOf('旱地') >= 0) points.push(p); });
+    let loaded = 0;
+    points.forEach(function (p) {
+      const key = target.key + '|' + Number(p.x).toFixed(7) + '|' + Number(p.y).toFixed(7);
+      if (app.gradeCache.has(key)) return;
+      const v = tiffSample(info, p.x, p.y);
+      app.gradeCache.set(key, v);
+      loaded++;
+    });
+    if (loaded && app.region === target) {
+      if (app.selected && String(app.selected.dlmc || '').indexOf('旱地') >= 0) {
+        /* 让已打开的面板立即使用已缓存的等级 */
+        updateSelectionPanel();
+        if (app.visualMode) updateVisualPanel();
+      }
+      invalidate();
+    }
+  } catch (e) { /* 静默：04 缺失/不支持时保持“无等级信息” */ }
+}
+
 function refreshCandidateGrades() {
   app.candidateGrades.clear();
   if (!app.selected || String(app.selected.dlmc || '').indexOf('旱地') < 0) return;
@@ -4628,10 +4800,11 @@ function drawMesh(ctx, size) {
 }
 function drawGridWorld(ctx) {
   if (!app.gridWorld.length) return;
+  const gs = app.gridStyle;
   ctx.save();
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = 'rgba(90,105,120,0.55)';
-  ctx.fillStyle = 'rgba(90,105,120,0.045)';
+  ctx.lineWidth = gs.width;
+  ctx.strokeStyle = gs.border;
+  ctx.fillStyle = hexToRgba(gs.fill, gs.opacity / 100);
   app.gridWorld.forEach(function (ring) {
     ctx.beginPath();
     ring.forEach(function (w, i) {
@@ -4639,8 +4812,8 @@ function drawGridWorld(ctx) {
       if (i === 0) ctx.moveTo(s.x, s.y); else ctx.lineTo(s.x, s.y);
     });
     ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
+    if (!gs.noFill) ctx.fill();
+    if (gs.width > 0) ctx.stroke();
   });
   ctx.restore();
 }
@@ -4675,16 +4848,11 @@ function drawViolationLines(ctx) {
   ctx.restore();
 }
 function drawOtherPoints(ctx) {
+  const st = app.pointStyles.other || DEFAULT_POINT_STYLES.other;
   ctx.save();
   app.otherPoints.forEach(function (p) {
     const s = screenPos(toWorld(p));
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, 2.6, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(138,147,158,0.8)';
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
-    ctx.lineWidth = 0.8;
-    ctx.stroke();
+    drawStyledShape(ctx, st.shape || 'circle', s.x, s.y, 3.2, st.color || '#8a939e', 'rgba(255,255,255,0.85)', 0.8);
   });
   ctx.restore();
 }
@@ -4733,12 +4901,11 @@ function drawCandidates(ctx) {
     const s = screenPos(toWorld(c));
     if (s.x < -10 || s.y < -10 || s.x > mapSize().w + 10 || s.y > mapSize().h + 10) continue;
     const eligible = item.eligible;
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, eligible ? 4.2 : 2.6, 0, Math.PI * 2);
-    ctx.strokeStyle = eligible ? (item.reasons && item.reasons.length ? '#9a5b00' : '#1e7d3a') : 'rgba(150,158,168,0.75)';
-    ctx.fillStyle = eligible ? 'rgba(216,243,223,0.95)' : 'rgba(240,242,244,0.6)';
-    ctx.lineWidth = eligible ? 1.8 : 1;
-    ctx.fill(); ctx.stroke();
+    const st = app.pointStyles.pool || DEFAULT_POINT_STYLES.pool;
+    drawStyledShape(ctx, st.shape || 'circle', s.x, s.y, eligible ? 4.2 : 2.6,
+      eligible ? (st.color || '#1e7d3a') : 'rgba(240,242,244,0.6)',
+      eligible ? 'rgba(255,255,255,0.95)' : 'rgba(150,158,168,0.75)',
+      eligible ? 1.8 : 1);
     if (item.eligible && app.candidateGrades.has(item.idx)) {
       ctx.save();
       ctx.font = '600 11px "Microsoft YaHei", sans-serif';
@@ -4920,21 +5087,154 @@ function drawHoverCandidateRings(ctx) {
   });
   ctx.restore();
 }
+function clampByte(v) { return Math.max(0, Math.min(255, Math.round(Number(v) || 0))); }
+function hslToRgb(h, s, l) {
+  h = ((Number(h) % 360) + 360) % 360 / 360;
+  const hue2rgb = function (p, q, t) {
+    if (t < 0) t += 1; if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  return { r: Math.round(hue2rgb(p, q, h + 1 / 3) * 255), g: Math.round(hue2rgb(p, q, h) * 255), b: Math.round(hue2rgb(p, q, h - 1 / 3) * 255) };
+}
+function rgbToHex(r, g, b) {
+  const h = function (v) { return clampByte(v).toString(16).padStart(2, '0'); };
+  return '#' + h(r) + h(g) + h(b);
+}
+function hslToHex(h, s, l) { const c = hslToRgb(h, s, l); return rgbToHex(c.r, c.g, c.b); }
+function hexToRgb(hex) {
+  let s = String(hex || '').replace('#', '').trim();
+  if (/^[0-9a-f]{3}$/i.test(s)) s = s.split('').map(function (c) { return c + c; }).join('');
+  if (!/^[0-9a-f]{6}$/i.test(s)) return null;
+  return { r: parseInt(s.slice(0, 2), 16), g: parseInt(s.slice(2, 4), 16), b: parseInt(s.slice(4, 6), 16) };
+}
+function hexToHue(hex) {
+  const c = hexToRgb(hex); if (!c) return 140;
+  const r = c.r / 255, g = c.g / 255, b = c.b / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  if (!d) return 0;
+  let h = 0;
+  if (max === r) h = ((g - b) / d) % 6;
+  else if (max === g) h = (b - r) / d + 2;
+  else h = (r - g) / d + 4;
+  h *= 60; if (h < 0) h += 360;
+  return Math.round(h);
+}
+function hexToRgba(hex, alpha) {
+  const c = hexToRgb(hex) || { r: 90, g: 105, b: 120 };
+  return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + Math.max(0, Math.min(1, alpha)) + ')';
+}
+function parseRgbInput(text) {
+  let s = String(text || '').trim();
+  if (!s) return null;
+  if (/^#?[0-9a-f]{3}([0-9a-f]{3})?$/i.test(s)) {
+    const c = hexToRgb(s); return c ? rgbToHex(c.r, c.g, c.b) : null;
+  }
+  const m = s.match(/rgba?\s*\(\s*(\d{1,3})\s*[, ]\s*(\d{1,3})\s*[, ]\s*(\d{1,3})/i);
+  if (m) return rgbToHex(m[1], m[2], m[3]);
+  const parts = s.split(/[,\s]+/).filter(Boolean).map(Number);
+  if (parts.length >= 3 && parts.every(function (v) { return isFinite(v); })) return rgbToHex(parts[0], parts[1], parts[2]);
+  return null;
+}
+function initStyleControls() {
+  if (!els || !els.pointStyleLayer) return;
+  els.pointStyleLayer.value = app.styleLayer;
+  updateGridStyleControls();
+  syncPointStyleControls();
+}
+function syncPointStyleControls() {
+  if (!els || !els.pointStyleLayer) return;
+  app.styleLayer = els.pointStyleLayer.value || app.styleLayer || 'city';
+  const st = app.pointStyles[app.styleLayer] || DEFAULT_POINT_STYLES[app.styleLayer] || { shape: 'circle', color: '#1e7d3a' };
+  if (!els.shapePicker.dataset.ready) {
+    els.shapePicker.dataset.ready = '1';
+  }
+  els.shapePicker.innerHTML = POINT_SHAPES.map(function (s) {
+    return '<button type="button" class="btn mini" data-shape="' + s.id + '" title="' + s.name + '" style="width:27px;height:27px;padding:0;font-size:16px;line-height:25px;' +
+      (st.shape === s.id ? 'border-color:#1a6fdb;background:#e8f1fc;color:#0b5f96;' : '') + '">' + s.label + '</button>';
+  }).join('');
+  els.pointRgbInput.value = 'rgb(' + (hexToRgb(st.color) ? [hexToRgb(st.color).r, hexToRgb(st.color).g, hexToRgb(st.color).b].join(',') : '0,0,0') + ')';
+  els.pointColorSwatch.style.background = st.color;
+  els.pointHue.value = String(hexToHue(st.color));
+}
+function applyPointRgbInput() {
+  const st = app.pointStyles[app.styleLayer];
+  if (!st) return;
+  const color = parseRgbInput(els.pointRgbInput.value);
+  if (!color) { toast('RGB 格式无效，请输入如 rgb(30,125,80) 或 #1e7d50。', 'warn'); syncPointStyleControls(); return; }
+  st.color = color;
+  syncPointStyleControls();
+  invalidate();
+}
+function updateGridStyleControls() {
+  if (!els || !els.gridWidth) return;
+  const gs = app.gridStyle;
+  els.gridWidth.value = String(gs.width);
+  els.gridWidthVal.textContent = String(gs.width);
+  els.gridBorderColor.value = gs.border;
+  els.gridFillColor.value = gs.fill;
+  els.gridNoFill.checked = !!gs.noFill;
+  els.gridFillOpacity.value = String(gs.opacity);
+  els.gridFillOpacityVal.textContent = gs.opacity + '%';
+  els.gridFillColor.disabled = !!gs.noFill;
+  els.gridFillOpacity.disabled = !!gs.noFill;
+}
+function shapePath(ctx, shape, x, y, r) {
+  if (shape === 'square') { ctx.rect(x - r * 0.82, y - r * 0.82, r * 1.64, r * 1.64); return; }
+  if (shape === 'triangle') { ctx.moveTo(x, y - r); ctx.lineTo(x + r * 0.94, y + r * 0.78); ctx.lineTo(x - r * 0.94, y + r * 0.78); ctx.closePath(); return; }
+  if (shape === 'triangleDown') { ctx.moveTo(x, y + r); ctx.lineTo(x + r * 0.94, y - r * 0.78); ctx.lineTo(x - r * 0.94, y - r * 0.78); ctx.closePath(); return; }
+  if (shape === 'diamond') { ctx.moveTo(x, y - r); ctx.lineTo(x + r, y); ctx.lineTo(x, y + r); ctx.lineTo(x - r, y); ctx.closePath(); return; }
+  if (shape === 'pentagon' || shape === 'hexagon') {
+    const n = shape === 'pentagon' ? 5 : 6;
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + i * Math.PI * 2 / n;
+      const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath(); return;
+  }
+  if (shape === 'star') {
+    for (let i = 0; i < 10; i++) {
+      const rr = i % 2 === 0 ? r : r * 0.43;
+      const a = -Math.PI / 2 + i * Math.PI / 5;
+      const px = x + Math.cos(a) * rr, py = y + Math.sin(a) * rr;
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.closePath(); return;
+  }
+  ctx.arc(x, y, r, 0, Math.PI * 2);
+}
+function drawStyledShape(ctx, shape, x, y, r, fill, stroke, lineWidth) {
+  if (shape === 'x' || shape === 'cross') {
+    ctx.save();
+    ctx.lineCap = 'round';
+    const lines = shape === 'x'
+      ? [[x - r, y - r, x + r, y + r], [x - r, y + r, x + r, y - r]]
+      : [[x - r, y, x + r, y], [x, y - r, x, y + r]];
+    ctx.strokeStyle = stroke; ctx.lineWidth = Math.max(2.5, lineWidth + r * 0.6);
+    lines.forEach(function (l) { ctx.beginPath(); ctx.moveTo(l[0], l[1]); ctx.lineTo(l[2], l[3]); ctx.stroke(); });
+    ctx.strokeStyle = fill; ctx.lineWidth = Math.max(1.5, r * 0.62);
+    lines.forEach(function (l) { ctx.beginPath(); ctx.moveTo(l[0], l[1]); ctx.lineTo(l[2], l[3]); ctx.stroke(); });
+    ctx.restore();
+    return;
+  }
+  ctx.beginPath();
+  shapePath(ctx, shape, x, y, r);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.lineWidth = lineWidth;
+  ctx.strokeStyle = stroke;
+  ctx.stroke();
+}
 function drawSymbol(ctx, x, y, level, active) {
   const size = active ? 8 : 6.4;
   ctx.save();
-  ctx.lineWidth = 1.4;
-  ctx.strokeStyle = '#ffffff';
-  if (level === 'prov') {
-    ctx.beginPath(); ctx.moveTo(x, y - size); ctx.lineTo(x + size, y); ctx.lineTo(x, y + size); ctx.lineTo(x - size, y); ctx.closePath();
-    ctx.fillStyle = LEVELS.prov.color; ctx.fill(); ctx.stroke();
-  } else if (level === 'city') {
-    ctx.beginPath(); ctx.moveTo(x, y - size); ctx.lineTo(x + size * 0.92, y + size * 0.78); ctx.lineTo(x - size * 0.92, y + size * 0.78); ctx.closePath();
-    ctx.fillStyle = LEVELS.city.color; ctx.fill(); ctx.stroke();
-  } else {
-    ctx.beginPath(); ctx.rect(x - size * 0.82, y - size * 0.82, size * 1.64, size * 1.64);
-    ctx.fillStyle = LEVELS.county.color; ctx.fill(); ctx.stroke();
-  }
+  const st = app.pointStyles[level] || DEFAULT_POINT_STYLES[level] || { shape: 'circle', color: LEVELS[level] ? LEVELS[level].color : '#666' };
+  drawStyledShape(ctx, st.shape || 'circle', x, y, size, st.color || LEVELS[level].color, '#ffffff', 1.4);
   ctx.restore();
 }
 function niceStep(v) {
@@ -6008,9 +6308,13 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
+
 </script>
 </body>
 </html>
+
+
 
 
 
