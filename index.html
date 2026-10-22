@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.15</title>
+<title>环耕站布点调整&amp;检测工具 v2.16</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -210,7 +210,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.15</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.16</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -455,14 +455,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.15 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.16 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 帮助 -->
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.15 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v2.16 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -688,14 +688,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v2.15 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v2.16 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.15';
+const TOOL_VERSION = 'v2.16';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1695,10 +1695,11 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v2.15 —— 界面与交互
+ * 环耕站布点调整与检测工具 v2.16 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
@@ -1734,9 +1735,9 @@ const DEFAULT_POINT_STYLES = {
   other: { shape: 'circle', color: '#8a939e' }
 };
 const ANNOUNCEMENT_ITEMS = [
-  '底部任务进度区新增“收起面板 / 展开面板”按钮：面板收起后按钮仍显示在进度条旁，可随时重新打开结果列表；进入目视检查时默认收起。',
-  '间距检查规则优化：若所有间距不合格项均为“省级点 ↔ 省级点”，因省级点不可移动，按全部样点间距通过处理，不再显示红色违规提示。',
-  '任务进度双进度条、候选等级放宽、GDDJBZ 跨级备注等功能继续保留。'
+  '修复收起/展开底部面板后地图画布未同步缩放的问题：现在画布尺寸会随地图区域实时更新，底图和样点可正常显示到新区域。',
+  '任务进度区保留常显“收起面板 / 展开面板”按钮；进入目视检查默认收起，进度条仍在最下方实时更新。',
+  '省级点间距离特例、候选等级放宽、GDDJBZ 跨级备注等功能继续保留。'
 ];
 
 const app = {
@@ -1865,6 +1866,16 @@ function init() {
   els.ctx = els.map.getContext('2d');
   bindEvents();
   resizeCanvas();
+  if (('ResizeObserver' in window) && els.mapPanel) {
+    app.mapResizeObserver = new ResizeObserver(function () {
+      if (app.mapResizeRAF) return;
+      app.mapResizeRAF = requestAnimationFrame(function () {
+        app.mapResizeRAF = 0;
+        resizeCanvas();
+      });
+    });
+    app.mapResizeObserver.observe(els.mapPanel);
+  }
   initKeySettings();
   initStyleControls();
   updateEditUI();
@@ -4037,6 +4048,12 @@ function setBottomCollapsed(on) {
   app.bottomCollapsed = !!on;
   if (els && els.bottomDock) els.bottomDock.classList.toggle('collapsed', app.bottomCollapsed);
   if (els && els.btnBottomToggle) els.btnBottomToggle.textContent = app.bottomCollapsed ? '展开面板' : '收起面板';
+  /* 面板过渡会改变地图容器高度，立即并按动画节奏同步画布尺寸 */
+  if (els && els.mapPanel) {
+    resizeCanvas();
+    requestAnimationFrame(function () { resizeCanvas(); });
+    setTimeout(function () { resizeCanvas(); }, 320);
+  }
 }
 function progressRegionKey(region) {
   return (app.group ? app.group.label : '') + '|' + (region ? region.key : '');
@@ -6683,9 +6700,11 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
 </script>
 </body>
 </html>
+
 
 
 
