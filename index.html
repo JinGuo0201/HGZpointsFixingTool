@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.6</title>
+<title>环耕站布点调整&amp;检测工具 v2.7</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -197,7 +197,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.6</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.7</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -385,14 +385,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.6 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.7 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 帮助 -->
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.6 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v2.7 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -408,6 +408,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li><b>旱地耕地等级</b>：工具会读取 04 耕地质量等级栅格；鼠标悬停旱地点、选中样点面板、目视检查面板都会显示“耕地等级”；选中旱地问题点时，合格候选点上方会标注其耕地等级，便于优先选择同值/相邻等级候选。</li>
       <li>Shift+单击替换：候选点必须与问题点地类一致，且与当前所有样点（含相邻行政区）间距严格大于 1500 m；不合格候选点会变灰并禁止选择。</li>
       <li><b>候选点格网优先</b>：选中问题点后，若同一 05 格网内存在合格候选，只显示同格网候选；同格网没有可替换候选时，才开放其他格网候选，并弹出横幅提示，跨格网替换可能影响格网组合。</li>
+      <li><b>候选点距离辅助圈</b>：选中问题点后，鼠标悬停在其他合格候选点上时，会以该候选点为圆心显示 100 m 和 200 m 青绿色虚线指示圈，便于判断候选点与周围地物的实际距离。</li>
       <li>Space+单击移动：以当前点位为圆心、20 m 为半径显示可操作圆环；光标超出圆环会自动限制在圆环边界；移动后同样校验 1500 m 间距。</li>
       <li>每次修改都可撤销/重做；导出前可随时继续调整，原文件始终不变。</li>
       <li>存在“未导出”的修改时切换行政区或任务组，会弹出确认窗口；确认切换将丢弃未导出的内存修改。</li>
@@ -612,14 +613,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v2.6 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v2.7 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.6';
+const TOOL_VERSION = 'v2.7';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1567,10 +1568,11 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v2.6 —— 界面与交互
+ * 环耕站布点调整与检测工具 v2.7 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
@@ -1587,8 +1589,8 @@ const TILE_TTL_IMG = 30 * 24 * 3600 * 1000;
 const TILE_TTL_LABEL = 7 * 24 * 3600 * 1000;
 const LS_ANNOUNCEMENT = 'spacingEditTool.announcementSeen';
 const ANNOUNCEMENT_ITEMS = [
-  '旱地样点新增耕地等级显示：鼠标悬停、选中样点面板、目视检查右上角面板中，“地类：旱地”后会显示该点从 04 耕地质量等级栅格读取的等级。',
-  '选中旱地问题点时，所有合格可替换候选点的上方会标注该候选点的耕地等级，便于按等级优先选择。',
+  '新增候选点距离辅助圈：选中问题点后，鼠标悬停在其他合格候选点上时，会以该候选点为圆心显示 100 m 和 200 m 青绿色虚线指示圈，便于判断候选点与周围地物的实际距离。',
+  '旱地样点继续显示耕地等级：悬停、选中面板、目视检查面板及合格候选点上方均标注 04 栅格读取的等级。',
   '底图仍为按点加载：目视检查每个目标点加载默认视野一次，缩放后需点击“全图”手动加载；不预加载、不持久化存储瓦片。'
 ];
 
@@ -4595,6 +4597,7 @@ function draw() {
   if (els.lyrOther.checked) drawOtherPoints(ctx);
   if (els.lyrProv.checked) drawProvPoints(ctx);
   drawOwnPoints(ctx);
+  if (app.selected && app.hoverIsCandidate && app.hover) drawHoverCandidateRings(ctx);
   if (els.lyrPool.checked && app.selected && app.editMode) drawCandidates(ctx);
   drawSelection(ctx);
   if (app.visualMode || (app.pendingInspect && app.pendingInspect.active)) drawVisualOverlay(ctx);
@@ -4847,6 +4850,50 @@ function drawVisualOverlay(ctx) {
   ctx.fillStyle = '#0b5f96';
   ctx.fillText('100 m', s.x + r100 * 0.55, s.y - r100 * 0.8);
   ctx.fillStyle = 'rgba(174,86,10,0.95)';
+  ctx.fillText('200 m', s.x + r200 * 0.5, s.y - r200 * 0.78);
+  ctx.restore();
+}
+function drawHoverCandidateRings(ctx) {
+  if (!app.selected || !app.hoverIsCandidate || !app.hover || !app.candidateEval) return;
+  const res = app.candidateEval.results[app.hover.idx];
+  if (!res || !res.eligible) return;
+  const c = app.hover;
+  const s = screenPos(toWorld(c));
+  const r100 = Math.max(5, metersToWorld(100, c.y) * app.view.scale);
+  const r200 = Math.max(10, metersToWorld(200, c.y) * app.view.scale);
+  ctx.save();
+  /* 候选点 200 m 外圈：青绿色，与目视检查目标点的蓝/橙圈区分 */
+  ctx.beginPath();
+  ctx.arc(s.x, s.y, r200, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(25,145,105,0.02)';
+  ctx.fill();
+  ctx.setLineDash([9, 6]);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(25,135,95,0.65)';
+  ctx.stroke();
+  /* 候选点 100 m 内圈 */
+  ctx.beginPath();
+  ctx.arc(s.x, s.y, r100, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(25,145,105,0.045)';
+  ctx.fill();
+  ctx.setLineDash([7, 5]);
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(20,120,80,0.9)';
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(20,120,80,0.6)';
+  ctx.beginPath();
+  ctx.moveTo(s.x - 12, s.y); ctx.lineTo(s.x + 12, s.y);
+  ctx.moveTo(s.x, s.y - 12); ctx.lineTo(s.x, s.y + 12);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(s.x, s.y, 3.5, 0, Math.PI * 2);
+  ctx.fillStyle = '#167a52';
+  ctx.fill();
+  ctx.font = '600 12px "Microsoft YaHei", sans-serif';
+  ctx.fillStyle = 'rgba(15,105,70,0.95)';
+  ctx.fillText('100 m', s.x + r100 * 0.55, s.y - r100 * 0.8);
   ctx.fillText('200 m', s.x + r200 * 0.5, s.y - r200 * 0.78);
   ctx.restore();
 }
@@ -5936,9 +5983,11 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
 </script>
 </body>
 </html>
+
 
 
 
