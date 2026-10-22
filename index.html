@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.10</title>
+<title>环耕站布点调整&amp;检测工具 v2.11</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -197,7 +197,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.10</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.11</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -428,14 +428,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.10 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.11 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 帮助 -->
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.10 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v2.11 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -450,7 +450,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li>只有 02 图层可编辑；03/05 只读。</li>
       <li><b>符号样式</b>：左下角“符号样式”可分别切换省级、市级、县级、03 候选池、其他行政区点的形状（10 种）与颜色（RGB 色带或 RGB 代码）；05 区县格网可设置边框粗细/颜色、填充颜色与透明度，默认不显示格网。</li>
       <li><b>旱地耕地等级</b>：工具会读取 04 耕地质量等级栅格（支持 8 位/16 位 LZW GeoTIFF）；选择行政区后会在后台静默预读并缓存旱地 02 点和候选点等级。鼠标悬停旱地点、选中样点面板、目视检查面板都会显示“耕地等级”；选中旱地问题点时，合格候选点上方会标注其耕地等级，便于优先选择同值/相邻等级候选。</li>
-      <li>Shift+单击替换：候选点必须与问题点地类一致，且与当前所有样点（含相邻行政区）间距严格大于 1500 m；不合格候选点会变灰并禁止选择。</li>
+      <li>Shift+单击替换：候选点必须与问题点地类一致（旱地与水浇地视为同一“旱地类”，可互换，但显示仍保留各自名称），且与当前所有样点（含相邻行政区）间距严格大于 1500 m；不合格候选点会变灰并禁止选择。</li>
       <li><b>候选点格网优先</b>：选中问题点后，若同一 05 格网内存在合格候选，只显示同格网候选；同格网没有可替换候选时，才开放其他格网候选，并弹出横幅提示，跨格网替换可能影响格网组合。</li>
       <li><b>候选点距离辅助圈</b>：选中问题点后，鼠标悬停在其他合格候选点上时，会以该候选点为圆心显示 100 m 和 200 m 亮品红色虚线指示圈（带白色描边），便于判断候选点与周围地物的实际距离。</li>
       <li>Space+单击移动：以当前点位为圆心、20 m 为半径显示可操作圆环；光标超出圆环会自动限制在圆环边界；移动后同样校验 1500 m 间距。</li>
@@ -458,7 +458,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li>存在“未导出”的修改时切换行政区或任务组，会弹出确认窗口；确认切换将丢弃未导出的内存修改。</li>
       <li><b>问题检查</b>：点击顶部“问题检查”按钮，中央窗口会显示当前正在检查的行政区、点数、检查范围等信息，并强制至少显示 2 秒后给出检查结果。</li>
       <li><b>格网组合检查</b>：修改后关闭“编辑模式”时，工具会逐一检查当前行政区每个 05 格网是否保持“1 省级 + 1 市级 + 1 县级”组合；通过会提示，未通过可选择“继续编辑”或“强制保存”。</li>
-      <li><b>一键调整样点</b>：对当前行政区自动查找因间距过近而冲突的 02 样点，从 03 候选池中选择同地类、与所有点保持 1500 m 以上的候选点进行批量替换，尽量优先落在原格网内。</li>
+      <li><b>一键调整样点</b>：对当前行政区自动查找因间距过近而冲突的 02 样点，从 03 候选池中选择同地类（旱地/水浇地互通）、与所有点保持 1500 m 以上的候选点进行批量替换；有耕地等级时优先同等级、其次相邻 ±1 级，再尽量优先落在原 05 格网内。</li>
       <li><b>目视检查模式</b>：仅依次检查本区 02 市、县级样点（省级点不进入检查队列），地图同时显示 100 m 蓝色圆环和 200 m 橙色指示圈（均为高透明度），并显示右侧悬浮面板，人工勾选“林地重合、河流距离、侵蚀沟避让、田垄检查（仅水田）”；面板内可开启编辑模式，用 Shift+单击替换或 Space+单击移动当前问题点；目视检查中按住 Space 移动时保持当前视野，并在点位上显示黄色透明的 20 m 瞄准圈，不跳转到 20 m 放大视图；完成后自动做一次间距复核，通过后会询问是否导出成果。</li>
       <li><b>天地图底图</b>：仅使用 Web 墨卡托影像 img_w + 注记 cia_w，与当前地图视图和 WGS84 样点坐标一致；首次使用不预填密钥，需在“底图设置”中填写自己的天地图 tk 后才会启用。支持填写多个 Key 按顺序自动切换，并使用 IndexedDB 持久缓存瓦片（上限 450 MB）；经纬度投影 img_c 与 Web 墨卡托视图不直接兼容，工具不会自动切换。</li>
       <li><b>本地进度</b>：编辑、目视检查勾选会自动保存到浏览器本地（IndexedDB，失败时自动降级到 localStorage）。重新选择同一任务文件夹时，会提示是否恢复上次的编辑状态；每个行政区各保存一份进度。也可用“导出进度 / 导入进度”保存为 JSON 文件。</li>
@@ -657,14 +657,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v2.10 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v2.11 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.10';
+const TOOL_VERSION = 'v2.11';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1294,6 +1294,10 @@ function attachAuxFiles(structure, metas, siblingMap) {
 }
 
 /* ---------- 候选点筛选 ---------- */
+function isDrylandDlmc(name) {
+  const n = normalizeName(name);
+  return n === '旱地' || n === '水浇地';
+}
 function evaluateCandidates(candidates, selected, currentPoints, crs) {
   const skip = selected;
   const others = currentPoints.filter(function (p) {
@@ -1304,7 +1308,10 @@ function evaluateCandidates(candidates, selected, currentPoints, crs) {
   for (let i = 0; i < candidates.length; i++) {
     const c = candidates[i];
     const reasons = [];
-    if (normalizeName(c.dlmc) !== normalizeName(selected.dlmc)) reasons.push('地类不同（候选 ' + (c.dlmc || '—') + '）');
+    if (!(normalizeName(c.dlmc) === normalizeName(selected.dlmc) ||
+      (isDrylandDlmc(c.dlmc) && isDrylandDlmc(selected.dlmc)))) {
+      reasons.push('地类不同（候选 ' + (c.dlmc || '—') + '）');
+    }
     if (!reasons.length && Math.abs(c.x - selected.x) < 1e-9 && Math.abs(c.y - selected.y) < 1e-9) {
       reasons.push('与所选问题点位置重合，替换无意义');
     }
@@ -1616,10 +1623,11 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v2.10 —— 界面与交互
+ * 环耕站布点调整与检测工具 v2.11 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
@@ -1655,9 +1663,9 @@ const DEFAULT_POINT_STYLES = {
   other: { shape: 'circle', color: '#8a939e' }
 };
 const ANNOUNCEMENT_ITEMS = [
-  '修复旱地耕地等级读取：支持双城区等 16 位 TIFF 栅格；选择行政区后后台静默预读 04 栅格并缓存全部旱地 02 点和候选点等级，面板可快速显示。',
-  '图层符号样式：左侧“符号样式”可分别为省级、市级、县级、03 候选池和其他行政区点选择 10 种形状，并通过 RGB 色带或 RGB 代码调整颜色。',
-  '05 区县格网支持边框粗细、边框颜色、填充颜色（可无填充）和填充透明度；区县格网和网格线默认关闭显示。'
+  '旱地与水浇地视为同一“旱地类”替换大类：显示上仍分别显示旱地/水浇地，但手工替换和一键自动调整都可在两类之间互换，其他地类仍严格匹配。',
+  '一键自动调整距离过近样点时，新增耕地等级优先：优先同等级候选，其次相邻 ±1 级，再考虑其他等级/未知等级；同时保留同 05 格网优先。',
+  '继续支持 16 位/8 位 04 等级栅格后台预读；候选点悬停亮品红测距圈、符号样式和格网样式保持不变。'
 ];
 
 const app = {
@@ -3203,7 +3211,7 @@ function loadRasterInfo(region) {
   return promise;
 }
 async function samplePointGrade(point) {
-  if (!point || !point.dlmc || String(point.dlmc).indexOf('旱地') < 0) return null;
+  if (!point || !point.dlmc || !isDrylandDlmc(point.dlmc)) return null;
   if (app.crsMode !== 'geo') return null;
   const region = rasterRegionForPoint(point);
   if (!region) return null;
@@ -3227,8 +3235,8 @@ async function preloadRegionGrades(region) {
     const info = await loadRasterInfo(target);
     if (!info || app.region !== target) return;
     const points = [];
-    (app.ownPoints || []).forEach(function (p) { if (String(p.dlmc || '').indexOf('旱地') >= 0) points.push(p); });
-    (app.candidates || []).forEach(function (p) { if (String(p.dlmc || '').indexOf('旱地') >= 0) points.push(p); });
+    (app.ownPoints || []).forEach(function (p) { if (isDrylandDlmc(p.dlmc)) points.push(p); });
+    (app.candidates || []).forEach(function (p) { if (isDrylandDlmc(p.dlmc)) points.push(p); });
     let loaded = 0;
     points.forEach(function (p) {
       const key = target.key + '|' + Number(p.x).toFixed(7) + '|' + Number(p.y).toFixed(7);
@@ -3238,7 +3246,7 @@ async function preloadRegionGrades(region) {
       loaded++;
     });
     if (loaded && app.region === target) {
-      if (app.selected && String(app.selected.dlmc || '').indexOf('旱地') >= 0) {
+      if (app.selected && isDrylandDlmc(app.selected.dlmc)) {
         /* 让已打开的面板立即使用已缓存的等级 */
         updateSelectionPanel();
         if (app.visualMode) updateVisualPanel();
@@ -3250,7 +3258,7 @@ async function preloadRegionGrades(region) {
 
 function refreshCandidateGrades() {
   app.candidateGrades.clear();
-  if (!app.selected || String(app.selected.dlmc || '').indexOf('旱地') < 0) return;
+  if (!app.selected || !isDrylandDlmc(app.selected.dlmc)) return;
   const sel = app.selected;
   const token = ++app.gradeToken;
   const targets = (app.candidateDisplay || []).filter(function (item) { return item.eligible; });
@@ -3762,6 +3770,18 @@ async function runAutoAdjust() {
       const chosenKey = pointKeyOf(chosen);
       const evalRes = evaluateCandidates(app.candidates, chosen, app.current, app.crs);
       const chosenGrid = findGridIndexForPoint(chosen);
+      const chosenIsGradeClass = isDrylandDlmc(chosen.dlmc);
+      let chosenGrade = null;
+      const candGradeMap = new Map();
+      if (chosenIsGradeClass) {
+        chosenGrade = await samplePointGrade(chosen);
+        if (chosenGrade != null) {
+          for (let gi = 0; gi < evalRes.results.length; gi++) {
+            if (!evalRes.results[gi].eligible || usedCandidates.has(gi)) continue;
+            candGradeMap.set(gi, await samplePointGrade(app.candidates[gi]));
+          }
+        }
+      }
       let best = null;
       for (let i = 0; i < evalRes.results.length; i++) {
         if (!evalRes.results[i].eligible || usedCandidates.has(i)) continue;
@@ -3769,8 +3789,23 @@ async function runAutoAdjust() {
         const candGrid = findGridIndexForPoint(cand);
         const sameGrid = (chosenGrid < 0 || candGrid < 0) ? true : (chosenGrid === candGrid);
         const dist = distanceBetween(chosen, cand, app.crs);
-        const score = (sameGrid ? 0 : 1e12) + dist;
-        if (!best || score < best.score) best = { i: i, cand: cand, dist: dist, sameGrid: sameGrid, score: score };
+        let gradeRank = 0, gradeNote = '';
+        if (chosenGrade != null) {
+          const candGrade = candGradeMap.has(i) ? candGradeMap.get(i) : null;
+          if (candGrade == null) { gradeRank = 3; gradeNote = '等级未知'; }
+          else {
+            const diff = Math.abs(candGrade - chosenGrade);
+            if (diff === 0) { gradeRank = 0; gradeNote = '等级一致'; }
+            else if (diff === 1) { gradeRank = 1; gradeNote = '等级相邻'; }
+            else { gradeRank = 2; gradeNote = '等级不同'; }
+          }
+        }
+        const score = gradeRank * 1e15 + (sameGrid ? 0 : 1e12) + dist;
+        if (!best || score < best.score) best = {
+          i: i, cand: cand, dist: dist, sameGrid: sameGrid, score: score,
+          gradeRank: gradeRank, gradeNote: gradeNote, chosenGrade: chosenGrade,
+          candGrade: candGradeMap.has(i) ? candGradeMap.get(i) : null
+        };
       }
       if (!best) {
         attempted.add(chosenKey);
@@ -3789,8 +3824,8 @@ async function runAutoAdjust() {
         timeText: timestampText(new Date()), group: app.group.label, region: chosen.region, level: chosen.level,
         id: chosen.id, actionLabel: '自动替换', beforeCoord: coordText(chosen), afterCoord: coordText(best.cand),
         movedMeters: best.dist, candidateId: candidateId,
-        checkText: '地类一致；间距校验通过' + (best.sameGrid ? '' : '（跨格网）'),
-        note: '一键调整距离过近问题' + (best.sameGrid ? '' : '；候选点跨 05 格网')
+        checkText: '地类一致' + (best.gradeNote ? '；耕地' + best.gradeNote : '') + '；间距校验通过' + (best.sameGrid ? '' : '（跨格网）'),
+        note: '一键调整距离过近问题' + (best.gradeNote ? '；耕地' + best.gradeNote : '') + (best.sameGrid ? '' : '；候选点跨 05 格网')
       };
       const action = {
         key: key, regionKey: app.region.key, regionName: chosen.region, level: chosen.level, idx: chosen.idx,
@@ -3964,7 +3999,7 @@ function updateVisualPanel() {
   let done = 0;
   app.visualPoints.forEach(function (q) { if (isVisualPointComplete(q)) done++; });
   const levelLabel = LEVELS[p.level] ? LEVELS[p.level].label : p.level;
-  const isDry = String(p.dlmc || '').indexOf('旱地') >= 0;
+  const isDry = isDrylandDlmc(p.dlmc);
   els.visualProgress.textContent = idx + ' / ' + total;
   els.visualInfo.innerHTML =
     '<div><b>级别：</b>' + escapeHtml(levelLabel) + '</div>' +
@@ -4118,7 +4153,7 @@ function renderPendingPanel() {
   const f = visualFlags(p);
   const done = app.pendingInspect.points.filter(function (q) { return isVisualPointComplete(q); }).length;
   els.pendingProgress.textContent = (app.pendingInspect.index + 1) + ' / ' + total;
-  const pendingDry = String(p.dlmc || '').indexOf('旱地') >= 0;
+  const pendingDry = isDrylandDlmc(p.dlmc);
   els.pendingInfo.innerHTML =
     '<div><b>级别：</b>' + escapeHtml(LEVELS[p.level] ? LEVELS[p.level].label : p.level) + '</div>' +
     '<div><b>编号：</b>' + escapeHtml(p.id || '—') + '</div>' +
@@ -4681,7 +4716,7 @@ function updateSelectionPanel() {
   let html = '<div><span class="tag">' + LEVELS[s.level].label + '</span>' + escapeHtml(s.id) + '（' + escapeHtml(s.region) + '）</div>';
   html += '<div>当前坐标：' + coordText(s) + '</div>';
   html += '<div>地类：' + escapeHtml(s.dlmc || (s.level === 'prov' ? '—（01 图层无地类字段）' : '—')) + '</div>';
-  const selDry = String(s.dlmc || '').indexOf('旱地') >= 0;
+  const selDry = isDrylandDlmc(s.dlmc);
   if (selDry) html += '<div id="selectionGradeLine">耕地等级：读取中…</div>';
   if (Math.abs(s.x - s.baseX) > 1e-12 || Math.abs(s.y - s.baseY) > 1e-12) {
     html += '<div>原始坐标：' + coordText({ x: s.baseX, y: s.baseY }) + '</div>';
@@ -5861,7 +5896,7 @@ function updateHover(sx, sy) {
     lines.push('<b>03 候选池点</b>');
     lines.push('编号：' + escapeHtml(found.attrs.YDBH || ('#' + (found.idx + 1))));
     lines.push('地类：' + escapeHtml(found.attrs.DLMC || '—') + '　' + escapeHtml(found.attrs.ZLDWMC || ''));
-    hoverDry = String(found.attrs.DLMC || found.dlmc || '').indexOf('旱地') >= 0;
+    hoverDry = isDrylandDlmc(found.attrs.DLMC || found.dlmc);
     if (hoverDry) lines.push('<span id="hoverGradeLine">耕地等级：读取中…</span>');
     const r = app.candidateEval ? app.candidateEval.results[found.idx] : null;
     if (r) {
@@ -5873,7 +5908,7 @@ function updateHover(sx, sy) {
     lines.push('编号：' + escapeHtml(found.id || '—'));
     lines.push('行政区：' + escapeHtml(found.region));
     lines.push('地类：' + escapeHtml(found.dlmc || (found.level === 'prov' ? '—（01 图层无地类字段）' : '—')));
-    hoverDry = String(found.dlmc || '').indexOf('旱地') >= 0;
+    hoverDry = isDrylandDlmc(found.dlmc);
     if (hoverDry) lines.push('<span id="hoverGradeLine">耕地等级：读取中…</span>');
     lines.push('坐标：' + escapeHtml(coordText(found)));
     if (found.level === 'prov') lines.push('<span style="color:#ffd479">省级样点（01）：强制锁定，不可替换或移动</span>');
@@ -6310,9 +6345,11 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
 </script>
 </body>
 </html>
+
 
 
 
