@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.5</title>
+<title>环耕站布点调整&amp;检测工具 v2.6</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -197,7 +197,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.5</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.6</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -385,14 +385,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.5 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.6 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 帮助 -->
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.5 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v2.6 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -405,6 +405,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
     <ul>
       <li><b>01 省级样点强制锁定</b>：即使在编辑模式下，也不能替换、移动或选中省级点；单击省级点会提示“强制锁定”。</li>
       <li>只有 02 图层可编辑；03/05 只读。</li>
+      <li><b>旱地耕地等级</b>：工具会读取 04 耕地质量等级栅格；鼠标悬停旱地点、选中样点面板、目视检查面板都会显示“耕地等级”；选中旱地问题点时，合格候选点上方会标注其耕地等级，便于优先选择同值/相邻等级候选。</li>
       <li>Shift+单击替换：候选点必须与问题点地类一致，且与当前所有样点（含相邻行政区）间距严格大于 1500 m；不合格候选点会变灰并禁止选择。</li>
       <li><b>候选点格网优先</b>：选中问题点后，若同一 05 格网内存在合格候选，只显示同格网候选；同格网没有可替换候选时，才开放其他格网候选，并弹出横幅提示，跨格网替换可能影响格网组合。</li>
       <li>Space+单击移动：以当前点位为圆心、20 m 为半径显示可操作圆环；光标超出圆环会自动限制在圆环边界；移动后同样校验 1500 m 间距。</li>
@@ -611,14 +612,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v2.5 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v2.6 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.5';
+const TOOL_VERSION = 'v2.6';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1218,6 +1219,33 @@ function attachAuxFiles(structure, metas, siblingMap) {
       r.files.grids.push({ shp: m, prj: firstOf(rec['.prj']) });
     }
   }
+  /* 04 耕地质量等级栅格（TIF + 可选 TFW） */
+  for (const m of metas) {
+    if (!/\.tif$/i.test(m.path)) continue;
+    const parts = String(m.path).split('/').filter(Boolean);
+    let idx = -1;
+    for (let i = parts.length - 2; i >= 0; i--) {
+      if (/^0?\s*4/.test(parts[i]) && parts[i].indexOf('耕地质量') >= 0) { idx = i; break; }
+    }
+    if (idx < 0) continue;
+    const root = parts.slice(0, idx).join('/');
+    const g = groupByRoot.get(root);
+    if (!g) continue;
+    const fileName = parts[parts.length - 1];
+    const regionName = cleanRegionName(fileName.replace(/\.tif$/i, ''));
+    let r = findRegion(g, normalizeName(regionName));
+    if (!r) {
+      const n = normalizeName(regionName);
+      r = g.regions.find(function (x) { return x.key.indexOf(n) >= 0 || n.indexOf(x.key) >= 0; }) || null;
+    }
+    if (!r || !r.files.raster) {
+      if (r) {
+        const basePath = m.path.slice(0, -4);
+        const rec = (siblingMap && siblingMap.get(basePath.toLowerCase())) || Object.create(null);
+        r.files.raster = { tif: m, tfw: firstOf(rec['.tfw']) };
+      }
+    }
+  }
 }
 
 /* ---------- 候选点筛选 ---------- */
@@ -1538,10 +1566,11 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v2.5 —— 界面与交互
+ * 环耕站布点调整与检测工具 v2.6 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
@@ -1558,9 +1587,9 @@ const TILE_TTL_IMG = 30 * 24 * 3600 * 1000;
 const TILE_TTL_LABEL = 7 * 24 * 3600 * 1000;
 const LS_ANNOUNCEMENT = 'spacingEditTool.announcementSeen';
 const ANNOUNCEMENT_ITEMS = [
-  '目视检查底图改为按点加载：每切换到一个目标样点，只加载该点在默认缩放状态下当前视野内的影像一次；缩放、平移后不自动加载。',
-  '“全图”按钮可手动重新加载当前视野全部影像，并修正按钮文字超出范围的问题；间距调整阶段仍强制不加载任何瓦片。',
-  '多 Key 顺序切换保留；不自动预加载、不持久化存储瓦片，避免快速消耗额度。'
+  '旱地样点新增耕地等级显示：鼠标悬停、选中样点面板、目视检查右上角面板中，“地类：旱地”后会显示该点从 04 耕地质量等级栅格读取的等级。',
+  '选中旱地问题点时，所有合格可替换候选点的上方会标注该候选点的耕地等级，便于按等级优先选择。',
+  '底图仍为按点加载：目视检查每个目标点加载默认视野一次，缩放后需点击“全图”手动加载；不预加载、不持久化存储瓦片。'
 ];
 
 const app = {
@@ -1590,6 +1619,7 @@ const app = {
   tileDb: null, cacheBytes: 0, cacheReady: false, cacheEvicting: false,
   cacheHits: 0, cacheMisses: 0, tileFetchUnsupported: false,
   regionCountChecks: new Map(), countMismatchPending: null, countValidateAllPromise: null, countValidatePromises: new Map(),
+  rasterInfoCache: new Map(), gradeCache: new Map(), candidateGrades: new Map(), gradeToken: 0, hoverGradeToken: 0,
   pendingExport: null, loadToken: 0, refreshToken: 0,
   drag: null, moved: false,
   resultTab: 'check'
@@ -2805,6 +2835,259 @@ function readTextFile(fileObj) {
     return decodeBytes(new Uint8Array(buf), 'utf-8');
   });
 }
+/* ---------- 04 耕地质量等级栅格（最小 GeoTIFF 采样） ---------- */
+function tiffTagArray(view, offset, little) {
+  const type = view.getUint16(offset + 2, little);
+  const count = view.getUint32(offset + 4, little);
+  const sizes = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 12: 8 };
+  const typeSize = sizes[type] || 1;
+  let dataOffset = offset + 8;
+  if (typeSize * count > 4) dataOffset = view.getUint32(offset + 8, little);
+  if (type === 2) {
+    let s = '';
+    for (let i = 0; i < count; i++) {
+      const c = view.getUint8(dataOffset + i);
+      if (!c) break;
+      s += String.fromCharCode(c);
+    }
+    return s;
+  }
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    if (type === 1) out.push(view.getUint8(dataOffset + i));
+    else if (type === 3) out.push(view.getUint16(dataOffset + i * 2, little));
+    else if (type === 4) out.push(view.getUint32(dataOffset + i * 4, little));
+    else if (type === 5) out.push(view.getUint32(dataOffset + i * 8, little) / (view.getUint32(dataOffset + i * 8 + 4, little) || 1));
+    else if (type === 12) out.push(view.getFloat64(dataOffset + i * 8, little));
+    else out.push(0);
+  }
+  return out;
+}
+function parseTiffInfo(buf) {
+  const view = new DataView(buf);
+  const le = view.getUint16(0, true) === 0x4949;
+  const be = view.getUint16(0, true) === 0x4D4D;
+  if (!le && !be) throw new Error('不是经典 TIFF 文件');
+  const little = le;
+  if (view.getUint16(2, little) !== 42) throw new Error('TIFF 版本不支持');
+  const ifdOffset = view.getUint32(4, little);
+  const n = view.getUint16(ifdOffset, little);
+  const tags = {};
+  for (let i = 0; i < n; i++) {
+    const off = ifdOffset + 2 + i * 12;
+    const tag = view.getUint16(off, little);
+    tags[tag] = tiffTagArray(view, off, little);
+  }
+  const first = function (tag) { const v = tags[tag]; return Array.isArray(v) ? v[0] : v; };
+  const width = first(256), height = first(257);
+  const bits = tags[258] || [1];
+  const compression = first(259);
+  const photo = first(262);
+  const samples = first(277) || 1;
+  const predictor = first(317) || 1;
+  const tileW = first(322), tileH = first(323);
+  const tileOffsets = tags[324], tileCounts = tags[325];
+  const stripOffsets = tags[273], stripCounts = tags[279];
+  const rowsPerStrip = first(278) || height;
+  if (!width || !height) throw new Error('TIFF 尺寸缺失');
+  if (samples !== 1 || bits[0] !== 8) throw new Error('暂不支持多波段/非 8 位 TIFF');
+  if (compression !== 1 && compression !== 5) throw new Error('暂不支持的 TIFF 压缩方式：' + compression);
+  const info = {
+    buf: buf, view: view, little: little, width: width, height: height,
+    compression: compression, predictor: predictor, tiled: !!(tileW && tileH && tileOffsets && tileCounts),
+    tileW: tileW || 0, tileH: tileH || 0, tileOffsets: tileOffsets || [], tileCounts: tileCounts || [],
+    stripOffsets: stripOffsets || [], stripCounts: stripCounts || [], rowsPerStrip: rowsPerStrip,
+    tileCache: new Map(), nodata: null, geo: null
+  };
+  const nodata = tags[42113];
+  if (nodata != null) {
+    const text = Array.isArray(nodata) ? nodata.join('') : String(nodata);
+    const num = parseFloat(text.replace(/[^0-9+\-.]/g, ''));
+    if (isFinite(num)) info.nodata = num;
+  }
+  return info;
+}
+function tiffLzwDecode(bytes, expected) {
+  let bitPos = 0, codeSize = 9;
+  const dict = [];
+  for (let i = 0; i < 256; i++) dict[i] = [i];
+  dict[256] = null; dict[257] = null;
+  let prev = null;
+  const out = [];
+  function readCode() {
+    if (bitPos + codeSize > bytes.length * 8) return -1;
+    let code = 0;
+    for (let i = 0; i < codeSize; i++) {
+      const byte = bytes[(bitPos >> 3)];
+      const bit = (byte >> (7 - (bitPos & 7))) & 1;
+      code = (code << 1) | bit;
+      bitPos++;
+    }
+    return code;
+  }
+  let code = readCode();
+  while (code >= 0) {
+    if (code === 256) {
+      codeSize = 9;
+      dict.length = 258;
+      prev = null;
+      code = readCode();
+      continue;
+    }
+    if (code === 257) break;
+    let entry;
+    if (code < dict.length && dict[code]) entry = dict[code];
+    else if (code === dict.length && prev) entry = prev.concat([prev[0]]);
+    else break;
+    for (let i = 0; i < entry.length; i++) out.push(entry[i]);
+    if (prev && dict.length < 4096) {
+      dict.push(prev.concat([entry[0]]));
+      if (dict.length === (1 << codeSize) - 1 && codeSize < 12) codeSize++;
+    }
+    prev = entry;
+    code = readCode();
+  }
+  const result = new Uint8Array(expected || out.length);
+  for (let i = 0; i < result.length && i < out.length; i++) result[i] = out[i] & 255;
+  return result;
+}
+function decodeTiffBlock(info, offset, byteCount, width, height) {
+  let raw;
+  if (info.compression === 1) raw = new Uint8Array(info.buf, offset, byteCount);
+  else raw = tiffLzwDecode(new Uint8Array(info.buf, offset, byteCount), width * height);
+  if (info.predictor === 2) {
+    for (let y = 0; y < height; y++) {
+      const row = y * width;
+      for (let x = 1; x < width; x++) raw[row + x] = (raw[row + x] + raw[row + x - 1]) & 255;
+    }
+  }
+  return raw;
+}
+function tiffSample(info, lon, lat) {
+  if (!info || !info.geo) return null;
+  const g = info.geo;
+  const col = Math.floor((lon - g.originLon) / g.pixelX);
+  const row = Math.floor((g.originLat - lat) / g.pixelY);
+  if (col < 0 || row < 0 || col >= info.width || row >= info.height) return null;
+  let value = null;
+  if (info.tiled) {
+    const tilesX = Math.ceil(info.width / info.tileW);
+    const tx = Math.floor(col / info.tileW), ty = Math.floor(row / info.tileH);
+    const ti = ty * tilesX + tx;
+    if (ti >= info.tileOffsets.length) return null;
+    let block = info.tileCache.get(ti);
+    if (!block) {
+      block = decodeTiffBlock(info, info.tileOffsets[ti], info.tileCounts[ti], info.tileW, info.tileH);
+      info.tileCache.set(ti, block);
+    }
+    const px = col % info.tileW, py = row % info.tileH;
+    value = block[py * info.tileW + px];
+  } else {
+    const si = Math.floor(row / info.rowsPerStrip);
+    if (si >= info.stripOffsets.length) return null;
+    let block = info.tileCache.get('s' + si);
+    if (!block) {
+      const rows = Math.min(info.rowsPerStrip, info.height - si * info.rowsPerStrip);
+      block = decodeTiffBlock(info, info.stripOffsets[si], info.stripCounts[si], info.width, rows);
+      info.tileCache.set('s' + si, block);
+    }
+    value = block[(row - si * info.rowsPerStrip) * info.width + col];
+  }
+  if (!isFinite(value)) return null;
+  if (value < 1 || value > 10) return null;
+  return value;
+}
+function rasterRegionForPoint(point) {
+  if (!app.group) return null;
+  if (point.region) {
+    const r = app.group.regions.find(function (x) { return x.name === point.region; });
+    if (r) return r;
+  }
+  return app.region;
+}
+function loadRasterInfo(region) {
+  if (!region || !region.files || !region.files.raster || !region.files.raster.tif) return Promise.resolve(null);
+  const key = region.key + '|' + region.name;
+  if (app.rasterInfoCache.has(key)) return app.rasterInfoCache.get(key);
+  const promise = (async function () {
+    const entry = region.files.raster;
+    const buf = await readFileArrayBuffer(entry.tif.file);
+    const info = parseTiffInfo(buf);
+    let georef = null;
+    if (entry.tfw) {
+      try {
+        const text = await readTextFile(entry.tfw.file);
+        const lines = text.split(/\r?\n/).map(function (s) { return parseFloat(s.trim()); });
+        if (lines.length >= 6 && lines.every(function (v) { return isFinite(v); })) {
+          const A = lines[0], D = lines[1], B = lines[2], E = lines[3], C = lines[4], F = lines[5];
+          if (Math.abs(D) < 1e-12 && Math.abs(B) < 1e-12) {
+            georef = { pixelX: Math.abs(A), pixelY: Math.abs(E), originLon: C - A / 2, originLat: F - E / 2 };
+          }
+        }
+      } catch (e) { /* ignore */ }
+    }
+    if (!georef && info.view) {
+      const tags = {};
+      /* 重新解析 IFD 以获取地形标签（parseTiffInfo 已解析，但未暴露 tags） */
+      try {
+        const view = info.view;
+        const little = info.little;
+        const ifd = view.getUint32(4, little);
+        const n = view.getUint16(ifd, little);
+        for (let i = 0; i < n; i++) {
+          const off = ifd + 2 + i * 12;
+          const tag = view.getUint16(off, little);
+          tags[tag] = tiffTagArray(view, off, little);
+        }
+        const scale = tags[33550], tie = tags[33922];
+        if (scale && tie && scale[0] && scale[1]) {
+          georef = {
+            pixelX: Math.abs(scale[0]), pixelY: Math.abs(scale[1]),
+            originLon: tie[3] - tie[0] * scale[0], originLat: tie[4] + tie[1] * scale[1]
+          };
+        }
+      } catch (e) { /* ignore */ }
+    }
+    if (!georef) return null;
+    info.geo = georef;
+    return info;
+  })();
+  app.rasterInfoCache.set(key, promise);
+  return promise;
+}
+async function samplePointGrade(point) {
+  if (!point || !point.dlmc || String(point.dlmc).indexOf('旱地') < 0) return null;
+  if (app.crsMode !== 'geo') return null;
+  const region = rasterRegionForPoint(point);
+  if (!region) return null;
+  const cacheKey = region.key + '|' + Number(point.x).toFixed(7) + '|' + Number(point.y).toFixed(7);
+  if (app.gradeCache.has(cacheKey)) return app.gradeCache.get(cacheKey);
+  let value = null;
+  try {
+    const info = await loadRasterInfo(region);
+    if (info) value = tiffSample(info, point.x, point.y);
+  } catch (e) { value = null; }
+  app.gradeCache.set(cacheKey, value);
+  return value;
+}
+function gradeText(value) {
+  return value == null ? '无等级信息' : String(value) + ' 级';
+}
+function refreshCandidateGrades() {
+  app.candidateGrades.clear();
+  if (!app.selected || String(app.selected.dlmc || '').indexOf('旱地') < 0) return;
+  const sel = app.selected;
+  const token = ++app.gradeToken;
+  const targets = (app.candidateDisplay || []).filter(function (item) { return item.eligible; });
+  targets.forEach(function (item) {
+    samplePointGrade(item.cand).then(function (v) {
+      if (app.selected !== sel || token !== app.gradeToken) return;
+      app.candidateGrades.set(item.idx, v);
+      invalidate();
+    });
+  });
+}
+
 function loadLayerRaw(entry, level, regionName) {
   if (!entry || !entry.shp) return Promise.reject(new Error('缺少图层文件'));
   const key = entry.shp.path;
@@ -3506,13 +3789,22 @@ function updateVisualPanel() {
   let done = 0;
   app.visualPoints.forEach(function (q) { if (isVisualPointComplete(q)) done++; });
   const levelLabel = LEVELS[p.level] ? LEVELS[p.level].label : p.level;
+  const isDry = String(p.dlmc || '').indexOf('旱地') >= 0;
   els.visualProgress.textContent = idx + ' / ' + total;
   els.visualInfo.innerHTML =
     '<div><b>级别：</b>' + escapeHtml(levelLabel) + '</div>' +
     '<div><b>编号：</b>' + escapeHtml(p.id || '—') + '</div>' +
     '<div><b>行政区：</b>' + escapeHtml(p.region) + '</div>' +
     '<div><b>地类：</b>' + escapeHtml(p.dlmc || (p.level === 'prov' ? '—（01 无地类字段）' : '—')) + '</div>' +
+    (isDry ? '<div id="visualGradeLine">耕地等级：读取中…</div>' : '') +
     '<div><b>坐标：</b>' + escapeHtml(coordText(p)) + '</div>';
+  if (isDry) {
+    samplePointGrade(p).then(function (v) {
+      if (currentVisualPoint() !== p) return;
+      const el = document.getElementById('visualGradeLine');
+      if (el) el.textContent = '耕地等级：' + gradeText(v);
+    });
+  }
   els.visualCheckNote.innerHTML = '已完成 <b>' + done + ' / ' + total + '</b> 个样点的人工检查';
   els.chkForest.checked = !!f.forest;
   els.chkRiver.checked = !!f.river;
@@ -3651,12 +3943,21 @@ function renderPendingPanel() {
   const f = visualFlags(p);
   const done = app.pendingInspect.points.filter(function (q) { return isVisualPointComplete(q); }).length;
   els.pendingProgress.textContent = (app.pendingInspect.index + 1) + ' / ' + total;
+  const pendingDry = String(p.dlmc || '').indexOf('旱地') >= 0;
   els.pendingInfo.innerHTML =
     '<div><b>级别：</b>' + escapeHtml(LEVELS[p.level] ? LEVELS[p.level].label : p.level) + '</div>' +
     '<div><b>编号：</b>' + escapeHtml(p.id || '—') + '</div>' +
     '<div><b>行政区：</b>' + escapeHtml(p.region) + '</div>' +
     '<div><b>地类：</b>' + escapeHtml(p.dlmc || '—') + '</div>' +
+    (pendingDry ? '<div id="pendingGradeLine">耕地等级：读取中…</div>' : '') +
     '<div><b>坐标：</b>' + escapeHtml(coordText(p)) + '</div>';
+  if (pendingDry) {
+    samplePointGrade(p).then(function (v) {
+      if (currentPendingPoint() !== p) return;
+      const el = document.getElementById('pendingGradeLine');
+      if (el) el.textContent = '耕地等级：' + gradeText(v);
+    });
+  }
   els.pendingChkForest.checked = !!f.forest;
   els.pendingChkRiver.checked = !!f.river;
   els.pendingChkGully.checked = !!f.gully;
@@ -3870,6 +4171,8 @@ function clearSelection() {
   app.selected = null;
   app.candidateEval = null;
   app.candidateDisplay = [];
+  app.candidateGrades.clear();
+  app.gradeToken++;
   app.moveState = null;
   els.candidateStats.innerHTML = '';
   if (els.btnReplaceNearest) { els.btnReplaceNearest.disabled = true; els.btnReplaceNearest.textContent = '一键替换为最近合格候选'; }
@@ -3919,6 +4222,7 @@ async function evaluateCandidatesIfAny() {
       }
     }
     app.candidateDisplay = displayRows.slice(0, 160);
+    refreshCandidateGrades();
     const nearestEligible = app.candidateDisplay.find(function (x) { return x.eligible; });
     if (els.btnReplaceNearest) {
       els.btnReplaceNearest.disabled = !nearestEligible;
@@ -4202,6 +4506,8 @@ function updateSelectionPanel() {
   let html = '<div><span class="tag">' + LEVELS[s.level].label + '</span>' + escapeHtml(s.id) + '（' + escapeHtml(s.region) + '）</div>';
   html += '<div>当前坐标：' + coordText(s) + '</div>';
   html += '<div>地类：' + escapeHtml(s.dlmc || (s.level === 'prov' ? '—（01 图层无地类字段）' : '—')) + '</div>';
+  const selDry = String(s.dlmc || '').indexOf('旱地') >= 0;
+  if (selDry) html += '<div id="selectionGradeLine">耕地等级：读取中…</div>';
   if (Math.abs(s.x - s.baseX) > 1e-12 || Math.abs(s.y - s.baseY) > 1e-12) {
     html += '<div>原始坐标：' + coordText({ x: s.baseX, y: s.baseY }) + '</div>';
     html += '<div>距原始位置：' + distanceBetween(s, { x: s.baseX, y: s.baseY }, app.crs).toFixed(2) + ' m</div>';
@@ -4209,6 +4515,13 @@ function updateSelectionPanel() {
   if (patch) html += '<div style="color:#9a5b00">状态：' + (patch.type === 'replace' ? '已替换（候选 ' + escapeHtml(patch.candidateId || '') + '）' : '已移动') + '</div>';
   html += '<div class="edit-idle" style="margin-top:3px">Ctrl+单击可改选；Shift+单击 03 候选替换；Space+单击移动</div>';
   els.selectionPanel.innerHTML = html;
+  if (selDry) {
+    samplePointGrade(s).then(function (v) {
+      if (app.selected !== s) return;
+      const el = document.getElementById('selectionGradeLine');
+      if (el) el.textContent = '耕地等级：' + gradeText(v);
+    });
+  }
 }
 
 /* ============================================================
@@ -4422,6 +4735,15 @@ function drawCandidates(ctx) {
     ctx.fillStyle = eligible ? 'rgba(216,243,223,0.95)' : 'rgba(240,242,244,0.6)';
     ctx.lineWidth = eligible ? 1.8 : 1;
     ctx.fill(); ctx.stroke();
+    if (item.eligible && app.candidateGrades.has(item.idx)) {
+      ctx.save();
+      ctx.font = '600 11px "Microsoft YaHei", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = '#0b5f96';
+      ctx.fillText('等级 ' + gradeText(app.candidateGrades.get(item.idx)), s.x, s.y - 7);
+      ctx.restore();
+    }
     if (app.hover === c) {
       ctx.beginPath(); ctx.arc(s.x, s.y, 8, 0, Math.PI * 2);
       ctx.strokeStyle = '#1f2328'; ctx.lineWidth = 1.2; ctx.stroke();
@@ -5164,10 +5486,13 @@ function updateHover(sx, sy) {
   app.hoverIsCandidate = isCand;
   if (!found) { hideHover(); return; }
   const lines = [];
+  let hoverDry = false;
   if (isCand) {
     lines.push('<b>03 候选池点</b>');
     lines.push('编号：' + escapeHtml(found.attrs.YDBH || ('#' + (found.idx + 1))));
     lines.push('地类：' + escapeHtml(found.attrs.DLMC || '—') + '　' + escapeHtml(found.attrs.ZLDWMC || ''));
+    hoverDry = String(found.attrs.DLMC || found.dlmc || '').indexOf('旱地') >= 0;
+    if (hoverDry) lines.push('<span id="hoverGradeLine">耕地等级：读取中…</span>');
     const r = app.candidateEval ? app.candidateEval.results[found.idx] : null;
     if (r) {
       if (r.eligible) lines.push('<span style="color:#8be28b">合格候选</span>');
@@ -5178,11 +5503,22 @@ function updateHover(sx, sy) {
     lines.push('编号：' + escapeHtml(found.id || '—'));
     lines.push('行政区：' + escapeHtml(found.region));
     lines.push('地类：' + escapeHtml(found.dlmc || (found.level === 'prov' ? '—（01 图层无地类字段）' : '—')));
+    hoverDry = String(found.dlmc || '').indexOf('旱地') >= 0;
+    if (hoverDry) lines.push('<span id="hoverGradeLine">耕地等级：读取中…</span>');
     lines.push('坐标：' + escapeHtml(coordText(found)));
     if (found.level === 'prov') lines.push('<span style="color:#ffd479">省级样点（01）：强制锁定，不可替换或移动</span>');
     else if (found.region === app.region.name) lines.push('<span style="color:#ffd479">可编辑：Ctrl+单击选择</span>');
   }
   els.hoverTip.innerHTML = lines.join('<br>');
+  if (hoverDry) {
+    const token = ++app.hoverGradeToken;
+    const gradePoint = isCand ? { x: found.x, y: found.y, dlmc: found.attrs.DLMC || found.dlmc || '', region: found.region || app.region.name } : found;
+    samplePointGrade(gradePoint).then(function (v) {
+      if (token !== app.hoverGradeToken || app.hover !== found) return;
+      const el = document.getElementById('hoverGradeLine');
+      if (el) el.textContent = '耕地等级：' + gradeText(v);
+    });
+  }
   els.hoverTip.classList.remove('hidden');
   const size = mapSize();
   let left = sx + 16, top = sy + 14;
@@ -5599,9 +5935,11 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
 </script>
 </body>
 </html>
+
 
 
 
