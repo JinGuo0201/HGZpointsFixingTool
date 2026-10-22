@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.11</title>
+<title>环耕站布点调整&amp;检测工具 v2.12</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -197,7 +197,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.11</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.12</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -428,14 +428,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.11 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.12 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 帮助 -->
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.11 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v2.12 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -452,6 +452,8 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li><b>旱地耕地等级</b>：工具会读取 04 耕地质量等级栅格（支持 8 位/16 位 LZW GeoTIFF）；选择行政区后会在后台静默预读并缓存旱地 02 点和候选点等级。鼠标悬停旱地点、选中样点面板、目视检查面板都会显示“耕地等级”；选中旱地问题点时，合格候选点上方会标注其耕地等级，便于优先选择同值/相邻等级候选。</li>
       <li>Shift+单击替换：候选点必须与问题点地类一致（旱地与水浇地视为同一“旱地类”，可互换，但显示仍保留各自名称），且与当前所有样点（含相邻行政区）间距严格大于 1500 m；不合格候选点会变灰并禁止选择。</li>
       <li><b>候选点格网优先</b>：选中问题点后，若同一 05 格网内存在合格候选，只显示同格网候选；同格网没有可替换候选时，才开放其他格网候选，并弹出横幅提示，跨格网替换可能影响格网组合。</li>
+      <li><b>候选点耕地等级分级</b>：旱地类问题点优先只显示同等级候选；没有同等级才开放 ±1 级；仍没有才开放 ±2 级，并在替换弹窗中提醒跨多级替换。没有符合等级的候选时按存疑处理。</li>
+      <li><b>GDDJBZ 备注字段</b>：发生 ±2 级跨级替换的点，导出 02 DBF 时自动新增 GDDJBZ 字段，写入“跨多个耕地质量等级替换”；未发生跨级替换时字段结构保持不变。</li>
       <li><b>候选点距离辅助圈</b>：选中问题点后，鼠标悬停在其他合格候选点上时，会以该候选点为圆心显示 100 m 和 200 m 亮品红色虚线指示圈（带白色描边），便于判断候选点与周围地物的实际距离。</li>
       <li>Space+单击移动：以当前点位为圆心、20 m 为半径显示可操作圆环；光标超出圆环会自动限制在圆环边界；移动后同样校验 1500 m 间距。</li>
       <li>每次修改都可撤销/重做；导出前可随时继续调整，原文件始终不变。</li>
@@ -657,14 +659,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v2.11 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v2.12 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.11';
+const TOOL_VERSION = 'v2.12';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1438,6 +1440,42 @@ function applyPatchesToLayer(raw, patches) {
   };
 }
 
+/* ---------- 给导出的 DBF 追加一个备注字段 ---------- */
+function appendDbfField(dbfBuf, fieldName, length, values, encodingLabel, warnings) {
+  const ab = dbfBuf instanceof Uint8Array
+    ? dbfBuf.buffer.slice(dbfBuf.byteOffset, dbfBuf.byteOffset + dbfBuf.byteLength)
+    : dbfBuf;
+  const parsed = parseDbf(ab, encodingLabel || 'utf-8');
+  const old = new Uint8Array(dbfBuf);
+  const oldHeaderLen = parsed.headerLen, oldRecordLen = parsed.recordLen;
+  const newHeaderLen = oldHeaderLen + 32;
+  const newRecordLen = oldRecordLen + length;
+  const out = new Uint8Array(newHeaderLen + parsed.numRecords * newRecordLen);
+  out.set(old.subarray(0, oldHeaderLen - 1), 0);
+  const desc = new Uint8Array(32);
+  const name = String(fieldName || 'GDDJBZ').slice(0, 11);
+  for (let i = 0; i < name.length; i++) desc[i] = name.charCodeAt(i) & 255;
+  desc[11] = 0x43; /* C */
+  const dv = new DataView(desc.buffer);
+  dv.setUint32(12, oldRecordLen, true);
+  desc[16] = length;
+  out.set(desc, oldHeaderLen - 1);
+  out[oldHeaderLen - 1 + 32] = 0x0d;
+  const hdr = new DataView(out.buffer);
+  hdr.setUint16(8, newHeaderLen, true);
+  hdr.setUint16(10, newRecordLen, true);
+  const field = { name: name, type: 'C', length: length, offset: oldRecordLen };
+  for (let i = 0; i < parsed.numRecords; i++) {
+    const src = oldHeaderLen + i * oldRecordLen;
+    const dst = newHeaderLen + i * newRecordLen;
+    out.set(old.subarray(src, src + oldRecordLen), dst);
+    const value = values && values[i] != null ? values[i] : '';
+    const bytes = encodeDbfValue(field, value, encodingLabel || 'utf-8', warnings || []);
+    out.set(bytes, dst + oldRecordLen);
+  }
+  return out;
+}
+
 /* ---------- ZIP（store 方式，无第三方库） ---------- */
 let _crcTable = null;
 function crc32(u8) {
@@ -1624,10 +1662,11 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v2.11 —— 界面与交互
+ * 环耕站布点调整与检测工具 v2.12 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
@@ -1663,9 +1702,9 @@ const DEFAULT_POINT_STYLES = {
   other: { shape: 'circle', color: '#8a939e' }
 };
 const ANNOUNCEMENT_ITEMS = [
-  '旱地与水浇地视为同一“旱地类”替换大类：显示上仍分别显示旱地/水浇地，但手工替换和一键自动调整都可在两类之间互换，其他地类仍严格匹配。',
-  '一键自动调整距离过近样点时，新增耕地等级优先：优先同等级候选，其次相邻 ±1 级，再考虑其他等级/未知等级；同时保留同 05 格网优先。',
-  '继续支持 16 位/8 位 04 等级栅格后台预读；候选点悬停亮品红测距圈、符号样式和格网样式保持不变。'
+  '候选点按耕地等级分级过滤：有同等级候选时只显示同等级；没有则开放 ±1 级；仍没有才开放 ±2 级，并在替换弹窗中提醒“跨多级耕地质量替换”。',
+  '跨多级替换备注：发生 ±2 级替换的点，在导出的 02 DBF 中新增 GDDJBZ 字段，写入“跨多个耕地质量等级替换”供后续复核；未跨级替换时导出字段结构不变。',
+  '旱地与水浇地仍视为同一“旱地类”可互换；一键自动调整同样按同等级→±1→±2优先，并在修改记录中说明等级情况。'
 ];
 
 const app = {
@@ -1841,7 +1880,7 @@ function bindEvents() {
     if (!app.selected || !app.candidateDisplay) return;
     const nearest = app.candidateDisplay.find(function (x) { return x.eligible; });
     if (!nearest) { toast('当前没有合格候选点，请按存疑上报处理。', 'warn'); return; }
-    openReplaceModal(nearest.cand);
+    openReplaceModal(nearest.cand, nearest);
   });
   els.btnUndo.addEventListener('click', undo);
   els.btnRedo.addEventListener('click', redo);
@@ -3749,7 +3788,7 @@ async function runAutoAdjust() {
     els.btnAutoAdjust.disabled = false;
     return;
   }
-  let replaced = 0, crossGrid = 0, iterations = 0;
+  let replaced = 0, crossGrid = 0, gradeCrossCount = 0, iterations = 0;
   const usedCandidates = new Set();
   const attempted = new Set();
   let lastError = null;
@@ -3782,6 +3821,27 @@ async function runAutoAdjust() {
           }
         }
       }
+      let autoGradeTier = null;
+      if (chosenGrade != null) {
+        let hasKnown = false, hasWithinTwo = false;
+        candGradeMap.forEach(function (g) {
+          if (g == null) return;
+          hasKnown = true;
+          if (Math.abs(g - chosenGrade) <= 2) hasWithinTwo = true;
+        });
+        if (hasKnown) {
+          autoGradeTier = 3;
+          if (hasWithinTwo) {
+            let minDiff = 99;
+            candGradeMap.forEach(function (g) {
+              if (g == null) return;
+              const d = Math.abs(g - chosenGrade);
+              if (d <= 2 && d < minDiff) minDiff = d;
+            });
+            autoGradeTier = minDiff;
+          }
+        }
+      }
       let best = null;
       for (let i = 0; i < evalRes.results.length; i++) {
         if (!evalRes.results[i].eligible || usedCandidates.has(i)) continue;
@@ -3790,21 +3850,28 @@ async function runAutoAdjust() {
         const sameGrid = (chosenGrid < 0 || candGrid < 0) ? true : (chosenGrid === candGrid);
         const dist = distanceBetween(chosen, cand, app.crs);
         let gradeRank = 0, gradeNote = '';
-        if (chosenGrade != null) {
-          const candGrade = candGradeMap.has(i) ? candGradeMap.get(i) : null;
+        const candGrade = candGradeMap.has(i) ? candGradeMap.get(i) : null;
+        if (autoGradeTier != null) {
+          if (autoGradeTier === 3) continue;
+          if (candGrade == null || Math.abs(candGrade - chosenGrade) !== autoGradeTier) continue;
+          gradeRank = autoGradeTier;
+          gradeNote = autoGradeTier === 0 ? '等级一致' : (autoGradeTier === 1 ? '等级相邻' : '跨多级（±2）');
+        } else if (chosenGrade != null) {
           if (candGrade == null) { gradeRank = 3; gradeNote = '等级未知'; }
           else {
             const diff = Math.abs(candGrade - chosenGrade);
+            if (diff > 2) continue;
             if (diff === 0) { gradeRank = 0; gradeNote = '等级一致'; }
             else if (diff === 1) { gradeRank = 1; gradeNote = '等级相邻'; }
-            else { gradeRank = 2; gradeNote = '等级不同'; }
+            else { gradeRank = 2; gradeNote = '跨多级（±2）'; }
           }
         }
         const score = gradeRank * 1e15 + (sameGrid ? 0 : 1e12) + dist;
         if (!best || score < best.score) best = {
           i: i, cand: cand, dist: dist, sameGrid: sameGrid, score: score,
           gradeRank: gradeRank, gradeNote: gradeNote, chosenGrade: chosenGrade,
-          candGrade: candGradeMap.has(i) ? candGradeMap.get(i) : null
+          candGrade: candGrade,
+          gradeCross: !!(autoGradeTier != null && autoGradeTier >= 2)
         };
       }
       if (!best) {
@@ -3816,16 +3883,18 @@ async function runAutoAdjust() {
       const key = app.region.key + '|' + chosen.level + '|' + chosen.idx;
       const beforePatch = app.patches.get(key) || null;
       const candidateId = best.cand.attrs.YDBH || ('#' + (best.cand.idx + 1));
+      const autoGradeCross = !!best.gradeCross;
       const after = {
         idx: chosen.idx, type: 'replace', x: best.cand.x, y: best.cand.y, attrs: attrs,
-        candidateId: candidateId, note: '一键自动调整替换'
+        candidateId: candidateId, note: autoGradeCross ? '跨多个耕地质量等级替换' : '一键自动调整替换',
+        gradeCross: autoGradeCross
       };
       const log = {
         timeText: timestampText(new Date()), group: app.group.label, region: chosen.region, level: chosen.level,
         id: chosen.id, actionLabel: '自动替换', beforeCoord: coordText(chosen), afterCoord: coordText(best.cand),
         movedMeters: best.dist, candidateId: candidateId,
         checkText: '地类一致' + (best.gradeNote ? '；耕地' + best.gradeNote : '') + '；间距校验通过' + (best.sameGrid ? '' : '（跨格网）'),
-        note: '一键调整距离过近问题' + (best.gradeNote ? '；耕地' + best.gradeNote : '') + (best.sameGrid ? '' : '；候选点跨 05 格网')
+        note: '一键调整距离过近问题' + (best.gradeNote ? '；耕地' + best.gradeNote : '') + (autoGradeCross ? '；导出将注明 GDDJBZ' : '') + (best.sameGrid ? '' : '；候选点跨 05 格网')
       };
       const action = {
         key: key, regionKey: app.region.key, regionName: chosen.region, level: chosen.level, idx: chosen.idx,
@@ -3842,6 +3911,7 @@ async function runAutoAdjust() {
       app.candidateDisplay = [];
       replaced++;
       if (!best.sameGrid) crossGrid++;
+      if (autoGradeCross) gradeCrossCount++;
       usedCandidates.add(best.i);
       iterations++;
       updateUndoRedoButtons();
@@ -3859,6 +3929,7 @@ async function runAutoAdjust() {
     html += '<div><b>行政区：</b>' + escapeHtml(app.region.name) + '</div>';
     html += '<div><b>自动替换样点：</b>' + replaced + ' 个</div>';
     if (crossGrid) html += '<div class="warn">其中跨 05 格网替换：' + crossGrid + ' 个，退出编辑模式时会由格网组合检查提示。</div>';
+    if (gradeCrossCount) html += '<div class="warn">其中跨多级耕地质量替换：' + gradeCrossCount + ' 个，导出时会在对应点 GDDJBZ 字段标注“跨多个耕地质量等级替换”。</div>';
     html += '<div><b>调整后剩余间距违规：</b>' + remaining + ' 对</div>';
     if (remaining === 0) {
       html += '<div class="ok" style="margin-top:8px">距离过近问题已完成自动处理，请继续目视检查或导出成果。</div>';
@@ -4405,15 +4476,55 @@ async function evaluateCandidatesIfAny() {
     if (!app.selected || app.selected !== sel) { /* stale */ }
     app.candidateEval = evalRes;
     const selGrid = findGridIndexForPoint(sel);
-    const rows = evalRes.results.map(function (r, i) {
+    let rows = evalRes.results.map(function (r, i) {
       const cand = app.candidates[i];
       const candGrid = findGridIndexForPoint(cand);
       return {
         idx: i, eligible: r.eligible, reasons: r.reasons, cand: cand,
         dist: distanceBetween(cand, sel, app.crs),
-        sameGrid: selGrid >= 0 && candGrid === selGrid
+        sameGrid: selGrid >= 0 && candGrid === selGrid,
+        gradeValue: null, gradeDiff: null
       };
-    }).sort(function (a, b) {
+    });
+    app.candidateGradeTier = null;
+    let gradeNotice = '';
+    if (isDrylandDlmc(sel.dlmc)) {
+      const selGrade = await samplePointGrade(sel);
+      if (selGrade != null) {
+        const eligibleRows = rows.filter(function (x) { return x.eligible; });
+        for (const item of eligibleRows) {
+          item.gradeValue = await samplePointGrade(item.cand);
+        }
+        let minDiff = 99;
+        eligibleRows.forEach(function (item) {
+          if (item.gradeValue == null) return;
+          const diff = Math.abs(item.gradeValue - selGrade);
+          if (diff <= 2 && diff < minDiff) minDiff = diff;
+        });
+        const knownGrades = eligibleRows.filter(function (x) { return x.gradeValue != null; }).length;
+        if (minDiff <= 2) {
+          app.candidateGradeTier = minDiff;
+          rows = rows.filter(function (item) {
+            if (item.gradeValue == null) return false;
+            item.gradeDiff = Math.abs(item.gradeValue - selGrade);
+            return item.gradeDiff === minDiff;
+          });
+          rows.forEach(function (item) { item.selectedGrade = selGrade; });
+          if (minDiff === 0) gradeNotice = '同耕地等级候选 ' + rows.filter(function (x) { return x.eligible; }).length + ' 个，仅显示同等级候选。';
+          else if (minDiff === 1) gradeNotice = '没有同等级候选，已开放相邻 ±1 级候选。';
+          else if (minDiff === 2) {
+            gradeNotice = '没有同等级或 ±1 级候选，已开放 ±2 级候选；替换时会弹出跨级提醒，导出时写入 GDDJBZ。';
+            showBanner('该点位没有同等级或 ±1 级的合格候选，已开放 ±2 级候选；替换时会弹出提醒，导出时标注 GDDJBZ。', 'warn');
+          }
+        } else if (knownGrades > 0) {
+          app.candidateGradeTier = 3;
+          rows = [];
+          gradeNotice = '没有同等级、±1 或 ±2 级的合格候选，按存疑处理；不开放更高等级差候选。';
+          showBanner('该点位没有同等级、±1 或 ±2 级的可替换候选点；不开放更高等级差替换，请按存疑处理。', 'warn');
+        }
+      }
+    }
+    rows.sort(function (a, b) {
       if (a.sameGrid !== b.sameGrid) return a.sameGrid ? -1 : 1;
       return a.dist - b.dist;
     });
@@ -4421,7 +4532,9 @@ async function evaluateCandidatesIfAny() {
     const sameGridEligible = sameGridRows.filter(function (x) { return x.eligible; });
     let displayRows = rows;
     let gridNotice = '';
-    if (selGrid >= 0) {
+    if (!rows.length) {
+      displayRows = [];
+    } else if (selGrid >= 0) {
       if (sameGridEligible.length) {
         displayRows = sameGridRows;
         gridNotice = '同格网内合格候选 ' + sameGridEligible.length + ' 个，仅显示该 05 格网内的候选点。';
@@ -4443,6 +4556,7 @@ async function evaluateCandidatesIfAny() {
     const eligible = evalRes.results.filter(function (r) { return r.eligible; }).length;
     els.candidateStats.innerHTML = '03 候选池：共 ' + app.candidates.length + ' 个；' +
       '<span class="ok">合格 ' + eligible + '</span> / <span class="bad">不合格 ' + (app.candidates.length - eligible) + '</span>' +
+      (gradeNotice ? '<br><span class="' + (app.candidateGradeTier === 0 ? 'ok' : 'bad') + '">' + escapeHtml(gradeNotice) + '</span>' : '') +
       (gridNotice ? '<br><span class="' + (sameGridEligible.length ? 'ok' : 'bad') + '">' + escapeHtml(gridNotice) + '</span>' : '') +
       '<br><span class="edit-idle">地图显示 ' + app.candidateDisplay.length + ' 个候选；Shift+单击合格候选点执行替换。</span>';
     invalidate();
@@ -4460,18 +4574,24 @@ function handleShiftClick(sx, sy) {
     toast('该候选点不可替换：' + reasons, 'err');
     return;
   }
-  openReplaceModal(cand);
+  const item = (app.candidateDisplay || []).find(function (x) { return x.cand === cand || x.idx === cand.idx; }) || null;
+  openReplaceModal(cand, item);
 }
-function openReplaceModal(cand) {
+function openReplaceModal(cand, gradeInfo) {
   const sel = app.selected;
   if (!sel) return;
   const raw = app.regionData.levels[sel.level];
   const orig = raw.dbf ? raw.dbf.records[sel.idx] : {};
   const targetFields = raw.dbf ? raw.dbf.fields.map(function (f) { return f.name; }) : [];
-  app.pendingReplace = { cand: cand, targetFields: targetFields };
+  const gradeCross = !!(gradeInfo && gradeInfo.gradeDiff >= 2);
+  app.pendingReplace = { cand: cand, targetFields: targetFields, gradeCross: gradeCross, gradeInfo: gradeInfo || null };
   const d = distanceBetween(cand, sel, app.crs);
   const xzdmNeeded = targetFields.indexOf('XZDM') >= 0;
   let html = '';
+  if (gradeCross) {
+    html += '<div class="warn" style="margin-bottom:7px;padding:7px 9px;border:1px solid #d98a00;background:#fff8e8;border-radius:4px"><b>跨多级耕地质量替换提醒：</b>该点位没有同等级或相邻 ±1 级的可替换候选点，本次将使用相差 ' +
+      Math.abs((gradeInfo && gradeInfo.gradeValue) - (gradeInfo && gradeInfo.selectedGrade)) + ' 级的候选点。导出时会在该点写入 GDDJBZ 备注“跨多个耕地质量等级替换”，请复核。</div>';
+  }
   html += '<div><b>问题点：</b>' + LEVELS[sel.level].label + ' ' + escapeHtml(sel.id) + '（' + escapeHtml(sel.region) + '）</div>';
   html += '<div><b>当前位置：</b>' + coordText(sel) + '</div>';
   html += '<div><b>候选点：</b>03 池点 ' + escapeHtml(cand.attrs.YDBH || ('#' + (cand.idx + 1))) + '，' +
@@ -4526,16 +4646,20 @@ function applyReplace(candidate, xzdmValue) {
   const attrs = buildReplaceAttrs(sel, candidate, xzdmValue);
   const key = app.region.key + '|' + sel.level + '|' + sel.idx;
   const before = app.patches.get(key) || null;
+  const pend = app.pendingReplace;
+  const gradeCross = !!(pend && pend.gradeCross);
   const after = {
     idx: sel.idx, type: 'replace', x: candidate.x, y: candidate.y, attrs: attrs,
     candidateId: candidate.attrs.YDBH || ('#' + (candidate.idx + 1)),
-    note: '替换为 03 池点'
+    note: gradeCross ? '跨多个耕地质量等级替换' : '替换为 03 池点',
+    gradeCross: gradeCross
   };
   const log = {
     timeText: timestampText(new Date()), group: app.group.label, region: sel.region, level: sel.level,
     id: sel.id, actionLabel: '替换', beforeCoord: coordText(sel), afterCoord: coordText(candidate),
     movedMeters: distanceBetween(sel, candidate, app.crs), candidateId: after.candidateId,
-    checkText: '地类一致；间距校验通过', note: '替换为 03 候选池点'
+    checkText: '地类一致；间距校验通过' + (gradeCross ? '；跨多个耕地质量等级替换' : ''),
+    note: gradeCross ? '跨多个耕地质量等级替换（已开放 ±2 候选）' : '替换为 03 候选池点'
   };
   pushAction({ key: key, regionKey: app.region.key, regionName: sel.region, level: sel.level, idx: sel.idx, before: before, after: after, log: log });
   app.selected = Object.assign({}, sel, {
@@ -6068,6 +6192,13 @@ async function collectExportPackage() {
     const raw = await loadLayerRaw(region.files[g.level], g.level, region.name);
     const patches = g.patches.map(function (x) { return x.patch; });
     const out = applyPatchesToLayer(raw, patches);
+    const gradeCrossPatches = patches.filter(function (p) { return p && p.gradeCross; });
+    if (gradeCrossPatches.length && out.dbfBuf) {
+      const remarkValues = new Array(out.attrs.length).fill('');
+      gradeCrossPatches.forEach(function (p) { if (p.idx >= 0 && p.idx < remarkValues.length) remarkValues[p.idx] = '跨多个耕地质量等级替换'; });
+      out.dbfBuf = appendDbfField(out.dbfBuf, 'GDDJBZ', 60, remarkValues, raw.encoding, out.warnings);
+      checks.push('跨级替换备注：' + gradeCrossPatches.length + ' 个点已在 GDDJBZ 字段标注“跨多个耕地质量等级替换”');
+    }
     /* 读回校验 */
     const checkShp = parsePointsShp(out.shpBuf.buffer);
     const checkDbf = out.dbfBuf ? parseDbf(out.dbfBuf.buffer, raw.encoding) : null;
@@ -6346,9 +6477,11 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
 </script>
 </body>
 </html>
+
 
 
 
