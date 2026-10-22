@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.16</title>
+<title>环耕站布点调整&amp;检测工具 v2.17</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -155,7 +155,8 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 .table-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#7a8491;font-size:12.5px;padding:16px;text-align:center;line-height:1.7;background:#fff;white-space:pre-line}
 .statusbar{height:24px;background:#f4f6f8;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:11px;color:#5b6673;gap:12px}
 .statusbar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.banner{margin:8px 8px 0;padding:8px 12px;border-radius:4px;font-size:12.5px;line-height:1.5;border:1px solid;display:flex;gap:8px;align-items:flex-start}
+.banner{margin:0 8px;padding:0 12px;border-radius:4px;font-size:12.5px;line-height:1.5;border:1px solid;display:flex;gap:8px;align-items:flex-start;max-height:0;opacity:0;transform:translateY(-16px);overflow:hidden;border-width:0;transition:max-height .3s ease,padding .3s ease,margin .3s ease,opacity .24s ease,transform .3s ease,border-width .3s ease}
+.banner.open{max-height:160px;padding:8px 12px;margin:8px 8px 0;opacity:1;transform:translateY(0);border-width:1px}
 .banner.err{background:#fdf0f0;border-color:#f0c4c4;color:#9d1c1c}
 .banner.warn{background:#fff8e8;border-color:#f0ddb4;color:#8a5600}
 .banner.info{background:#eef6fd;border-color:#c5dff2;color:#1c5f8f}
@@ -210,7 +211,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.16</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.17</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -227,7 +228,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
     <button id="btnHelp" class="btn btn-ghost">帮助</button>
   </div>
 </div>
-<div id="banner" class="banner hidden"></div>
+<div id="banner" class="banner"></div>
 
 <div class="main">
   <aside class="sidebar">
@@ -455,14 +456,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.16 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.17 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 帮助 -->
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.16 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v2.17 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -491,6 +492,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li><b>一键调整样点</b>：对当前行政区自动查找因间距过近而冲突的 02 样点，从 03 候选池中选择同地类（旱地/水浇地互通）、与所有点保持 1500 m 以上的候选点进行批量替换；有耕地等级时优先同等级、其次相邻 ±1 级，再尽量优先落在原 05 格网内。</li>
       <li><b>目视检查模式</b>：仅依次检查本区 02 市、县级样点（省级点不进入检查队列），地图同时显示 100 m 蓝色圆环和 200 m 橙色指示圈（均为高透明度），并显示右侧悬浮面板，人工勾选“林地重合、河流距离、侵蚀沟避让、田垄检查（仅水田）”；面板内可开启编辑模式，用 Shift+单击替换或 Space+单击移动当前问题点；目视检查中按住 Space 移动时保持当前视野，并在点位上显示黄色透明的 20 m 瞄准圈，不跳转到 20 m 放大视图；完成后自动做一次间距复核，通过后会询问是否导出成果。</li>
       <li><b>任务进度统计</b>：底部结果面板上方有两条进度条：绿色为本行政区目视检查进度，蓝色为当前任务组全部行政区总进度；条内显示“完成数 / 总数”。进入目视检查模式时底部面板默认收起，进度条固定在显示区最下方随勾选实时更新；可点击“收起面板 / 展开面板”切换，带过渡动画。</li>
+      <li><b>横幅提示</b>：所有横幅从顶部向下探出，停留约 5 秒后自动收回；切换目视检查点时，旧横幅若不适用于新点会立即收回，若仍适用则继续保留并重新计算 5 秒停留时间。</li>
       <li><b>天地图底图</b>：仅使用 Web 墨卡托影像 img_w；间距调整阶段不加载，进入目视检查后每个目标点按默认视野加载一次；不预加载、不持久化存储瓦片；可填写多个 Key 顺序自动切换。</li>
       <li><b>本地进度</b>：编辑、目视检查勾选会自动保存到浏览器本地（IndexedDB，失败时自动降级到 localStorage）。重新选择同一任务文件夹时，会提示是否恢复上次的编辑状态；每个行政区各保存一份进度。也可用“导出进度 / 导入进度”保存为 JSON 文件。</li>
       <li><b>导出前目视检查校验</b>：点击“导出成果”时，若本区仍有 02 市、县级点存在未勾选的目视检查项，会阻止导出并弹出提示；可打开独立的“待补充目视检查”悬浮面板，逐点补充完成后合并回本次修改点集继续导出。</li>
@@ -688,14 +690,14 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v2.16 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v2.17 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.16';
+const TOOL_VERSION = 'v2.17';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1696,10 +1698,11 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v2.16 —— 界面与交互
+ * 环耕站布点调整与检测工具 v2.17 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
@@ -1735,9 +1738,9 @@ const DEFAULT_POINT_STYLES = {
   other: { shape: 'circle', color: '#8a939e' }
 };
 const ANNOUNCEMENT_ITEMS = [
-  '修复收起/展开底部面板后地图画布未同步缩放的问题：现在画布尺寸会随地图区域实时更新，底图和样点可正常显示到新区域。',
-  '任务进度区保留常显“收起面板 / 展开面板”按钮；进入目视检查默认收起，进度条仍在最下方实时更新。',
-  '省级点间距离特例、候选等级放宽、GDDJBZ 跨级备注等功能继续保留。'
+  '所有横幅改为从顶部向下探出、自动收回的动画：弹出后停留约 5 秒自动收起，不再一直遮挡地图。',
+  '切换目视检查点时，不适用的旧横幅会强制收回；若下一个点仍适用同一横幅，则保留并重新延长 5 秒。',
+  '底部面板常显开关、省级点间距离特例、候选等级放宽、GDDJBZ 跨级备注等功能继续保留。'
 ];
 
 const app = {
@@ -1771,6 +1774,7 @@ const app = {
   candidateGradeExtra: 0, candidateBaseTier: null, candidateMaxDiff: null,
   regionVisualTotals: new Map(), visualCompletedByRegion: new Map(), visualTotalsLoading: false,
   bottomCollapsed: false, bottomPrevCollapsed: false,
+  bannerTimer: null, bannerHideTimer: null, bannerMsg: '', bannerToken: 0, bannerContext: null,
   pointStyles: {
     prov: { shape: 'diamond', color: '#1a6fdb' },
     city: { shape: 'triangle', color: '#d9720b' },
@@ -4208,6 +4212,8 @@ function currentInspectionPoint() {
 function visualStep(delta) {
   if (!app.visualMode || !app.visualPoints.length) return;
   app.viewTilesSnapshot = null;
+  let bannerToken = null;
+  if (!app.editMode) bannerToken = beginBannerContext();
   const n = app.visualPoints.length;
   app.visualIndex = (app.visualIndex + delta + n) % n;
   updateVisualPanel();
@@ -4215,6 +4221,8 @@ function visualStep(delta) {
   if (app.editMode) {
     const p = currentVisualPoint();
     if (p) selectPoint(p);
+  } else if (bannerToken != null) {
+    setTimeout(function () { endBannerContext(bannerToken); }, 0);
   }
   invalidate();
 }
@@ -4435,10 +4443,12 @@ function renderPendingPanel() {
 }
 function pendingStep(delta) {
   if (!app.pendingInspect || !app.pendingInspect.points.length) return;
+  const bannerToken = beginBannerContext();
   const n = app.pendingInspect.points.length;
   app.pendingInspect.index = (app.pendingInspect.index + delta + n) % n;
   renderPendingPanel();
   centerPendingPoint();
+  setTimeout(function () { endBannerContext(bannerToken); }, 0);
   invalidate();
 }
 function onPendingCheckChange() {
@@ -4629,7 +4639,8 @@ function selectPoint(point) {
   app.candidateMaxDiff = null;
   hideModeHint();
   updateSelectionPanel();
-  evaluateCandidatesIfAny();
+  const bannerToken = beginBannerContext();
+  Promise.resolve(evaluateCandidatesIfAny()).finally(function () { endBannerContext(bannerToken); });
   invalidate();
 }
 function clearSelection() {
@@ -6646,10 +6657,49 @@ function setHealth(rows) {
   }).join('');
 }
 function showBanner(msg, type) {
-  els.banner.className = 'banner ' + (type || 'info');
-  els.banner.textContent = msg;
+  if (!els || !els.banner) return;
+  if (app.bannerContext) app.bannerContext.kept = true;
+  clearTimeout(app.bannerTimer);
+  clearTimeout(app.bannerHideTimer);
+  const sameOpen = app.bannerMsg === msg && els.banner.classList.contains('open');
+  app.bannerMsg = msg || '';
+  if (sameOpen) {
+    els.banner.className = 'banner ' + (type || 'info') + ' open';
+    els.banner.textContent = msg;
+  } else {
+    els.banner.className = 'banner ' + (type || 'info');
+    els.banner.textContent = msg;
+    /* 先回到收起态，再在下一帧展开，确保从顶部探出动画可见 */
+    void els.banner.offsetHeight;
+    requestAnimationFrame(function () { if (els && els.banner) els.banner.classList.add('open'); });
+  }
+  app.bannerTimer = setTimeout(function () { hideBanner(); }, 5000);
 }
-function hideBanner() { els.banner.className = 'banner hidden'; els.banner.textContent = ''; }
+function hideBanner() {
+  if (!els || !els.banner) return;
+  clearTimeout(app.bannerTimer);
+  app.bannerTimer = null;
+  app.bannerMsg = '';
+  els.banner.classList.remove('open');
+  clearTimeout(app.bannerHideTimer);
+  app.bannerHideTimer = setTimeout(function () {
+    if (!els || !els.banner) return;
+    if (!els.banner.classList.contains('open')) {
+      els.banner.className = 'banner';
+      els.banner.textContent = '';
+    }
+  }, 330);
+}
+function beginBannerContext() {
+  app.bannerContext = { token: ++app.bannerToken, oldMsg: app.bannerMsg || '', kept: false };
+  return app.bannerContext.token;
+}
+function endBannerContext(token) {
+  const ctx = app.bannerContext;
+  if (!ctx || ctx.token !== token) return;
+  app.bannerContext = null;
+  if (!ctx.kept && app.bannerMsg === ctx.oldMsg) hideBanner();
+}
 function setStatus(msg) { if (els) els.statusLeft.textContent = msg; }
 function showLoading(on, text) {
   if (!els) return;
@@ -6701,9 +6751,11 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
 </script>
 </body>
 </html>
+
 
 
 
