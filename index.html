@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v3.6</title>
+<title>环耕站布点调整&amp;检测工具 v3.7</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -98,7 +98,7 @@ button{font-family:inherit}
 .mini-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
 .chk{display:flex;align-items:center;gap:7px;padding:3px 0;cursor:pointer;font-size:12px;user-select:none}
 .chk input{margin:0}
-.sym{display:inline-block;flex:0 0 auto;vertical-align:middle}
+.sym{display:inline-block;flex:0 0 auto;vertical-align:middle}.dyn-sym{width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 16px}.dyn-sym svg{display:block;width:16px;height:16px}
 .sym-prov{width:8px;height:8px;background:var(--prov);transform:rotate(45deg);margin:0 2px}
 .sym-city{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid var(--city)}
 .sym-county{width:8px;height:8px;background:var(--county)}
@@ -244,7 +244,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v3.6</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v3.7</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -325,12 +325,12 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
     <div class="section">
       <div class="panel-title">图层</div>
-      <label class="chk"><input type="checkbox" id="lyrProv" checked><span class="sym sym-prov"></span>省级样点（01，强制锁定）</label>
-      <label class="chk"><input type="checkbox" id="lyrCity" checked><span class="sym sym-city"></span>市级样点（02，可编辑）</label>
-      <label class="chk"><input type="checkbox" id="lyrCounty" checked><span class="sym sym-county"></span>县级样点（02，可编辑）</label>
-      <label class="chk"><input type="checkbox" id="lyrPool" checked><span class="sym sym-pool-ok"></span>03 样点池（候选）</label>
+      <label class="chk"><input type="checkbox" id="lyrProv" checked><span class="sym dyn-sym" data-legend-level="prov"></span>省级样点（01，强制锁定）</label>
+      <label class="chk"><input type="checkbox" id="lyrCity" checked><span class="sym dyn-sym" data-legend-level="city"></span>市级样点（02，可编辑）</label>
+      <label class="chk"><input type="checkbox" id="lyrCounty" checked><span class="sym dyn-sym" data-legend-level="county"></span>县级样点（02，可编辑）</label>
+      <label class="chk"><input type="checkbox" id="lyrPool" checked><span class="sym dyn-sym" data-legend-level="pool"></span>03 样点池（候选）</label>
       <label class="chk"><input type="checkbox" id="lyrGrid"><span class="sym sym-grid"></span>05 区县格网</label>
-      <label class="chk"><input type="checkbox" id="lyrOther" checked><span class="sym sym-other"></span>同文件夹其他行政区点</label>
+      <label class="chk"><input type="checkbox" id="lyrOther" checked><span class="sym dyn-sym" data-legend-level="other"></span>同文件夹其他行政区点</label>
       <label class="chk"><input type="checkbox" id="lyrCircle"><span class="sym sym-circle"></span>1.5 km 参考圈</label>
       <label class="chk"><input type="checkbox" id="lyrBase" disabled><span class="sym sym-base"></span>天地图影像（仅目视检查）</label>
       <label class="chk" style="display:none"><input type="checkbox" id="lyrLabel">天地图注记</label>
@@ -351,15 +351,16 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
         </select>
       </div>
       <div id="shapePicker" style="display:flex;flex-wrap:wrap;gap:4px;margin:3px 0 6px"></div>
-      <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
         <span class="tiny">颜色</span>
-        <input id="pointHue" type="range" min="0" max="360" step="1" value="140" style="flex:1;height:16px;border-radius:8px;background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)">
-        <span id="pointColorSwatch" style="width:20px;height:20px;border:1px solid #8b95a1;border-radius:3px;background:#39ff14"></span>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
-        <span class="tiny">RGB</span>
-        <input id="pointRgbInput" type="text" placeholder="rgb(30,125,80)" spellcheck="false" style="flex:1;min-width:0">
+        <input id="pointColor" type="color" value="#39ff14" style="width:38px;height:24px;padding:0">
+        <span id="pointColorHex" class="tiny" style="flex:1;min-width:0"></span>
         <button id="btnPointStyleReset" class="btn mini" title="恢复当前图层默认样式">默认</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px">
+        <span class="tiny">点大小</span>
+        <input id="pointSize" type="range" min="50" max="200" step="5" value="100" style="flex:1">
+        <span id="pointSizeVal" class="tiny" style="width:34px;text-align:right">100%</span>
       </div>
       <div class="tiny" style="margin-top:5px;border-top:1px dashed #d5dbe2;padding-top:6px">区县格网样式</div>
       <div style="display:flex;align-items:center;gap:5px;margin:4px 0">
@@ -405,8 +406,8 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
         </div>
       </div>
       <div class="map-legend">
-        <div class="row"><span class="sym sym-prov"></span>省级点（锁定）　<span class="sym sym-city"></span>市级点　<span class="sym sym-county"></span>县级点</div>
-        <div class="row"><span class="sym sym-pool-ok"></span>合格候选　<span class="sym sym-pool-bad"></span>不合格候选　<span class="sym sym-other"></span>其它行政区点</div>
+        <div class="row"><span class="sym dyn-sym" data-legend-level="prov"></span>省级点（锁定）　<span class="sym dyn-sym" data-legend-level="city"></span>市级点　<span class="sym dyn-sym" data-legend-level="county"></span>县级点</div>
+        <div class="row"><span class="sym dyn-sym" data-legend-level="pool"></span>合格候选　<span class="sym dyn-sym" data-legend-level="pool" data-legend-variant="bad"></span>不合格候选　<span class="sym dyn-sym" data-legend-level="other"></span>其它行政区点</div>
         <div class="row"><span class="line"></span>区内间距不足　<span class="line cross"></span>跨区间距不足</div>
       </div>
       <div class="scalebar"><div class="scalebar-bar" id="scalebarBar"></div><div id="scalebarText">—</div></div>
@@ -517,7 +518,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v3.6 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v3.7 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 二轮复核问题清单匹配 -->
@@ -559,7 +560,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v3.6 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v3.7 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -573,9 +574,9 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
     <ul>
       <li><b>01 省级样点强制锁定</b>：即使在编辑模式下，也不能替换、移动或选中省级点；单击省级点会提示“强制锁定”。</li>
       <li>只有 02 图层可编辑；03/05 只读。</li>
-      <li><b>符号样式</b>：左下角“符号样式”可分别切换省级、市级、县级、03 候选池、其他行政区点的形状（10 种）与颜色（RGB 色带或 RGB 代码）；05 区县格网可设置边框粗细/颜色、填充颜色与透明度，默认不显示格网。</li>
+      <li><b>符号样式</b>：左下角“符号样式”可分别切换省级、市级、县级、03 候选池、其他行政区点的形状（10 种）与颜色（原生颜色选择器），并可统一点大小；左侧图层图例和地图右下角图例会同步形状/颜色；05 区县格网可设置边框粗细/颜色、填充颜色与透明度，默认不显示格网。</li>
       <li><b>旱地耕地等级</b>：工具会读取 04 耕地质量等级栅格（支持 8 位/16 位 LZW GeoTIFF）；选择行政区后会在后台静默预读并缓存旱地 02 点和候选点等级。鼠标悬停旱地点、选中样点面板、目视检查面板都会显示“耕地等级”；选中旱地问题点时，合格候选点上方会标注其耕地等级，便于优先选择同值/相邻等级候选。</li>
-      <li>Shift+单击替换：候选点必须与问题点地类一致（旱地与水浇地视为同一“旱地类”，可互换，但显示仍保留各自名称），且与当前所有样点（含相邻行政区）间距严格大于 1500 m；不合格候选点会变灰并禁止选择。</li>
+      <li>Shift+单击替换：候选点必须与问题点地类一致（旱地与水浇地视为同一“旱地类”，可互换，但显示仍保留各自名称），且与当前所有样点（含相邻行政区）间距严格大于 1500 m；不合格候选点仍为荧光绿色但尺寸较小、描边较深，并禁止选择。</li>
       <li><b>候选点格网优先</b>：选中问题点后，若同一 05 格网内存在合格候选，只显示同格网候选；同格网没有可替换候选时，才开放其他格网候选，并弹出横幅提示，跨格网替换可能影响格网组合。</li>
       <li><b>候选点耕地等级分级</b>：旱地类问题点优先只显示同等级候选；没有同等级才开放 ±1 级；仍没有才开放 ±2 级。若同等级候选都不合格，可点击“显示 ±1 级候选（增加可选点）”按钮逐级放宽候选；选择 ±2 级候选会弹窗提醒跨多级替换。</li>
       <li><b>GDDJBZ 备注字段</b>：发生 ±2 级跨级替换的点，导出 02 DBF 时自动新增 GDDJBZ 字段，写入“跨多个耕地质量等级替换”；未发生跨级替换时字段结构保持不变。</li>
@@ -814,14 +815,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v3.6 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v3.7 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v3.6';
+const TOOL_VERSION = 'v3.7';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1978,10 +1979,11 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v3.6 —— 界面与交互
+ * 环耕站布点调整与检测工具 v3.7 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
@@ -2017,9 +2019,9 @@ const DEFAULT_POINT_STYLES = {
   other: { shape: 'circle', color: '#8a939e' }
 };
 const ANNOUNCEMENT_ITEMS = [
-  '03 样点池中的所有候选点颜色改为荧光绿，方便在影像和地图上快速查找；合格候选为明亮实心绿色，不合格候选为半透明荧光绿。',
-  '候选点悬停 100 m/200 m 亮品红辅助圈和候选等级标注继续保留。',
-  '二轮复核快速切换区县、稳定队列、替换后样点编号列和双导出功能继续保留。'
+  '符号形状和颜色调整现在会同步到左侧图层图例和地图右下角图例，不再只更新画布。',
+  '“符号样式”新增点大小滑轨，可统一调整 50%～200% 的样点显示大小。',
+  '样点颜色选择改为与格网边框一致的原生颜色选择器，可直接取色并显示十六进制色值。'
 ];
 
 const app = {
@@ -2065,6 +2067,7 @@ const app = {
     other: { shape: 'circle', color: '#8a939e' }
   },
   gridStyle: { width: 1, border: '#5a6978', fill: '#5a6978', noFill: true, opacity: 4 },
+  symbolScale: 1,
   styleLayer: 'city',
   pendingExport: null, loadToken: 0, refreshToken: 0,
   drag: null, moved: false,
@@ -2130,8 +2133,9 @@ function init() {
     lyrProv: $('lyrProv'), lyrCity: $('lyrCity'), lyrCounty: $('lyrCounty'),
     lyrPool: $('lyrPool'), lyrGrid: $('lyrGrid'), lyrOther: $('lyrOther'),
     lyrCircle: $('lyrCircle'), lyrBase: $('lyrBase'), lyrLabel: $('lyrLabel'), lyrMesh: $('lyrMesh'),
-    pointStyleLayer: $('pointStyleLayer'), shapePicker: $('shapePicker'), pointHue: $('pointHue'),
-    pointColorSwatch: $('pointColorSwatch'), pointRgbInput: $('pointRgbInput'), btnPointStyleReset: $('btnPointStyleReset'),
+    pointStyleLayer: $('pointStyleLayer'), shapePicker: $('shapePicker'),
+    pointColor: $('pointColor'), pointColorHex: $('pointColorHex'),
+    pointSize: $('pointSize'), pointSizeVal: $('pointSizeVal'), btnPointStyleReset: $('btnPointStyleReset'),
     gridWidth: $('gridWidth'), gridWidthVal: $('gridWidthVal'), gridBorderColor: $('gridBorderColor'),
     gridFillColor: $('gridFillColor'), gridNoFill: $('gridNoFill'), gridFillOpacity: $('gridFillOpacity'), gridFillOpacityVal: $('gridFillOpacityVal'),
     helpModal: $('helpModal'), btnCloseHelp: $('btnCloseHelp'),
@@ -2162,6 +2166,7 @@ function init() {
   };
   els.ctx = els.map.getContext('2d');
   bindEvents();
+  syncPointStyleControls();
   resizeCanvas();
   if (('ResizeObserver' in window) && els.mapPanel) {
     app.mapResizeObserver = new ResizeObserver(function () {
@@ -2415,15 +2420,18 @@ function bindEvents() {
     syncPointStyleControls();
     invalidate();
   });
-  els.pointHue.addEventListener('input', function () {
+  els.pointColor.addEventListener('input', function () {
     const st = app.pointStyles[app.styleLayer];
     if (!st) return;
-    st.color = hslToHex(Number(els.pointHue.value), 0.78, 0.42);
+    st.color = els.pointColor.value;
     syncPointStyleControls();
     invalidate();
   });
-  els.pointRgbInput.addEventListener('change', applyPointRgbInput);
-  els.pointRgbInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); applyPointRgbInput(); } });
+  els.pointSize.addEventListener('input', function () {
+    app.symbolScale = Math.max(0.5, Math.min(2, Number(els.pointSize.value) / 100));
+    if (els.pointSizeVal) els.pointSizeVal.textContent = Math.round(app.symbolScale * 100) + '%';
+    invalidate();
+  });
   els.btnPointStyleReset.addEventListener('click', function () {
     delete app.pointStyles[app.styleLayer];
     app.pointStyles[app.styleLayer] = JSON.parse(JSON.stringify(DEFAULT_POINT_STYLES[app.styleLayer]));
@@ -6273,7 +6281,7 @@ function drawOtherPoints(ctx) {
   ctx.save();
   app.otherPoints.forEach(function (p) {
     const s = screenPos(toWorld(p));
-    drawStyledShape(ctx, st.shape || 'circle', s.x, s.y, 3.2, st.color || '#8a939e', 'rgba(255,255,255,0.85)', 0.8);
+    drawStyledShape(ctx, st.shape || 'circle', s.x, s.y, 3.2 * (app.symbolScale || 1), st.color || '#8a939e', 'rgba(255,255,255,0.85)', 0.8);
   });
   ctx.restore();
 }
@@ -6323,7 +6331,7 @@ function drawCandidates(ctx) {
     if (s.x < -10 || s.y < -10 || s.x > mapSize().w + 10 || s.y > mapSize().h + 10) continue;
     const eligible = item.eligible;
     const st = app.pointStyles.pool || DEFAULT_POINT_STYLES.pool;
-    drawStyledShape(ctx, st.shape || 'circle', s.x, s.y, eligible ? 4.2 : 3.0,
+    drawStyledShape(ctx, st.shape || 'circle', s.x, s.y, (eligible ? 4.2 : 3.0) * (app.symbolScale || 1),
       (st.color || '#39ff14'),
       eligible ? 'rgba(255,255,255,0.95)' : 'rgba(18,105,18,0.95)',
       eligible ? 1.8 : 1);
@@ -6578,18 +6586,62 @@ function syncPointStyleControls() {
     return '<button type="button" class="btn mini" data-shape="' + s.id + '" title="' + s.name + '" style="width:27px;height:27px;padding:0;font-size:16px;line-height:25px;' +
       (st.shape === s.id ? 'border-color:#1a6fdb;background:#e8f1fc;color:#0b5f96;' : '') + '">' + s.label + '</button>';
   }).join('');
-  els.pointRgbInput.value = 'rgb(' + (hexToRgb(st.color) ? [hexToRgb(st.color).r, hexToRgb(st.color).g, hexToRgb(st.color).b].join(',') : '0,0,0') + ')';
-  els.pointColorSwatch.style.background = st.color;
-  els.pointHue.value = String(hexToHue(st.color));
+  els.pointColor.value = colorToHex(st.color);
+  els.pointColorHex.textContent = colorToHex(st.color);
+  if (els.pointSize) els.pointSize.value = String(Math.round((app.symbolScale || 1) * 100));
+  if (els.pointSizeVal) els.pointSizeVal.textContent = Math.round((app.symbolScale || 1) * 100) + '%';
+  renderDynamicLegend();
 }
-function applyPointRgbInput() {
-  const st = app.pointStyles[app.styleLayer];
-  if (!st) return;
-  const color = parseRgbInput(els.pointRgbInput.value);
-  if (!color) { toast('RGB 格式无效，请输入如 rgb(30,125,80) 或 #1e7d50。', 'warn'); syncPointStyleControls(); return; }
-  st.color = color;
-  syncPointStyleControls();
-  invalidate();
+function colorToHex(c) {
+  if (/^#[0-9a-f]{6}$/i.test(String(c || ''))) return c;
+  const rgb = parseRgbInput(String(c || ''));
+  if (rgb) return '#' + [rgb.r, rgb.g, rgb.b].map(function (v) { return v.toString(16).padStart(2, '0'); }).join('');
+  return '#39ff14';
+}
+function pointShapeSvg(shape, fill, stroke) {
+  const sh = shape || 'circle';
+  const f = escapeHtml(fill || '#39ff14');
+  const s = escapeHtml(stroke || '#ffffff');
+  let body = '';
+  if (sh === 'square') body = '<rect x="3" y="3" width="10" height="10" fill="' + f + '" stroke="' + s + '" stroke-width="1.4"/>';
+  else if (sh === 'triangle') body = '<polygon points="8,2 14,14 2,14" fill="' + f + '" stroke="' + s + '" stroke-width="1.4"/>';
+  else if (sh === 'triangleDown') body = '<polygon points="2,2 14,2 8,14" fill="' + f + '" stroke="' + s + '" stroke-width="1.4"/>';
+  else if (sh === 'diamond') body = '<polygon points="8,1 15,8 8,15 1,8" fill="' + f + '" stroke="' + s + '" stroke-width="1.4"/>';
+  else if (sh === 'pentagon' || sh === 'hexagon') {
+    const n = sh === 'pentagon' ? 5 : 6;
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const a = -Math.PI / 2 + i * Math.PI * 2 / n;
+      pts.push((8 + 6 * Math.cos(a)).toFixed(2) + ',' + (8 + 6 * Math.sin(a)).toFixed(2));
+    }
+    body = '<polygon points="' + pts.join(' ') + '" fill="' + f + '" stroke="' + s + '" stroke-width="1.4"/>';
+  } else if (sh === 'star') {
+    const pts = [];
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + i * Math.PI / 5;
+      const r = i % 2 === 0 ? 6.5 : 2.8;
+      pts.push((8 + r * Math.cos(a)).toFixed(2) + ',' + (8 + r * Math.sin(a)).toFixed(2));
+    }
+    body = '<polygon points="' + pts.join(' ') + '" fill="' + f + '" stroke="' + s + '" stroke-width="1.2"/>';
+  } else if (sh === 'cross' || sh === 'x') {
+    const d = sh === 'x' ? 'M3 3L13 13M13 3L3 13' : 'M8 2V14M2 8H14';
+    body = '<path d="' + d + '" fill="none" stroke="' + s + '" stroke-width="4.2" stroke-linecap="round"/>' +
+      '<path d="' + d + '" fill="none" stroke="' + f + '" stroke-width="2.2" stroke-linecap="round"/>';
+  } else {
+    body = '<circle cx="8" cy="8" r="5.6" fill="' + f + '" stroke="' + s + '" stroke-width="1.4"/>';
+  }
+  return '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">' + body + '</svg>';
+}
+function renderDynamicLegend() {
+  if (typeof document === 'undefined') return;
+  const nodes = document.querySelectorAll('[data-legend-level]');
+  nodes.forEach(function (el) {
+    const level = el.getAttribute('data-legend-level');
+    if (!level) return;
+    const st = app.pointStyles[level] || DEFAULT_POINT_STYLES[level] || { shape: 'circle', color: '#39ff14' };
+    const bad = el.getAttribute('data-legend-variant') === 'bad';
+    el.innerHTML = pointShapeSvg(st.shape, st.color, bad ? '#149314' : '#ffffff');
+  });
 }
 function updateGridStyleControls() {
   if (!els || !els.gridWidth) return;
@@ -6652,7 +6704,7 @@ function drawStyledShape(ctx, shape, x, y, r, fill, stroke, lineWidth) {
   ctx.stroke();
 }
 function drawSymbol(ctx, x, y, level, active) {
-  const size = active ? 8 : 6.4;
+  const size = (active ? 8 : 6.4) * (app.symbolScale || 1);
   ctx.save();
   const st = app.pointStyles[level] || DEFAULT_POINT_STYLES[level] || { shape: 'circle', color: LEVELS[level] ? LEVELS[level].color : '#666' };
   drawStyledShape(ctx, st.shape || 'circle', x, y, size, st.color || LEVELS[level].color, '#ffffff', 1.4);
@@ -7839,9 +7891,14 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
 </script>
 </body>
 </html>
+
+
+
+
 
 
 
