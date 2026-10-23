@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v2.20</title>
+<title>环耕站布点调整&amp;检测工具 v3.0</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -67,6 +67,10 @@ button{font-family:inherit}
 .review-panel .review-other:focus{outline:2px solid #b9d7ee;outline-offset:-1px}
 .review-panel .vb-disabled{opacity:.5}
 .review-map-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.review-dropzone{margin:0 0 7px;padding:7px 8px;border:1px dashed #b8c0c9;border-radius:4px;background:#f8fafb;color:#667085;font-size:11.5px;line-height:1.5;text-align:center;cursor:pointer;transition:border-color .15s ease,background .15s ease,color .15s ease}
+.review-dropzone span{color:#98a2b3;font-size:10.5px}
+.review-dropzone.dragover{border-color:#2f80b9;background:#eef7fd;color:#145f8c}
+.review-dropzone.dragover span{color:#2f80b9}
 .review-preview{border:1px solid #e1e6eb;border-radius:4px;max-height:220px;overflow:auto;font-size:11.5px;background:#fbfcfd}
 .review-preview table{border-collapse:collapse;width:100%}
 .review-preview th,.review-preview td{padding:4px 6px;border-bottom:1px solid #eef1f4;white-space:nowrap;text-align:left}
@@ -239,7 +243,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v2.20</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v3.0</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -297,6 +301,9 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <div class="mini-row" style="margin:0 0 5px">
         <button id="btnReviewMode" class="btn mini wide" disabled title="导入问题清单，按问题点进行二轮复核">二轮复核模式</button>
         <input type="file" id="reviewInput" accept=".xlsx,.xls,.csv" style="display:none">
+      </div>
+      <div id="reviewDropZone" class="review-dropzone" title="支持拖入 xlsx、xls、csv；点击打开文件选择">
+        拖入 xlsx / xls / csv 问题清单<br><span>或点击此处选择文件</span>
       </div>
       <div class="mini-row" style="margin:0 0 5px">
         <button id="btnProgressExport" class="btn mini" disabled title="把本地进度导出为 JSON 文件">导出进度</button>
@@ -508,7 +515,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v2.20 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v3.0 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 二轮复核问题清单匹配 -->
@@ -539,7 +546,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v2.20 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v3.0 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
@@ -567,7 +574,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <li><b>格网组合检查</b>：修改后关闭“编辑模式”时，工具会逐一检查当前行政区每个 05 格网是否保持“1 省级 + 1 市级 + 1 县级”组合；通过会提示，未通过可选择“继续编辑”或“强制保存”。</li>
       <li><b>一键调整样点</b>：对当前行政区自动查找因间距过近而冲突的 02 样点，从 03 候选池中选择同地类（旱地/水浇地互通）、与所有点保持 1500 m 以上的候选点进行批量替换；有耕地等级时优先同等级、其次相邻 ±1 级，再尽量优先落在原 05 格网内。</li>
       <li><b>目视检查模式</b>：仅依次检查本区 02 市、县级样点（省级点不进入检查队列），地图同时显示 100 m 蓝色圆环和 200 m 橙色指示圈（均为高透明度），并显示右侧悬浮面板，人工勾选“林地重合、河流距离、侵蚀沟避让、田垄检查（仅水田）”；面板内可开启编辑模式，用 Shift+单击替换或 Space+单击移动当前问题点；目视检查中按住 Space 移动时保持当前视野，并在点位上显示黄色透明的 20 m 瞄准圈，不跳转到 20 m 放大视图；完成后自动做一次间距复核，通过后会询问是否导出成果。</li>
-      <li><b>二轮复核模式</b>：点击“二轮复核模式”，导入 xlsx/xls/csv 问题清单；在弹窗中选择工作表（CSV 跳过）、区县列、级别列、样点编码列和问题列。导入后仅切换清单中的问题点，右侧面板可选择“无其他有效候选点 / 复核无误 / 已调整 / 其他情况”，选择“其他情况”时必须填写任意文字。导出复核 ZIP 包含全部市/县级样点 SHP、市/县分开的问题点 SHP 和 Sheet1 复核反馈表 XLSX。</li>
+      <li><b>二轮复核模式</b>：点击“二轮复核模式”，或将 xlsx/xls/csv 问题清单直接拖入左侧虚线目标框，导入问题清单；在弹窗中选择工作表（CSV 跳过）、区县列、级别列、样点编码列和问题列。导入后仅切换清单中的问题点，右侧面板可选择“无其他有效候选点 / 复核无误 / 已调整 / 其他情况”，选择“其他情况”时必须填写任意文字。导出复核 ZIP 包含全部市/县级样点 SHP、市/县分开的问题点 SHP 和 Sheet1 复核反馈表 XLSX。</li>
       <li><b>任务进度统计</b>：底部结果面板上方有两条进度条：绿色为本行政区目视检查进度，蓝色为当前任务组全部行政区总进度；条内显示“完成数 / 总数”。进入目视检查模式时底部面板默认收起，进度条固定在显示区最下方随勾选实时更新；可点击“收起面板 / 展开面板”切换，带过渡动画。</li>
       <li><b>行政区状态与彩蛋</b>：行政区下拉列表中每个行政区名称前显示状态标签：浅红“未开展”、浅黄“进行中”、浅绿“已完成”。绿色和蓝色进度条同时填满且导出成功后播放约 5 秒彩带动画；蓝色进度条填满且全部行政区均已导出成功后，播放约 10 秒、数量更多的撒花动画。彩带会逐渐飘落并在空中随风翻转旋转，动画层不拦截鼠标操作。</li>
       <li><b>横幅提示</b>：所有横幅从顶部向下探出，停留约 5 秒后自动收回；切换目视检查点时，旧横幅若不适用于新点会立即收回，若仍适用则继续保留并重新计算 5 秒停留时间。</li>
@@ -794,14 +801,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v2.20 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v3.0 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v2.20';
+const TOOL_VERSION = 'v3.0';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1885,10 +1892,11 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v2.20 —— 界面与交互
+ * 环耕站布点调整与检测工具 v3.0 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
@@ -1924,9 +1932,9 @@ const DEFAULT_POINT_STYLES = {
   other: { shape: 'circle', color: '#8a939e' }
 };
 const ANNOUNCEMENT_ITEMS = [
-  '新增“二轮复核模式”：导入 xlsx/xls/csv 问题清单，匹配 sheet 页、区县、级别、样点编码和问题列；有问题的行政区状态显示“待修改”。',
-  '复核模式只切换导入清单中的问题点，右侧可选择“无其他有效候选点 / 复核无误 / 已调整 / 其他情况”并填写文字反馈。',
-  '复核导出包含全部市、县级样点 SHP、市/县分开的问题点 SHP 和 Sheet1 复核反馈表 XLSX。'
+  '二轮复核问题清单支持拖拽导入：可将 xlsx、xls、csv 文件直接拖入左侧“拖入问题清单”目标框，也可点击目标框或“二轮复核模式”选择文件。',
+  '复核模式支持 Sheet/字段匹配、问题行政区“待修改”状态、问题点逐点复核，以及预填意见和“其他情况”文字反馈。',
+  '复核成果导出包含全部市/县级 SHP、市/县分开的问题点 SHP 和 Sheet1 复核反馈表 XLSX。'
 ];
 
 const app = {
@@ -2044,7 +2052,7 @@ function init() {
     keyModal: $('keyModal'), keyRows: $('keyRows'), btnAddKey: $('btnAddKey'), keyOrigin: $('keyOrigin'),
     keyStatus: $('keyStatus'), cacheStatus: $('cacheStatus'), btnClearCache: $('btnClearCache'), basemapState: $('basemapState'),
     btnCandidateGradeMore: $('btnCandidateGradeMore'),
-    btnReviewMode: $('btnReviewMode'), reviewInput: $('reviewInput'),
+    btnReviewMode: $('btnReviewMode'), reviewInput: $('reviewInput'), reviewDropZone: $('reviewDropZone'),
     reviewMatchModal: $('reviewMatchModal'), reviewFileInfo: $('reviewFileInfo'), reviewSheetField: $('reviewSheetField'),
     reviewSheetSelect: $('reviewSheetSelect'), reviewFieldRegion: $('reviewFieldRegion'), reviewFieldLevel: $('reviewFieldLevel'),
     reviewFieldCode: $('reviewFieldCode'), reviewFieldProblem: $('reviewFieldProblem'), reviewMatchHint: $('reviewMatchHint'),
@@ -2237,6 +2245,25 @@ function bindEvents() {
   els.reviewInput.addEventListener('change', function () {
     const file = els.reviewInput.files && els.reviewInput.files[0];
     els.reviewInput.value = '';
+    if (file) handleReviewFile(file);
+  });
+  els.reviewDropZone.addEventListener('click', function () { els.reviewInput.click(); });
+  ['dragenter', 'dragover'].forEach(function (evt) {
+    els.reviewDropZone.addEventListener(evt, function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      els.reviewDropZone.classList.add('dragover');
+    });
+  });
+  els.reviewDropZone.addEventListener('dragleave', function (e) {
+    e.preventDefault();
+    els.reviewDropZone.classList.remove('dragover');
+  });
+  els.reviewDropZone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    els.reviewDropZone.classList.remove('dragover');
+    const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
     if (file) handleReviewFile(file);
   });
   els.btnReviewMatchCancel.addEventListener('click', function () { els.reviewMatchModal.classList.add('hidden'); });
@@ -7552,9 +7579,11 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
 </script>
 </body>
 </html>
+
 
 
 
