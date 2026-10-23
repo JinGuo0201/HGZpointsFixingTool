@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>环耕站布点调整&amp;检测工具 v3.5</title>
+<title>环耕站布点调整&amp;检测工具 v3.6</title>
 <style>
 :root{
   --blue:#0079c1;--blue-dark:#00609a;--blue-light:#e5f2fa;
@@ -103,8 +103,8 @@ button{font-family:inherit}
 .sym-city{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:9px solid var(--city)}
 .sym-county{width:8px;height:8px;background:var(--county)}
 .sym-other{width:8px;height:8px;border:1.5px solid #8a939e;border-radius:50%;background:#fff}
-.sym-pool-ok{width:8px;height:8px;border:1.5px solid #1e7d3a;border-radius:50%;background:#d8f3df}
-.sym-pool-bad{width:8px;height:8px;border:1.5px solid #b0b8c1;border-radius:50%;background:#f0f2f4}
+.sym-pool-ok{width:8px;height:8px;border:1.5px solid #39ff14;border-radius:50%;background:#b7ffad}
+.sym-pool-bad{width:8px;height:8px;border:1.5px solid rgba(57,255,20,.65);border-radius:50%;background:rgba(57,255,20,.18)}
 .sym-circle{width:9px;height:9px;border:1.5px solid #6aa8d8;border-radius:50%}
 .sym-grid{width:10px;height:9px;border-left:1px solid #9aa4ae;border-top:1px solid #9aa4ae;background:linear-gradient(90deg,transparent 4px,#9aa4ae 4px,#9aa4ae 5px,transparent 5px),linear-gradient(0deg,transparent 4px,#9aa4ae 4px,#9aa4ae 5px,transparent 5px)}
 .sym-base{width:10px;height:9px;border:1px solid #7fa3bd;background:linear-gradient(135deg,#cfe3f2,#eef6fc)}
@@ -244,7 +244,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
   <div class="brand">
     <div class="logo">◎</div>
     <div>
-      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v3.5</span></div>
+      <div class="title">环耕站布点调整&amp;检测工具 <span class="ver">v3.6</span></div>
       <div class="brand-credit">Designed by Jin Guo, Harbin Normal University; Powered by DeepSeek-V4.1-Flash-1017; © Jin Guo, All Rights Reserved.</div>
     </div>
   </div>
@@ -354,7 +354,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px">
         <span class="tiny">颜色</span>
         <input id="pointHue" type="range" min="0" max="360" step="1" value="140" style="flex:1;height:16px;border-radius:8px;background:linear-gradient(90deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)">
-        <span id="pointColorSwatch" style="width:20px;height:20px;border:1px solid #8b95a1;border-radius:3px;background:#1e7d3a"></span>
+        <span id="pointColorSwatch" style="width:20px;height:20px;border:1px solid #8b95a1;border-radius:3px;background:#39ff14"></span>
       </div>
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
         <span class="tiny">RGB</span>
@@ -517,7 +517,7 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 
 <footer class="statusbar">
   <span id="statusLeft">就绪</span>
-  <span id="statusRight">环耕站布点调整&amp;检测工具 v3.5 · 原数据只读 · 修改仅在内存中</span>
+  <span id="statusRight">环耕站布点调整&amp;检测工具 v3.6 · 原数据只读 · 修改仅在内存中</span>
 </footer>
 
 <!-- 二轮复核问题清单匹配 -->
@@ -559,11 +559,11 @@ table.data td.dist{color:var(--red);font-weight:600;font-family:Consolas,monospa
 <div id="helpModal" class="modal hidden">
   <div class="modal-card">
     <h2>环耕站布点调整&amp;检测工具 · 使用说明</h2>
-    <div class="muted">v3.5 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
+    <div class="muted">v3.6 · 原数据只读、修改保存在内存、导出为新的 SHP 成果包</div>
     <h3>一、整体流程</h3>
     <ol>
       <li>点击"选择任务文件夹"，选择本人任务文件夹（含 01–05 子目录的那一层）；工具只读加载，不会写入原文件。</li>
-      <li>选择行政区，工具自动加载 01 省级点、02 市/县级点、03 样点池、05 格网，并做间距检查。</li>
+      <li>选择行政区，工具自动加载 01 省级点、02 市/县级点、03 样点池、05 格网，并做间距检查；03 候选点统一显示为荧光绿色，便于快速识别。</li>
       <li><b>省级点间距离特例</b>：若所有间距不合格项都是“省级点 ↔ 省级点”，因省级点不可移动，工具按全部样点间距通过处理，不再显示红色违规提示；其他任何级别组合的违规仍正常提示。</li>
       <li>开启"编辑模式"，用 Ctrl+单击选中一条 02 问题点；Shift+单击 03 候选点替换；按住 Space+单击在 20 m 圆环内移动。</li>
       <li>每次修改都会做间距、类型、20 m 半径校验，并写入修改记录。</li>
@@ -814,14 +814,14 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 /* ================= core.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整&检测工具 v3.5 —— 核心纯函数
+ * 环耕站布点调整&检测工具 v3.6 —— 核心纯函数
  * （解析、距离、匹配、编辑导出、ZIP、投影换算）
  * 本文件不访问 DOM，便于 Node 单元测试。
  * ============================================================ */
 
 const THRESHOLD_M = 1500;
 const MOVE_LIMIT_M = 20;
-const TOOL_VERSION = 'v3.5';
+const TOOL_VERSION = 'v3.6';
 const LEVELS = {
   prov: { key: 'prov', label: '省级', color: '#1a6fdb' },
   city: { key: 'city', label: '市级', color: '#d9720b' },
@@ -1977,10 +1977,11 @@ function outputPathFor(regionName, level, ext) {
 
 
 
+
 /* ================= ui.js ================= */
 'use strict';
 /* ============================================================
- * 环耕站布点调整与检测工具 v3.5 —— 界面与交互
+ * 环耕站布点调整与检测工具 v3.6 —— 界面与交互
  * ============================================================ */
 
 const LEGACY_DEFAULT_TIANDITU_HASH = '1tst8q4';
@@ -2012,13 +2013,13 @@ const DEFAULT_POINT_STYLES = {
   prov: { shape: 'diamond', color: '#1a6fdb' },
   city: { shape: 'triangle', color: '#d9720b' },
   county: { shape: 'square', color: '#1f8f3e' },
-  pool: { shape: 'circle', color: '#1e7d3a' },
+  pool: { shape: 'circle', color: '#39ff14' },
   other: { shape: 'circle', color: '#8a939e' }
 };
 const ANNOUNCEMENT_ITEMS = [
-  '二轮复核导入一次问题清单后，切换行政区会直接复用已导入的 xlsx/xls/csv，不再要求重新选择文件。',
-  '切换到有复核问题的行政区时自动进入复核模式并显示该区问题点；切换到无问题行政区时保持普通模式，切回有问题行政区会自动恢复复核。',
-  '复核队列稳定保留、替换后样点编号列、复核编辑和 ZIP/文件夹双导出功能继续保留。'
+  '03 样点池中的所有候选点颜色改为荧光绿，方便在影像和地图上快速查找；合格候选为明亮实心绿色，不合格候选为半透明荧光绿。',
+  '候选点悬停 100 m/200 m 亮品红辅助圈和候选等级标注继续保留。',
+  '二轮复核快速切换区县、稳定队列、替换后样点编号列和双导出功能继续保留。'
 ];
 
 const app = {
@@ -2060,7 +2061,7 @@ const app = {
     prov: { shape: 'diamond', color: '#1a6fdb' },
     city: { shape: 'triangle', color: '#d9720b' },
     county: { shape: 'square', color: '#1f8f3e' },
-    pool: { shape: 'circle', color: '#1e7d3a' },
+    pool: { shape: 'circle', color: '#39ff14' },
     other: { shape: 'circle', color: '#8a939e' }
   },
   gridStyle: { width: 1, border: '#5a6978', fill: '#5a6978', noFill: true, opacity: 4 },
@@ -6323,8 +6324,8 @@ function drawCandidates(ctx) {
     const eligible = item.eligible;
     const st = app.pointStyles.pool || DEFAULT_POINT_STYLES.pool;
     drawStyledShape(ctx, st.shape || 'circle', s.x, s.y, eligible ? 4.2 : 2.6,
-      eligible ? (st.color || '#1e7d3a') : 'rgba(240,242,244,0.6)',
-      eligible ? 'rgba(255,255,255,0.95)' : 'rgba(150,158,168,0.75)',
+      eligible ? (st.color || '#39ff14') : 'rgba(57,255,20,0.55)',
+      eligible ? 'rgba(255,255,255,0.95)' : 'rgba(57,255,20,0.9)',
       eligible ? 1.8 : 1);
     if (item.eligible && app.candidateGrades.has(item.idx)) {
       ctx.save();
@@ -6569,7 +6570,7 @@ function initStyleControls() {
 function syncPointStyleControls() {
   if (!els || !els.pointStyleLayer) return;
   app.styleLayer = els.pointStyleLayer.value || app.styleLayer || 'city';
-  const st = app.pointStyles[app.styleLayer] || DEFAULT_POINT_STYLES[app.styleLayer] || { shape: 'circle', color: '#1e7d3a' };
+  const st = app.pointStyles[app.styleLayer] || DEFAULT_POINT_STYLES[app.styleLayer] || { shape: 'circle', color: '#39ff14' };
   if (!els.shapePicker.dataset.ready) {
     els.shapePicker.dataset.ready = '1';
   }
@@ -7836,9 +7837,14 @@ if (typeof document !== 'undefined' && document.getElementById) {
 
 
 
+
+
 </script>
 </body>
 </html>
+
+
+
 
 
 
